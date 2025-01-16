@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.volodya-lombrozo</groupId>
+  <artifactId>xnav</artifactId>
+  <packaging>jar</packaging>
+  <version>0.1.0</version>
+  <name>xnav</name>
+  <description>
+    Xnav is a library designed for seamless navigation and querying of XML documents
+  </description>
+  <inceptionYear>2025</inceptionYear>
+  <url>https://github.com/volodya-lombrozo/xnav</url>
+  <scm>
+    <connection>
+        scm:git:git://github.com/volodya-lombrozo/xnav.git
+      </connection>
+    <developerConnection>
+        scm:git:ssh://github.com/volodya-lombrozo/xnav.git
+      </developerConnection>
+    <url>
+        https://github.com/volodya-lombrozo/xnav/tree/main
+    </url>
+  </scm>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Volodya Lombrozo</name>
+      <email>volodya.lombrozo@gmail.com</email>
+      <roles>
+        <role>Architect</role>
+      </roles>
+    </developer>
+  </developers>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+</project>

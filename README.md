@@ -7,8 +7,7 @@
 
 Xnav is a library designed for seamless navigation and querying of XML
 documents, inspired by the simplicity and elegance of XPath. With Xnav,
-developers can easily traverse, manipulate, and extract information from XML
-structures.
+developers can easily traverse and extract information from XML structures.
 
 ## Installation
 
