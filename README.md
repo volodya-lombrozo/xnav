@@ -33,7 +33,7 @@ example of how to use it:
 public class XnavExample {
     public static void main(String[] args) {
         System.out.println(
-            new XmlNavigator("<root><item key='value'/></root>")
+            new Navigator("<root><item key='value'/></root>")
                 .child("root")
                 .child("item")
                 .attr("key")

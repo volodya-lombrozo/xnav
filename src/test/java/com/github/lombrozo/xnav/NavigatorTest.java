@@ -8,10 +8,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Test case for {@link XmlNavigator}.
+ * Test case for {@link Navigator}.
  * @since 0.1
  */
-class XmlNavigatorTest {
+class NavigatorTest {
 
     @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})
@@ -35,7 +35,7 @@ class XmlNavigatorTest {
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private static Stream<Arguments> elementPaths() {
-        final Navigator xml = new XmlNavigator(
+        final Navigator xml = new Navigator(
             String.join(
                 "\n",
                 "<program><metas>",
@@ -93,7 +93,7 @@ class XmlNavigatorTest {
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private static Stream<Arguments> attributePaths() {
-        final Navigator xml = new XmlNavigator(
+        final Navigator xml = new Navigator(
             String.join(
                 "\n",
                 "<prog progattr='1'>",

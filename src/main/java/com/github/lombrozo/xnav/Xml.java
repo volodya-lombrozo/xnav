@@ -6,8 +6,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
-import javax.print.Doc;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -18,7 +16,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -44,14 +41,27 @@ final class Xml {
      */
     private final Node node;
 
+    /**
+     * Ctor.
+     * @param xml XML document as a string.
+     */
     Xml(final String xml) {
         this(Xml.fromString(xml));
     }
 
+    /**
+     * Ctor.
+     * @param node XML document node.
+     */
     Xml(final Node node) {
         this.node = node;
     }
 
+    /**
+     * Get a child node by its name.
+     * @param element Element name.
+     * @return child.
+     */
     Xml child(final String element) {
         final NodeList nodes = this.node.getChildNodes();
         for (int idx = 0; idx < nodes.getLength(); ++idx) {
@@ -66,6 +76,11 @@ final class Xml {
         );
     }
 
+    /**
+     * Get an attribute by its name.
+     * @param name Attribute name.
+     * @return attribute.
+     */
     Xml attribute(final String name) {
         final Node item = this.node.getAttributes().getNamedItem(name);
         if (Objects.nonNull(item)) {
@@ -76,6 +91,10 @@ final class Xml {
         );
     }
 
+    /**
+     * Get the text of the current node.
+     * @return Text of the node.
+     */
     Optional<String> text() {
         final Optional<String> result;
         if (this.node.getNodeType() == Node.DOCUMENT_NODE) {
@@ -86,6 +105,11 @@ final class Xml {
         return result;
     }
 
+    /**
+     * Create XML node from a string.
+     * @param xml XML as a string.
+     * @return XML node.
+     */
     private static Node fromString(final String xml) {
         try {
             return Xml.DFACTORY.newDocumentBuilder()
@@ -103,6 +127,10 @@ final class Xml {
         try {
             final Transformer transformer = Xml.TFACTORY.newTransformer();
             transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            if(!(this.node instanceof Document)){
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            }
             final StringWriter writer = new StringWriter();
             transformer.transform(new DOMSource(this.node), new StreamResult(writer));
             return writer.toString();
