@@ -24,7 +24,6 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 /**
@@ -33,7 +32,6 @@ import lombok.ToString;
  * @since 0.1
  */
 @ToString
-@EqualsAndHashCode
 public final class Navigator {
 
     /**

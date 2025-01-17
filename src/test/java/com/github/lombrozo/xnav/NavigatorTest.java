@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,7 +35,16 @@ import org.junit.jupiter.params.provider.MethodSource;
  * Test case for {@link Navigator}.
  * @since 0.1
  */
-class NavigatorTest {
+final class NavigatorTest {
+
+    @Test
+    void convertsToString() {
+        MatcherAssert.assertThat(
+            "We expect the navigator to be converted to string",
+            new Navigator("<root><child>text</child></root>").child("root").toString(),
+            Matchers.equalTo("Navigator(node=<root><child>text</child></root>)")
+        );
+    }
 
     @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})

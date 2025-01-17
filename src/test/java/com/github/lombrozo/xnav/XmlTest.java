@@ -25,6 +25,7 @@ package com.github.lombrozo.xnav;
 
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -48,6 +49,15 @@ final class XmlTest {
             "Node is not converted to string",
             new Xml("<doc><node>text</node></doc>").child("doc").child("node").toString(),
             Matchers.equalTo("<node>text</node>")
+        );
+    }
+
+    @Test
+    void failsToCreateCorruptedDocument() {
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new Xml("<doc..."),
+            "Corrupted document is not created, exception is expected"
         );
     }
 }
