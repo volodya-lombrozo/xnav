@@ -32,14 +32,14 @@ example of how to use it:
 
 public class XnavExample {
     public static void main(String[] args) {
-        Navigator navigator = new Navigator(
-            new XMLDocument("<root><item key='value'/></root>").innerNode());
-        String attributeValue = navigator
-            .into("root")
-            .find("//item[@key]")
-            .attr("key")
-            .text();
-        System.out.println(attributeValue); // Output: value
+        System.out.println(
+            new XmlNavigator("<root><item key='value'/></root>")
+                .child("root")
+                .child("item")
+                .attr("key")
+                .text()
+                .orElse("default")
+        ); // Output: value
     }
 }
 ```
