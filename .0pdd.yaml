@@ -1,0 +1,15 @@
+threshold: 256
+model: true
+alerts:
+  suppress:
+    - on-found-puzzle
+    - on-lost-puzzle
+    - on-scope
+  github:
+    - volodya-lombrozo
+format:
+  - short-title
+  - title-length=100
+tags:
+  - pdd
+  - bug
