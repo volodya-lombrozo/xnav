@@ -46,6 +46,17 @@ final class NavigatorTest {
         );
     }
 
+    @Test
+    void createsNavigatorFromNode() {
+        MatcherAssert.assertThat(
+            "We expect the navigator to be created from node",
+            new Navigator(new StringNode("<a>text</a>").toNode())
+                .child("a")
+                .toString(),
+            Matchers.equalTo("Navigator(node=<a>text</a>)")
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})
     void retrievesTextFromElements(final Navigator navigator, final String expected) {

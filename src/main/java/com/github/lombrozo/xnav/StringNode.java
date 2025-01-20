@@ -21,72 +21,54 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package com.github.lombrozo.xnav;
 
-import java.util.Optional;
-import lombok.ToString;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 /**
- * XML navigator.
- * Allows navigating through an XML document.
+ * XML as a string.
  * @since 0.1
  */
-@ToString
-public final class Navigator {
+final class StringNode {
 
     /**
-     * Actual XML document node.
+     * Document factory.
      */
-    private final Xml node;
+    private static final DocumentBuilderFactory DFACTORY = DocumentBuilderFactory.newInstance();
 
     /**
-     * Ctor.
-     * @param join XML document as a string.
+     * XML as a string.
      */
-    public Navigator(final String join) {
-        this(new Xml(join));
-    }
+    private final String xml;
 
     /**
      * Ctor.
-     * @param node XML document node.
+     * @param xml XML as a string.
      */
-    public Navigator(final Node node) {
-        this(new Xml(node));
+    StringNode(final String xml) {
+        this.xml = xml;
     }
 
     /**
-     * Ctor.
-     * @param xml XML document node.
+     * Converts XML string to XML node.
+     * @return XML node.
      */
-    public Navigator(final Xml xml) {
-        this.node = xml;
-    }
-
-    /**
-     * Get a child node by its name.
-     * @param element Element name.
-     * @return Navigator for the child.
-     */
-    public Navigator child(final String element) {
-        return new Navigator(this.node.child(element));
-    }
-
-    /**
-     * Get an attribute by its name.
-     * @param name Attribute name.
-     * @return Navigator for the attribute.
-     */
-    public Navigator attribute(final String name) {
-        return new Navigator(this.node.attribute(name));
-    }
-
-    /**
-     * Get the text of the current node.
-     * @return Text of the node.
-     */
-    public Optional<String> text() {
-        return this.node.text();
+    Node toNode() {
+        try {
+            return StringNode.DFACTORY.newDocumentBuilder()
+                .parse(new ByteArrayInputStream(this.xml.getBytes(StandardCharsets.UTF_8)));
+        } catch (final SAXException | IOException | ParserConfigurationException exception) {
+            throw new IllegalArgumentException(
+                String.format("Failed to parse XML: %s", this.xml),
+                exception
+            );
+        }
     }
 }
