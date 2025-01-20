@@ -21,7 +21,7 @@ jobs:
           restore-keys: |
             maven-
       - run: mvn clean install -P"qulice" --errors --batch-mode
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./target/site/jacoco/jacoco.xml
