@@ -26,7 +26,6 @@ package com.github.lombrozo.xnav;
 import java.io.StringWriter;
 import java.util.Objects;
 import java.util.Optional;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -43,11 +42,6 @@ import org.w3c.dom.NodeList;
  * @since 0.1
  */
 final class Xml {
-
-    /**
-     * Document factory.
-     */
-    private static final DocumentBuilderFactory DFACTORY = DocumentBuilderFactory.newInstance();
 
     /**
      * Transformer factory.
@@ -109,7 +103,8 @@ final class Xml {
      */
     Xml child(final String element) {
         final NodeList nodes = this.node.getChildNodes();
-        for (int idx = 0; idx < nodes.getLength(); ++idx) {
+        final int length = nodes.getLength();
+        for (int idx = 0; idx < length; ++idx) {
             final Node child = nodes.item(idx);
             if (child.getNodeType() == Node.ELEMENT_NODE
                 && child.getNodeName().equals(element)) {

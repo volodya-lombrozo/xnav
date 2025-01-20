@@ -50,7 +50,9 @@ final class NavigatorTest {
     void createsNavigatorFromNode() {
         MatcherAssert.assertThat(
             "We expect the navigator to be created from node",
-            new Navigator(new StringNode("<a>text</a>").toNode()).toString(),
+            new Navigator(new StringNode("<a>text</a>").toNode())
+                .child("a")
+                .toString(),
             Matchers.equalTo("Navigator(node=<a>text</a>)")
         );
     }
