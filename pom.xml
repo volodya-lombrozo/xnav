@@ -244,16 +244,6 @@ SOFTWARE.
       <activation>
         <activeByDefault>false</activeByDefault>
       </activation>
-      <distributionManagement>
-        <snapshotRepository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-      </distributionManagement>
       <build>
         <plugins>
           <plugin>
@@ -305,7 +295,7 @@ SOFTWARE.
             <version>0.7.0</version>
             <extensions>true</extensions>
             <configuration>
-              <publishingServerId>ossrh</publishingServerId>
+              <publishingServerId>central</publishingServerId>
               <tokenAuth>true</tokenAuth>
               <autoPublish>true</autoPublish>
             </configuration>
