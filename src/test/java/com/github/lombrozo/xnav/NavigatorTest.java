@@ -158,9 +158,19 @@ final class NavigatorTest {
             Arguments.of(xml.element(program).element(metas), "version\n1.2.3"),
             Arguments.of(xml.element(program).element(metas).element("meta"), "version\n1.2.3"),
             Arguments.of(
-                xml.element(program).element(metas).element("meta").element("head"), "version"),
+                xml.element(program)
+                    .element(metas)
+                    .element("meta")
+                    .element("head"),
+                "version"
+            ),
             Arguments.of(
-                xml.element(program).element(metas).element("meta").element("tail"), "1.2.3")
+                xml.element(program)
+                    .element(metas)
+                    .element("meta")
+                    .element("tail"),
+                "1.2.3"
+            )
         );
     }
 

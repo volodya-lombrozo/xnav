@@ -41,7 +41,7 @@ public final class Navigator {
     /**
      * Actual XML document node.
      */
-    private final Xml node;
+    private final Xml xml;
 
     /**
      * Ctor.
@@ -64,7 +64,7 @@ public final class Navigator {
      * @param xml XML document node.
      */
     public Navigator(final Xml xml) {
-        this.node = xml;
+        this.xml = xml;
     }
 
     /**
@@ -73,7 +73,7 @@ public final class Navigator {
      * @return Navigator for the child.
      */
     public Navigator element(final String name) {
-        return new Navigator(this.node.child(name));
+        return new Navigator(this.xml.child(name));
     }
 
     /**
@@ -82,7 +82,7 @@ public final class Navigator {
      * @return Stream of navigators for the children.
      */
     public Stream<Navigator> elements(final Filter... filters) {
-        return this.node.children().filter(Filter.all(filters)).map(Navigator::new);
+        return this.xml.children().filter(Filter.all(filters)).map(Navigator::new);
     }
 
     /**
@@ -92,21 +92,20 @@ public final class Navigator {
      */
     public Navigator attribute(final String name) {
         return new Navigator(
-            this.node.attribute(name)
-                .orElseThrow(() ->
-                    new IllegalStateException(
-                        String.format("Attribute '%s' not found in '%s'", name, this)
-                    )
+            this.xml.attribute(name).orElseThrow(
+                () -> new IllegalStateException(
+                    String.format("Attribute '%s' not found in '%s'", name, this)
                 )
+            )
         );
     }
 
     /**
-     * Make a deep copy of the navigator
+     * Make a deep copy of the navigator.
      * @return Deep copy of the navigator.
      */
     public Navigator copy() {
-        return new Navigator(this.node.copy());
+        return new Navigator(this.xml.copy());
     }
 
     /**
@@ -114,7 +113,7 @@ public final class Navigator {
      * @return Text of the node.
      */
     public Optional<String> text() {
-        return this.node.text();
+        return this.xml.text();
     }
 
     /**
@@ -122,6 +121,6 @@ public final class Navigator {
      * @return Current node.
      */
     public Node node() {
-        return this.node.node();
+        return this.xml.node();
     }
 }

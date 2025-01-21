@@ -28,6 +28,11 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Filter for XML nodes.
+ * @since 0.1
+ */
+@SuppressWarnings("PMD.ProhibitPublicStaticMethods")
 public interface Filter extends Predicate<Xml> {
 
     /**

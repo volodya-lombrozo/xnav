@@ -52,7 +52,7 @@ final class Xml {
     /**
      * Actual XML document node.
      */
-    private final Node node;
+    private final Node inner;
 
     /**
      * Ctor.
@@ -67,7 +67,7 @@ final class Xml {
      * @param node XML document node.
      */
     Xml(final Node node) {
-        this.node = node;
+        this.inner = node;
     }
 
     @Override
@@ -76,11 +76,11 @@ final class Xml {
             final Transformer transformer = Xml.TFACTORY.newTransformer();
             transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            if (!(this.node instanceof Document)) {
+            if (!(this.inner instanceof Document)) {
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             }
             final StringWriter writer = new StringWriter();
-            transformer.transform(new DOMSource(this.node), new StreamResult(writer));
+            transformer.transform(new DOMSource(this.inner), new StreamResult(writer));
             return writer.toString();
         } catch (final TransformerConfigurationException econf) {
             throw new IllegalStateException(
@@ -98,20 +98,22 @@ final class Xml {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
+        final boolean result;
         if (this == obj) {
-            return true;
+            result = true;
+        } else if (obj == null || getClass() != obj.getClass()) {
+            result = false;
+        } else {
+            final Xml other = (Xml) obj;
+            result = this.inner.isEqualNode(other.inner);
         }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        Xml other = (Xml) obj;
-        return this.node.isEqualNode(other.node);
+        return result;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.node);
+        return Objects.hash(this.inner);
     }
 
     /**
@@ -120,7 +122,7 @@ final class Xml {
      * @return Child.
      */
     Xml child(final String element) {
-        final NodeList nodes = this.node.getChildNodes();
+        final NodeList nodes = this.inner.getChildNodes();
         final int length = nodes.getLength();
         for (int idx = 0; idx < length; ++idx) {
             final Node child = nodes.item(idx);
@@ -140,7 +142,7 @@ final class Xml {
      * @return Attribute.
      */
     Optional<Xml> attribute(final String name) {
-        final Node item = this.node.getAttributes().getNamedItem(name);
+        final Node item = this.inner.getAttributes().getNamedItem(name);
         final Optional<Xml> result;
         if (Objects.nonNull(item)) {
             result = Optional.of(new Xml(item));
@@ -156,12 +158,12 @@ final class Xml {
      */
     Optional<String> text() {
         final Optional<String> result;
-        if (this.node.getNodeType() == Node.DOCUMENT_NODE) {
+        if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
             result = Optional.of("");
-        } else if (this.node.getNodeType() == Node.ATTRIBUTE_NODE) {
-            result = Optional.of(this.node.getNodeValue());
+        } else if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
+            result = Optional.of(this.inner.getNodeValue());
         } else {
-            result = Optional.of(this.node).map(Node::getTextContent);
+            result = Optional.of(this.inner).map(Node::getTextContent);
         }
         return result;
     }
@@ -171,7 +173,7 @@ final class Xml {
      * @return Children.
      */
     Stream<Xml> children() {
-        final NodeList nodes = this.node.getChildNodes();
+        final NodeList nodes = this.inner.getChildNodes();
         final int length = nodes.getLength();
         return Stream.iterate(0, idx -> idx + 1)
             .limit(length)
@@ -185,7 +187,7 @@ final class Xml {
      * @return Node name.
      */
     String name() {
-        return this.node.getNodeName();
+        return this.inner.getNodeName();
     }
 
     /**
@@ -193,7 +195,7 @@ final class Xml {
      * @return Copy of the document.
      */
     Xml copy() {
-        return new Xml(this.node.cloneNode(true));
+        return new Xml(this.inner.cloneNode(true));
     }
 
     /**
@@ -201,6 +203,6 @@ final class Xml {
      * @return Node.
      */
     Node node() {
-        return this.node;
+        return this.inner;
     }
 }
