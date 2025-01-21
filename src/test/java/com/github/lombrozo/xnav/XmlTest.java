@@ -23,7 +23,6 @@
  */
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -75,6 +74,31 @@ final class XmlTest {
                 new Xml("<node>first</node>").child("node"),
                 new Xml("<node>second</node>").child("node")
             )
+        );
+    }
+
+    @Test
+    void copiesNode() {
+        final Xml xml = new Xml("<doc><node>text</node></doc>");
+        MatcherAssert.assertThat(
+            "Node is not copied",
+            xml.copy().toString(),
+            Matchers.equalTo(xml.toString())
+        );
+    }
+
+    @Test
+    void retrievesNode() {
+        MatcherAssert.assertThat(
+            "We expect the node to be retrieved",
+            new Xml("<doc><node attr='value'>text</node></doc>")
+                .child("doc")
+                .child("node")
+                .node()
+                .isEqualNode(
+                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
+                ),
+            Matchers.is(true)
         );
     }
 }
