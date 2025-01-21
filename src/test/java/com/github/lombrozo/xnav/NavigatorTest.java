@@ -23,6 +23,7 @@
  */
 package com.github.lombrozo.xnav;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -101,6 +102,22 @@ final class NavigatorTest {
     }
 
     @ParameterizedTest
+    @MethodSource("filters")
+    void filtersSuccessfully(final Filter filter, final List<String> expected) {
+        MatcherAssert.assertThat(
+            "We expect the navigator to filter elements",
+            new Navigator(
+                "<root><a attr='a'>a</a><b attr='b'>b</b><c attr='c'>c</c><d attr='d'>d</d><e>e</e><f>f</f></root>"
+            ).elements(filter)
+                .map(Navigator::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList()),
+            Matchers.equalTo(expected)
+        );
+    }
+
+    @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})
     void retrievesTextFromElements(final Navigator navigator, final String expected) {
         MatcherAssert.assertThat(
@@ -143,6 +160,40 @@ final class NavigatorTest {
                 xml.element(program).element(metas).element("meta").element("head"), "version"),
             Arguments.of(
                 xml.element(program).element(metas).element("meta").element("tail"), "1.2.3")
+        );
+    }
+
+    /**
+     * Provide filters to test.
+     * This method provides a stream of arguments to the test method:
+     * {@link #filtersSuccessfully(Filter, List)}.
+     * @return Stream of arguments.
+     */
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    private static Stream<Arguments> filters() {
+        return Stream.of(
+            Arguments.of(Filter.all(), List.of()),
+            Arguments.of(Filter.withName("a"), List.of("a")),
+            Arguments.of(Filter.withName("b"), List.of("b")),
+            Arguments.of(Filter.withName("c"), List.of("c")),
+            Arguments.of(Filter.withName("d"), List.of("d")),
+            Arguments.of(Filter.withName("e"), List.of("e")),
+            Arguments.of(Filter.withName("f"), List.of("f")),
+            Arguments.of(Filter.withAttribute("attr", "a"), List.of("a")),
+            Arguments.of(Filter.hasAttribute("attr"), List.of("a", "b", "c", "d")),
+            Arguments.of(Filter.not(Filter.hasAttribute("attr")), List.of("e", "f")),
+            Arguments.of(
+                Filter.all(Filter.withName("a"), Filter.withAttribute("attr", "a")),
+                List.of("a")
+            ),
+            Arguments.of(
+                Filter.any(Filter.withName("a"), Filter.withName("b")),
+                List.of("a", "b")
+            ),
+            Arguments.of(
+                Filter.all(Filter.withName("a"), Filter.withName("b")),
+                List.of()
+            )
         );
     }
 

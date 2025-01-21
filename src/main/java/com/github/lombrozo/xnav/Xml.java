@@ -139,14 +139,15 @@ final class Xml {
      * @param name Attribute name.
      * @return Attribute.
      */
-    Xml attribute(final String name) {
+    Optional<Xml> attribute(final String name) {
         final Node item = this.node.getAttributes().getNamedItem(name);
+        final Optional<Xml> result;
         if (Objects.nonNull(item)) {
-            return new Xml(item);
+            result = Optional.of(new Xml(item));
+        } else {
+            result = Optional.empty();
         }
-        throw new IllegalStateException(
-            String.format("Attribute '%s' not found in '%s'", name, this)
-        );
+        return result;
     }
 
     /**
@@ -175,6 +176,14 @@ final class Xml {
             .map(nodes::item)
             .filter(Objects::nonNull)
             .map(Xml::new);
+    }
+
+    /**
+     * Get the name of the node.
+     * @return Node name.
+     */
+    String name() {
+        return this.node.getNodeName();
     }
 
     /**

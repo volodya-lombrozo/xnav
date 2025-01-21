@@ -54,15 +54,40 @@ public interface Filter extends Predicate<Xml> {
         return xml -> Stream.of(filters).anyMatch(filter -> filter.test(xml));
     }
 
-//    static Filter withName(final String name) {
-//        return xml -> xml.equals(name);
-//    }
-//
-//    static Filter withAttribute(final String name, final String value) {
-//        return xml -> xml.equals(name, value);
-//    }
-//
-//    static Filter hasAttribute(final String name) {
-//        return xml -> xml.hasAttribute(name);
-//    }
+    /**
+     * Filter XML nodes by name.
+     * @param name Name.
+     * @return Filter.
+     */
+    static Filter withName(final String name) {
+        return xml -> xml.name().equals(name);
+    }
+
+    /**
+     * Filter XML nodes by attribute.
+     * @param name Name of the attribute.
+     * @param value Value of the attribute.
+     * @return Filter.
+     */
+    static Filter withAttribute(final String name, final String value) {
+        return xml -> xml.attribute(name).map(value::equals).orElse(false);
+    }
+
+    /**
+     * Filter XML nodes by attribute presence.
+     * @param name Name of the attribute.
+     * @return Filter.
+     */
+    static Filter hasAttribute(final String name) {
+        return xml -> xml.attribute(name).isPresent();
+    }
+
+    /**
+     * Reverse the filter.
+     * @param filter Filter to reverse.
+     * @return Filter.
+     */
+    static Filter not(final Filter filter) {
+        return xml -> !filter.test(xml);
+    }
 }

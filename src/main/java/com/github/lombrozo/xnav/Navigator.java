@@ -91,7 +91,14 @@ public final class Navigator {
      * @return Navigator for the attribute.
      */
     public Navigator attribute(final String name) {
-        return new Navigator(this.node.attribute(name));
+        return new Navigator(
+            this.node.attribute(name)
+                .orElseThrow(() ->
+                    new IllegalStateException(
+                        String.format("Attribute '%s' not found in '%s'", name, this)
+                    )
+                )
+        );
     }
 
     /**
