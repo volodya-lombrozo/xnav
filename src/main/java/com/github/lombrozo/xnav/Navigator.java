@@ -25,6 +25,7 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
@@ -34,6 +35,7 @@ import org.w3c.dom.Node;
  * @since 0.1
  */
 @ToString
+@EqualsAndHashCode
 public final class Navigator {
 
     /**
@@ -93,8 +95,8 @@ public final class Navigator {
     }
 
     /**
-     * Copy the navigator.
-     * @return Copy of the navigator.
+     * Make a deep copy of the navigator
+     * @return Deep copy of the navigator.
      */
     public Navigator copy() {
         return new Navigator(this.node.copy());

@@ -74,6 +74,32 @@ final class NavigatorTest {
         );
     }
 
+    @Test
+    void copies() {
+        final Navigator navigator = new Navigator("<root><a>1</a><b>2</b><c>3</c></root>");
+        MatcherAssert.assertThat(
+            "We expect the navigator to be copied",
+            navigator.copy(),
+            Matchers.allOf(
+                Matchers.equalTo(navigator),
+                Matchers.not(Matchers.sameInstance(navigator))
+            )
+        );
+    }
+
+    @Test
+    void retrievesNode() {
+        final Navigator navigator = new Navigator("<root><a>1</a><b>2</b><c>3</c></root>");
+        MatcherAssert.assertThat(
+            "We expect the navigator to retrieve the node",
+            navigator.element("root")
+                .element("a")
+                .node()
+                .isEqualNode(new StringNode("<a>1</a>").toNode().getFirstChild()),
+            Matchers.is(true)
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})
     void retrievesTextFromElements(final Navigator navigator, final String expected) {
