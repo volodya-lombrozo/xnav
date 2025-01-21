@@ -23,6 +23,7 @@
  */
 package com.github.lombrozo.xnav;
 
+import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -58,6 +59,46 @@ final class XmlTest {
             IllegalArgumentException.class,
             () -> new Xml("<doc..."),
             "Corrupted document is not created, exception is expected"
+        );
+    }
+
+    @Test
+    void retrievesChildren() {
+        MatcherAssert.assertThat(
+            "Children are not retrieved",
+            new Xml("<doc><node>first</node><node>second</node></doc>")
+                .child("doc")
+                .children()
+                .collect(Collectors.toList()),
+            Matchers.hasItems(
+                new Xml("<node>first</node>").child("node"),
+                new Xml("<node>second</node>").child("node")
+            )
+        );
+    }
+
+    @Test
+    void copiesNode() {
+        final Xml xml = new Xml("<doc><node>text</node></doc>");
+        MatcherAssert.assertThat(
+            "Node is not copied",
+            xml.copy().toString(),
+            Matchers.equalTo(xml.toString())
+        );
+    }
+
+    @Test
+    void retrievesNode() {
+        MatcherAssert.assertThat(
+            "We expect the node to be retrieved",
+            new Xml("<doc><node attr='value'>text</node></doc>")
+                .child("doc")
+                .child("node")
+                .node()
+                .isEqualNode(
+                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
+                ),
+            Matchers.is(true)
         );
     }
 }

@@ -24,6 +24,8 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
+import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
@@ -33,12 +35,13 @@ import org.w3c.dom.Node;
  * @since 0.1
  */
 @ToString
+@EqualsAndHashCode
 public final class Navigator {
 
     /**
      * Actual XML document node.
      */
-    private final Xml node;
+    private final Xml xml;
 
     /**
      * Ctor.
@@ -61,16 +64,25 @@ public final class Navigator {
      * @param xml XML document node.
      */
     public Navigator(final Xml xml) {
-        this.node = xml;
+        this.xml = xml;
     }
 
     /**
      * Get a child node by its name.
-     * @param element Element name.
+     * @param name Element name.
      * @return Navigator for the child.
      */
-    public Navigator child(final String element) {
-        return new Navigator(this.node.child(element));
+    public Navigator element(final String name) {
+        return new Navigator(this.xml.child(name));
+    }
+
+    /**
+     * Get all child nodes by their name.
+     * @param filters Filters to apply.
+     * @return Stream of navigators for the children.
+     */
+    public Stream<Navigator> elements(final Filter... filters) {
+        return this.xml.children().filter(Filter.all(filters)).map(Navigator::new);
     }
 
     /**
@@ -79,7 +91,21 @@ public final class Navigator {
      * @return Navigator for the attribute.
      */
     public Navigator attribute(final String name) {
-        return new Navigator(this.node.attribute(name));
+        return new Navigator(
+            this.xml.attribute(name).orElseThrow(
+                () -> new IllegalStateException(
+                    String.format("Attribute '%s' not found in '%s'", name, this)
+                )
+            )
+        );
+    }
+
+    /**
+     * Make a deep copy of the navigator.
+     * @return Deep copy of the navigator.
+     */
+    public Navigator copy() {
+        return new Navigator(this.xml.copy());
     }
 
     /**
@@ -87,6 +113,14 @@ public final class Navigator {
      * @return Text of the node.
      */
     public Optional<String> text() {
-        return this.node.text();
+        return this.xml.text();
+    }
+
+    /**
+     * Get current node.
+     * @return Current node.
+     */
+    public Node node() {
+        return this.xml.node();
     }
 }
