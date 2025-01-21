@@ -23,6 +23,8 @@
  */
 package com.github.lombrozo.xnav;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -58,6 +60,21 @@ final class XmlTest {
             IllegalArgumentException.class,
             () -> new Xml("<doc..."),
             "Corrupted document is not created, exception is expected"
+        );
+    }
+
+    @Test
+    void retrievesChildren() {
+        MatcherAssert.assertThat(
+            "Children are not retrieved",
+            new Xml("<doc><node>first</node><node>second</node></doc>")
+                .child("doc")
+                .children()
+                .collect(Collectors.toList()),
+            Matchers.hasItems(
+                new Xml("<node>first</node>").child("node"),
+                new Xml("<node>second</node>").child("node")
+            )
         );
     }
 }

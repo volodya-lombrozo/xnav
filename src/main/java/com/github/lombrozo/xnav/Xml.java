@@ -97,6 +97,23 @@ final class Xml {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Xml other = (Xml) obj;
+        return this.node.isEqualNode(other.node);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.node);
+    }
+
     /**
      * Get a child node by its name.
      * @param element Element name.
@@ -146,15 +163,33 @@ final class Xml {
         return result;
     }
 
-    public Stream<Xml> children() {
-        return Stream.empty();
+    /**
+     * Get children of the current node.
+     * @return Children.
+     */
+    Stream<Xml> children() {
+        final NodeList nodes = this.node.getChildNodes();
+        final int length = nodes.getLength();
+        return Stream.iterate(0, idx -> idx + 1)
+            .limit(length)
+            .map(nodes::item)
+            .filter(Objects::nonNull)
+            .map(Xml::new);
     }
 
-    public Xml copy() {
-        return null;
+    /**
+     * Copy the XML document.
+     * @return Copy of the document.
+     */
+    Xml copy() {
+        return new Xml(this.node.cloneNode(true));
     }
 
-    public Node node() {
-        return null;
+    /**
+     * Get the actual node.
+     * @return Node.
+     */
+    Node node() {
+        return this.node;
     }
 }
