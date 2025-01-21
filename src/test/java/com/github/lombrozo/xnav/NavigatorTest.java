@@ -23,6 +23,8 @@
  */
 package com.github.lombrozo.xnav;
 
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -41,7 +43,7 @@ final class NavigatorTest {
     void convertsToString() {
         MatcherAssert.assertThat(
             "We expect the navigator to be converted to string",
-            new Navigator("<root><child>text</child></root>").child("root").toString(),
+            new Navigator("<root><child>text</child></root>").element("root").toString(),
             Matchers.equalTo("Navigator(node=<root><child>text</child></root>)")
         );
     }
@@ -51,9 +53,24 @@ final class NavigatorTest {
         MatcherAssert.assertThat(
             "We expect the navigator to be created from node",
             new Navigator(new StringNode("<a>text</a>").toNode())
-                .child("a")
+                .element("a")
                 .toString(),
             Matchers.equalTo("Navigator(node=<a>text</a>)")
+        );
+    }
+
+    @Test
+    void retrievesSeveralElements() {
+        MatcherAssert.assertThat(
+            "We expect the navigator to retrieve several elements",
+            new Navigator("<root><a>1</a><b>2</b><c>3</c></root>")
+                .element("root")
+                .elements()
+                .map(Navigator::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList()),
+            Matchers.contains("1", "2", "3")
         );
     }
 
@@ -94,10 +111,12 @@ final class NavigatorTest {
         final String metas = "metas";
         return Stream.of(
             Arguments.of(xml, ""),
-            Arguments.of(xml.child(program).child(metas), "version\n1.2.3"),
-            Arguments.of(xml.child(program).child(metas).child("meta"), "version\n1.2.3"),
-            Arguments.of(xml.child(program).child(metas).child("meta").child("head"), "version"),
-            Arguments.of(xml.child(program).child(metas).child("meta").child("tail"), "1.2.3")
+            Arguments.of(xml.element(program).element(metas), "version\n1.2.3"),
+            Arguments.of(xml.element(program).element(metas).element("meta"), "version\n1.2.3"),
+            Arguments.of(
+                xml.element(program).element(metas).element("meta").element("head"), "version"),
+            Arguments.of(
+                xml.element(program).element(metas).element("meta").element("tail"), "1.2.3")
         );
     }
 
@@ -120,10 +139,10 @@ final class NavigatorTest {
             )
         );
         return Stream.of(
-            Arguments.of(xml.child("prog").attribute("progattr"), "1"),
-            Arguments.of(xml.child("prog").child("m").attribute("metarg"), "2"),
-            Arguments.of(xml.child("prog").child("m").child("h").attribute("harg"), "3"),
-            Arguments.of(xml.child("prog").child("m").child("t").attribute("targ"), "4")
+            Arguments.of(xml.element("prog").attribute("progattr"), "1"),
+            Arguments.of(xml.element("prog").element("m").attribute("metarg"), "2"),
+            Arguments.of(xml.element("prog").element("m").element("h").attribute("harg"), "3"),
+            Arguments.of(xml.element("prog").element("m").element("t").attribute("targ"), "4")
         );
     }
 }

@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 import java.io.StringWriter;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -143,5 +144,17 @@ final class Xml {
             result = Optional.of(this.node).map(Node::getTextContent);
         }
         return result;
+    }
+
+    public Stream<Xml> children() {
+        return Stream.empty();
+    }
+
+    public Xml copy() {
+        return null;
+    }
+
+    public Node node() {
+        return null;
     }
 }

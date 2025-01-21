@@ -24,6 +24,7 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
@@ -66,11 +67,20 @@ public final class Navigator {
 
     /**
      * Get a child node by its name.
-     * @param element Element name.
+     * @param name Element name.
      * @return Navigator for the child.
      */
-    public Navigator child(final String element) {
-        return new Navigator(this.node.child(element));
+    public Navigator element(final String name) {
+        return new Navigator(this.node.child(name));
+    }
+
+    /**
+     * Get all child nodes by their name.
+     * @param filters Filters to apply.
+     * @return Stream of navigators for the children.
+     */
+    public Stream<Navigator> elements(final Filter... filters) {
+        return this.node.children().filter(Filter.all(filters)).map(Navigator::new);
     }
 
     /**
@@ -83,10 +93,26 @@ public final class Navigator {
     }
 
     /**
+     * Copy the navigator.
+     * @return Copy of the navigator.
+     */
+    public Navigator copy() {
+        return new Navigator(this.node.copy());
+    }
+
+    /**
      * Get the text of the current node.
      * @return Text of the node.
      */
     public Optional<String> text() {
         return this.node.text();
+    }
+
+    /**
+     * Get current node.
+     * @return Current node.
+     */
+    public Node node() {
+        return this.node.node();
     }
 }
