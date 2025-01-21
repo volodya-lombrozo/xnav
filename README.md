@@ -34,9 +34,9 @@ public class XnavExample {
     public static void main(String[] args) {
         System.out.println(
             new Navigator("<root><item key='value'/></root>")
-                .child("root")
-                .child("item")
-                .attr("key")
+                .element("root")
+                .element("item")
+                .attribute("key")
                 .text()
                 .orElse("default")
         ); // Output: value
