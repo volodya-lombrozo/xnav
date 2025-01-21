@@ -45,7 +45,7 @@ final class NavigatorTest {
         MatcherAssert.assertThat(
             "We expect the navigator to be converted to string",
             new Navigator("<root><child>text</child></root>").element("root").toString(),
-            Matchers.equalTo("Navigator(node=<root><child>text</child></root>)")
+            Matchers.equalTo("Navigator(xml=<root><child>text</child></root>)")
         );
     }
 
@@ -56,7 +56,7 @@ final class NavigatorTest {
             new Navigator(new StringNode("<a>text</a>").toNode())
                 .element("a")
                 .toString(),
-            Matchers.equalTo("Navigator(node=<a>text</a>)")
+            Matchers.equalTo("Navigator(xml=<a>text</a>)")
         );
     }
 
