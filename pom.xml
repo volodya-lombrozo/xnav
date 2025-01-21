@@ -27,7 +27,7 @@ SOFTWARE.
   <groupId>com.github.volodya-lombrozo</groupId>
   <artifactId>xnav</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.2</version>
   <name>xnav</name>
   <description>
     Xnav is a library designed for seamless navigation and querying of XML documents
