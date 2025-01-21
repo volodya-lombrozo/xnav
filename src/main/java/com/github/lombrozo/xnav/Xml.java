@@ -158,6 +158,8 @@ final class Xml {
         final Optional<String> result;
         if (this.node.getNodeType() == Node.DOCUMENT_NODE) {
             result = Optional.of("");
+        } else if (this.node.getNodeType() == Node.ATTRIBUTE_NODE) {
+            result = Optional.of(this.node.getNodeValue());
         } else {
             result = Optional.of(this.node).map(Node::getTextContent);
         }

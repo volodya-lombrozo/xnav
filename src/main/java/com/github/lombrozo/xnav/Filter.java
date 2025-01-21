@@ -24,6 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -42,7 +43,13 @@ public interface Filter extends Predicate<Xml> {
      * @return Combined filter.
      */
     static Filter all(final Filter... filters) {
-        return xml -> Stream.of(filters).allMatch(filter -> filter.test(xml));
+        final Filter result;
+        if (filters.length == 0) {
+            result = xml -> true;
+        } else {
+            result = xml -> Stream.of(filters).allMatch(filter -> filter.test(xml));
+        }
+        return result;
     }
 
     /**
@@ -51,7 +58,13 @@ public interface Filter extends Predicate<Xml> {
      * @return Combined filter.
      */
     static Filter any(final Filter... filters) {
-        return xml -> Stream.of(filters).anyMatch(filter -> filter.test(xml));
+        final Filter result;
+        if (filters.length == 0) {
+            result = xml -> true;
+        } else {
+            result = xml -> Stream.of(filters).anyMatch(filter -> filter.test(xml));
+        }
+        return result;
     }
 
     /**
@@ -70,7 +83,12 @@ public interface Filter extends Predicate<Xml> {
      * @return Filter.
      */
     static Filter withAttribute(final String name, final String value) {
-        return xml -> xml.attribute(name).map(value::equals).orElse(false);
+        return xml -> xml.attribute(name)
+            .map(Xml::text)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(val -> val.equals(value))
+            .orElse(false);
     }
 
     /**

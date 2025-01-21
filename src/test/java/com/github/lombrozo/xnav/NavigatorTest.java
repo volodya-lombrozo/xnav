@@ -101,14 +101,15 @@ final class NavigatorTest {
         );
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
-    void filtersSuccessfully(final Filter filter, final List<String> expected) {
+    void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
         MatcherAssert.assertThat(
-            "We expect the navigator to filter elements",
+            String.format("We expect the navigator to filter elements in the '%s' check", title),
             new Navigator(
                 "<root><a attr='a'>a</a><b attr='b'>b</b><c attr='c'>c</c><d attr='d'>d</d><e>e</e><f>f</f></root>"
-            ).elements(filter)
+            ).element("root")
+                .elements(filter)
                 .map(Navigator::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -165,32 +166,43 @@ final class NavigatorTest {
 
     /**
      * Provide filters to test.
-     * This method provides a stream of arguments to the test method:
-     * {@link #filtersSuccessfully(Filter, List)}.
+     * This method provides a stream of arguments to the test method.
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private static Stream<Arguments> filters() {
         return Stream.of(
-            Arguments.of(Filter.all(), List.of()),
-            Arguments.of(Filter.withName("a"), List.of("a")),
-            Arguments.of(Filter.withName("b"), List.of("b")),
-            Arguments.of(Filter.withName("c"), List.of("c")),
-            Arguments.of(Filter.withName("d"), List.of("d")),
-            Arguments.of(Filter.withName("e"), List.of("e")),
-            Arguments.of(Filter.withName("f"), List.of("f")),
-            Arguments.of(Filter.withAttribute("attr", "a"), List.of("a")),
-            Arguments.of(Filter.hasAttribute("attr"), List.of("a", "b", "c", "d")),
-            Arguments.of(Filter.not(Filter.hasAttribute("attr")), List.of("e", "f")),
+            Arguments.of("Empty ANY filter", Filter.any(), List.of("a", "b", "c", "d", "e", "f")),
+            Arguments.of("Empty ALL filter", Filter.all(), List.of("a", "b", "c", "d", "e", "f")),
+            Arguments.of("a", Filter.withName("a"), List.of("a")),
+            Arguments.of("b", Filter.withName("b"), List.of("b")),
+            Arguments.of("c", Filter.withName("c"), List.of("c")),
+            Arguments.of("d", Filter.withName("d"), List.of("d")),
+            Arguments.of("e", Filter.withName("e"), List.of("e")),
+            Arguments.of("f", Filter.withName("f"), List.of("f")),
+            Arguments.of("With attribute 'a'", Filter.withAttribute("attr", "a"), List.of("a")),
             Arguments.of(
+                "Has attribute 'attr'",
+                Filter.hasAttribute("attr"),
+                List.of("a", "b", "c", "d")
+            ),
+            Arguments.of(
+                "Has not attribute 'attr'",
+                Filter.not(Filter.hasAttribute("attr")),
+                List.of("e", "f")
+            ),
+            Arguments.of(
+                "With name 'a' and attribute 'attr'",
                 Filter.all(Filter.withName("a"), Filter.withAttribute("attr", "a")),
                 List.of("a")
             ),
             Arguments.of(
+                "With name 'a' or 'b'",
                 Filter.any(Filter.withName("a"), Filter.withName("b")),
                 List.of("a", "b")
             ),
             Arguments.of(
+                "With name 'a' and 'b'",
                 Filter.all(Filter.withName("a"), Filter.withName("b")),
                 List.of()
             )
