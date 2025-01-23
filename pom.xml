@@ -340,6 +340,11 @@ SOFTWARE.
               </scripts>
             </configuration>
             <dependencies>
+            <dependency>
+                <groupId>net.sf.saxon</groupId>
+                <artifactId>Saxon-HE</artifactId>
+                <version>12.5</version>
+            </dependency>
               <dependency>
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy</artifactId>

@@ -23,5 +23,18 @@ import com.github.lombrozo.xnav.Xnav
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmValue;
+import javax.xml.transform.stream.StreamSource;
 
-println new Xnav("<root><child/></root>").element("root").element("child").toString()
+def xml = "<root><child>hello</child></root>"
+Processor processor = new Processor(false);
+XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
+XdmValue result = processor.newXPathCompiler().evaluate("/root/child/text()", xdm);
+println result
+println new Xnav(xml)
+  .element("root")
+  .element("child")
+  .text()
+  .orElse("No child")
