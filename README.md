@@ -30,7 +30,7 @@ example of how to use it:
 
 ```java
 
-public class XnavExample {
+public class XnavUsage {
     public static void main(String[] args) {
         System.out.println(
             new Navigator("<root><item key='value'/></root>")
