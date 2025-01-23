@@ -341,6 +341,11 @@ SOFTWARE.
             </configuration>
             <dependencies>
             <dependency>
+              <groupId>org.dom4j</groupId>
+              <artifactId>dom4j</artifactId>
+              <version>2.1.4</version>
+            </dependency>
+            <dependency>
                 <groupId>net.sf.saxon</groupId>
                 <artifactId>Saxon-HE</artifactId>
                 <version>12.5</version>

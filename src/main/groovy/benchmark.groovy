@@ -28,11 +28,19 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
 import javax.xml.transform.stream.StreamSource;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+
 def xml = "<root><child>hello</child></root>"
 Processor processor = new Processor(false);
 XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
 XdmValue result = processor.newXPathCompiler().evaluate("/root/child/text()", xdm);
-println result
+println result;
+
+// The following two lines don't work
+//Document document = DocumentHelper.parseText(xml);
+//println document.selectSingleNode("/root/child/text()").getText()
+
 println new Xnav(xml)
   .element("root")
   .element("child")
