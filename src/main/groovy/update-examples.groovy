@@ -21,29 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 import java.nio.file.*
 import java.util.stream.Collectors
 
-println "Directory: " + System.getProperty("user.dir");
-
 def root = Paths.get(System.getProperty("user.dir"))
-def example = root.resolve("src/test/java/XnavUsage.java")
 def readme = root.resolve("README.md")
-
-def lines = Files.readAllLines(example).stream().skip(24).collect(Collectors.toList())
-
-def exampleCode = lines.join("\n")
-
-
+def sample = Files.readAllLines(root.resolve("src/test/java/XnavUsage.java"))
+  .stream()
+  .skip(24)
+  .collect(Collectors.toList())
+  .join("\n")
 def block = """```java
-${exampleCode}
+${sample}
 ```"""
-
-def readmeContent = new String(Files.readAllBytes(readme)).replaceAll(
+def updated = new String(Files.readAllBytes(readme)).replaceAll(
   /(?s)(<!-- EXAMPLE START -->).*?(<!-- EXAMPLE END -->)/,
   "\$1\n${block}\n\$2"
 )
-
-Files.write(readme, readmeContent.bytes)
+Files.write(readme, updated.bytes)
 println "README.md has been updated with the latest example!"
