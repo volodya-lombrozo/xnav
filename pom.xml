@@ -168,8 +168,8 @@ SOFTWARE.
                   <goal>check</goal>
                 </goals>
                 <configuration>
-                <exclusions>src/test/java/XnavUsage.java</exclusions>
-</configuration>
+                  <exclusions>src/test/java/XnavUsage.java</exclusions>
+                </configuration>
               </execution>
             </executions>
           </plugin>

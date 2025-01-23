@@ -29,6 +29,7 @@ def readme = root.resolve("README.md")
 def sample = Files.readAllLines(root.resolve("src/test/java/XnavUsage.java"))
   .stream()
   .skip(24)
+  .filter { string -> !string.contains("SuppressWarnings") }
   .collect(Collectors.toList())
   .join("\n")
 def block = """```java
