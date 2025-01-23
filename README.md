@@ -29,11 +29,12 @@ Xnav provides a fluent API for navigating and querying XML. Here's a basic
 example of how to use it:
 <!-- EXAMPLE START -->
 ```java
+import com.github.lombrozo.xnav.Xnav;
 
-public class XnavUsage {
+public final class XnavUsage {
     public static void main(String[] args) {
         System.out.println(
-            new Navigator("<root><item key='value'/></root>")
+            new Xnav("<root><item key='value'/></root>")
                 .element("root")
                 .element("item")
                 .attribute("key")
