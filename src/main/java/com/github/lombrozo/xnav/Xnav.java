@@ -36,7 +36,7 @@ import org.w3c.dom.Node;
  */
 @ToString
 @EqualsAndHashCode
-public final class Navigator {
+public final class Xnav {
 
     /**
      * Actual XML document node.
@@ -47,7 +47,7 @@ public final class Navigator {
      * Ctor.
      * @param join XML document as a string.
      */
-    public Navigator(final String join) {
+    public Xnav(final String join) {
         this(new Xml(join));
     }
 
@@ -55,7 +55,7 @@ public final class Navigator {
      * Ctor.
      * @param node XML document node.
      */
-    public Navigator(final Node node) {
+    public Xnav(final Node node) {
         this(new Xml(node));
     }
 
@@ -63,7 +63,7 @@ public final class Navigator {
      * Ctor.
      * @param xml XML document node.
      */
-    public Navigator(final Xml xml) {
+    public Xnav(final Xml xml) {
         this.xml = xml;
     }
 
@@ -72,8 +72,8 @@ public final class Navigator {
      * @param name Element name.
      * @return Navigator for the child.
      */
-    public Navigator element(final String name) {
-        return new Navigator(this.xml.child(name));
+    public Xnav element(final String name) {
+        return new Xnav(this.xml.child(name));
     }
 
     /**
@@ -81,8 +81,8 @@ public final class Navigator {
      * @param filters Filters to apply.
      * @return Stream of navigators for the children.
      */
-    public Stream<Navigator> elements(final Filter... filters) {
-        return this.xml.children().filter(Filter.all(filters)).map(Navigator::new);
+    public Stream<Xnav> elements(final Filter... filters) {
+        return this.xml.children().filter(Filter.all(filters)).map(Xnav::new);
     }
 
     /**
@@ -90,8 +90,8 @@ public final class Navigator {
      * @param name Attribute name.
      * @return Navigator for the attribute.
      */
-    public Navigator attribute(final String name) {
-        return new Navigator(
+    public Xnav attribute(final String name) {
+        return new Xnav(
             this.xml.attribute(name).orElseThrow(
                 () -> new IllegalStateException(
                     String.format("Attribute '%s' not found in '%s'", name, this)
@@ -104,8 +104,8 @@ public final class Navigator {
      * Make a deep copy of the navigator.
      * @return Deep copy of the navigator.
      */
-    public Navigator copy() {
-        return new Navigator(this.xml.copy());
+    public Xnav copy() {
+        return new Xnav(this.xml.copy());
     }
 
     /**

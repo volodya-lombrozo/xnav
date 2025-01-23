@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link Navigator}.
+ * Test case for {@link Xnav}.
  * @since 0.1
  */
 final class XmlTest {

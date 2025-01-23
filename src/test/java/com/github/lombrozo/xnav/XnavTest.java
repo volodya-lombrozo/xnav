@@ -35,16 +35,16 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Test case for {@link Navigator}.
+ * Test case for {@link Xnav}.
  * @since 0.1
  */
-final class NavigatorTest {
+final class XnavTest {
 
     @Test
     void convertsToString() {
         MatcherAssert.assertThat(
             "We expect the navigator to be converted to string",
-            new Navigator("<root><child>text</child></root>").element("root").toString(),
+            new Xnav("<root><child>text</child></root>").element("root").toString(),
             Matchers.equalTo("Navigator(xml=<root><child>text</child></root>)")
         );
     }
@@ -53,7 +53,7 @@ final class NavigatorTest {
     void createsNavigatorFromNode() {
         MatcherAssert.assertThat(
             "We expect the navigator to be created from node",
-            new Navigator(new StringNode("<a>text</a>").toNode())
+            new Xnav(new StringNode("<a>text</a>").toNode())
                 .element("a")
                 .toString(),
             Matchers.equalTo("Navigator(xml=<a>text</a>)")
@@ -64,10 +64,10 @@ final class NavigatorTest {
     void retrievesSeveralElements() {
         MatcherAssert.assertThat(
             "We expect the navigator to retrieve several elements",
-            new Navigator("<root><a>1</a><b>2</b><c>3</c></root>")
+            new Xnav("<root><a>1</a><b>2</b><c>3</c></root>")
                 .element("root")
                 .elements()
-                .map(Navigator::text)
+                .map(Xnav::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList()),
@@ -77,7 +77,7 @@ final class NavigatorTest {
 
     @Test
     void copies() {
-        final Navigator navigator = new Navigator("<root><a>1</a><b>2</b><c>3</c></root>");
+        final Xnav navigator = new Xnav("<root><a>1</a><b>2</b><c>3</c></root>");
         MatcherAssert.assertThat(
             "We expect the navigator to be copied",
             navigator.copy(),
@@ -90,7 +90,7 @@ final class NavigatorTest {
 
     @Test
     void retrievesNode() {
-        final Navigator navigator = new Navigator("<root><a>1</a><b>2</b><c>3</c></root>");
+        final Xnav navigator = new Xnav("<root><a>1</a><b>2</b><c>3</c></root>");
         MatcherAssert.assertThat(
             "We expect the navigator to retrieve the node",
             navigator.element("root")
@@ -106,11 +106,11 @@ final class NavigatorTest {
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
         MatcherAssert.assertThat(
             String.format("We expect the navigator to filter elements in the '%s' check", title),
-            new Navigator(
+            new Xnav(
                 "<root><a attr='a'>a</a><b attr='b'>b</b><c attr='c'>c</c><d attr='d'>d</d><e>e</e><f>f</f></root>"
             ).element("root")
                 .elements(filter)
-                .map(Navigator::text)
+                .map(Xnav::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList()),
@@ -120,7 +120,7 @@ final class NavigatorTest {
 
     @ParameterizedTest
     @MethodSource({"elementPaths", "attributePaths"})
-    void retrievesTextFromElements(final Navigator navigator, final String expected) {
+    void retrievesTextFromElements(final Xnav navigator, final String expected) {
         MatcherAssert.assertThat(
             "We expect the text to be retrieved correctly",
             navigator.text().orElseThrow(
@@ -135,12 +135,12 @@ final class NavigatorTest {
     /**
      * Provide navigators to test.
      * This method provides a stream of arguments to the test method:
-     * {@link #retrievesTextFromElements(Navigator, String)}.
+     * {@link #retrievesTextFromElements(Xnav, String)}.
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private static Stream<Arguments> elementPaths() {
-        final Navigator xml = new Navigator(
+        final Xnav xml = new Xnav(
             String.join(
                 "\n",
                 "<program><metas>",
@@ -222,12 +222,12 @@ final class NavigatorTest {
     /**
      * Provide navigators to test.
      * This method provides a stream of arguments to the test method:
-     * {@link #retrievesTextFromElements(Navigator, String)}.
+     * {@link #retrievesTextFromElements(Xnav, String)}.
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     private static Stream<Arguments> attributePaths() {
-        final Navigator xml = new Navigator(
+        final Xnav xml = new Xnav(
             String.join(
                 "\n",
                 "<prog progattr='1'>",
