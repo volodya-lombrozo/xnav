@@ -1,3 +1,5 @@
+import com.github.lombrozo.xnav.Xnav
+
 /*
  * MIT License
  *
@@ -22,4 +24,4 @@
  * SOFTWARE.
  */
 
-println "Hello from the benchmark script!"
+println new Xnav("<root><child/></root>").element("root").element("child").toString()
