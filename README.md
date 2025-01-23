@@ -28,6 +28,7 @@ the following snippet in your `pom.xml`:
 Xnav provides a fluent API for navigating and querying XML. Here's a basic
 example of how to use it:
 <!-- EXAMPLE START -->
+
 ```java
 import com.github.lombrozo.xnav.Xnav;
 
@@ -44,7 +45,30 @@ public final class XnavUsage {
     }
 }
 ```
+
 <!-- EXAMPLE END -->
+
+## Building from Source
+
+To build the library from source, clone the repository and run the following
+command in the root directory:
+
+```bash
+mvn clean install
+```
+
+To run the tests, use the following command:
+
+```bash
+mvn test
+```
+
+Also, you might want to update examples in the [README](README.md) file. To do
+this, run:
+
+```bash
+mvn process-resources -Pdocs
+```
 
 ## Contribution
 
