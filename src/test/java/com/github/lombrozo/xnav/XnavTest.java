@@ -45,7 +45,7 @@ final class XnavTest {
         MatcherAssert.assertThat(
             "We expect the navigator to be converted to string",
             new Xnav("<root><child>text</child></root>").element("root").toString(),
-            Matchers.equalTo("Navigator(xml=<root><child>text</child></root>)")
+            Matchers.equalTo("Xnav(xml=<root><child>text</child></root>)")
         );
     }
 
@@ -56,7 +56,7 @@ final class XnavTest {
             new Xnav(new StringNode("<a>text</a>").toNode())
                 .element("a")
                 .toString(),
-            Matchers.equalTo("Navigator(xml=<a>text</a>)")
+            Matchers.equalTo("Xnav(xml=<a>text</a>)")
         );
     }
 

@@ -24,6 +24,7 @@
 
 import com.github.lombrozo.xnav.Xnav;
 
+@SuppressWarnings({"JTCOP.RuleAllTestsHaveProductionClass", "JTCOP.RuleCorrectTestName"})
 public final class XnavUsage {
     public static void main(String[] args) {
         System.out.println(

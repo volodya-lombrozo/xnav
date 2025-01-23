@@ -141,8 +141,10 @@ SOFTWARE.
               <excludes>
                 <exclude>pmd:/src/test/resources/.*</exclude>
                 <exclude>pmd:/src/it/.*</exclude>
+                <exclude>pmd:/src/test/java/XnavUsage.java</exclude>
                 <exclude>checkstyle:/src/test/resources/.*</exclude>
                 <exclude>checkstyle:/src/it/.*</exclude>
+                <exclude>checkstyle:/src/test/java/XnavUsage.java</exclude>
                 <exclude>duplicatefinder:.*</exclude>
                 <exclude>dependencies:.*</exclude>
               </excludes>
@@ -165,6 +167,9 @@ SOFTWARE.
                 <goals>
                   <goal>check</goal>
                 </goals>
+                <configuration>
+                <exclusions>src/test/java/XnavUsage.java</exclusions>
+</configuration>
               </execution>
             </executions>
           </plugin>
