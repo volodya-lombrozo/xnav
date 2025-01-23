@@ -27,7 +27,7 @@ the following snippet in your `pom.xml`:
 
 Xnav provides a fluent API for navigating and querying XML. Here's a basic
 example of how to use it:
-
+<!-- EXAMPLE START -->
 ```java
 
 public class XnavUsage {
@@ -43,6 +43,7 @@ public class XnavUsage {
     }
 }
 ```
+<!-- EXAMPLE END -->
 
 ## Contribution
 

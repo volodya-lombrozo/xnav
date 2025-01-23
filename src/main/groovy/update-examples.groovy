@@ -23,35 +23,27 @@
  */
 
 import java.nio.file.*
+import java.util.stream.Collectors
 
-def testFilePath = "src/test/java/ExampleTest.java"
-def readmeFilePath = "README.md"
+println "Directory: " + System.getProperty("user.dir");
 
-// Read the test file
-def testFile = Paths.get(testFilePath)
-def lines = Files.readAllLines(testFile)
+def root = Paths.get(System.getProperty("user.dir"))
+def example = root.resolve("src/test/java/XnavUsage.java")
+def readme = root.resolve("README.md")
 
-// Extract the example from the test class
-def exampleStart = lines.indexOf(lines.find { it.contains("void exampleUsage()") }) + 1
-def exampleEnd = lines.indexOf(lines.find { it.trim() == "}" }, exampleStart)
-def exampleCode = lines[exampleStart..exampleEnd]
-  .collect { it.replaceFirst(/\s{8}/, "") } // Remove indentation
-  .join("\n")
+def lines = Files.readAllLines(example).stream().skip(24).collect(Collectors.toList())
 
-// Format the extracted example as a code block
-def exampleBlock = """```java
+def exampleCode = lines.join("\n")
+
+
+def block = """```java
 ${exampleCode}
 ```"""
 
-// Update the README file
-def readmeFile = Paths.get(readmeFilePath)
-def readmeContent = new String(Files.readAllBytes(readmeFile))
-def updatedReadme = readmeContent.replaceAll(
+def readmeContent = new String(Files.readAllBytes(readme)).replaceAll(
   /(?s)(<!-- EXAMPLE START -->).*?(<!-- EXAMPLE END -->)/,
-  "\$1\n${exampleBlock}\n\$2"
+  "\$1\n${block}\n\$2"
 )
 
-// Write the updated content back to the README file
-Files.write(readmeFile, updatedReadme.bytes)
-
+Files.write(readme, readmeContent.bytes)
 println "README.md has been updated with the latest example!"
