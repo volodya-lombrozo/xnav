@@ -37,29 +37,57 @@ import org.dom4j.DocumentHelper;
 
 def xml = "<root><child>hello</child></root>"
 
-// saxon
-Processor processor = new Processor(false);
-XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
-XdmValue result = processor.newXPathCompiler().evaluate("/root/child/text()", xdm);
-println result;
+// Timing function
+def measureExecutionTime(closure) {
+    def start = System.nanoTime()
+    def result = closure.call()
+    def end = System.nanoTime()
+    return [time: end - start, result: result]
+}
 
-// dom4j + Jaxen
-Document document = DocumentHelper.parseText(xml);
-println document.selectSingleNode("/root/child/text()").getText()
+// Saxon
+def measureSaxon(xml) {
+    Processor processor = new Processor(false);
+    XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
+    def compiler = processor.newXPathCompiler()
+    return measureExecutionTime(
+      { compiler.evaluate("/root/child/text()", xdm) }
+    )
+}
 
-// xnav
-println new Xnav(xml)
-  .element("root")
-  .element("child")
-  .text()
-  .orElse("No child")
+// Dom4j + Jaxen
+def measureJaxen(xml) {
+    Document document = DocumentHelper.parseText(xml);
+    return measureExecutionTime(
+      { document.selectSingleNode("/root/child/text()").getText() }
+    )
+}
 
 // JAXP
-def factory = DocumentBuilderFactory.newInstance()
-def builder = factory.newDocumentBuilder()
-def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
-def xPathFactory = XPathFactory.newInstance()
-def xPath = xPathFactory.newXPath()
-def expression = "/root/child/text()"
-def nodeList = xPath.evaluate(expression, doc, XPathConstants.NODESET) as NodeList
-println nodeList.item(0).textContent;
+def measureJaxp(xml) {
+    def factory = DocumentBuilderFactory.newInstance()
+    def builder = factory.newDocumentBuilder()
+    def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
+    def xPathFactory = XPathFactory.newInstance()
+    def xPath = xPathFactory.newXPath()
+    return measureExecutionTime(
+      {
+          def nodeList = (xPath.evaluate("/root/child/text()", doc, XPathConstants.NODESET) as NodeList)
+          nodeList.item(0).textContent
+      }
+    )
+}
+
+def measureXnav(xml) {
+    def xnav = new Xnav(xml)
+    return measureExecutionTime(
+      {
+          xnav.element("root").element("child").text().orElse("No child")
+      }
+    )
+}
+
+println measureSaxon(xml)
+println measureJaxen(xml)
+println measureJaxp(xml)
+println measureXnav(xml)
