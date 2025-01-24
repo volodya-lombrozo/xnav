@@ -41,8 +41,7 @@ import org.dom4j.DocumentHelper
 import java.nio.charset.StandardCharsets;
 
 
-def xml = "<root><child>hello</child></root>"
-prepareXml();
+def xml = prepareXml();
 println measureSaxon(xml)
 println measureJaxen(xml)
 println measureJaxp(xml)
@@ -61,12 +60,11 @@ def prepareXml() {
     }
 }
 
-// Timing function
-def measureExecutionTime(closure) {
+def measureExecutionTime(label, operation, closure) {
     def start = System.nanoTime()
     def result = closure.call()
     def end = System.nanoTime()
-    return [time: end - start, result: result]
+    return [label: label, operation: operation, time: end - start, result: result]
 }
 
 // Saxon
@@ -75,15 +73,9 @@ def measureSaxon(xml) {
     XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
     def compiler = processor.newXPathCompiler()
     return measureExecutionTime(
-      { compiler.evaluate("/root/child/text()", xdm) }
-    )
-}
-
-// Dom4j + Jaxen
-def measureJaxen(xml) {
-    Document document = DocumentHelper.parseText(xml);
-    return measureExecutionTime(
-      { document.selectSingleNode("/root/child/text()").getText() }
+      "Saxon",
+      "/program/@name",
+      { compiler.evaluate("/program/@name", xdm).getTypedValue() }
     )
 }
 
@@ -95,19 +87,33 @@ def measureJaxp(xml) {
     def xPathFactory = XPathFactory.newInstance()
     def xPath = xPathFactory.newXPath()
     return measureExecutionTime(
+      "JAXP",
+      "/program/@name",
       {
-          def nodeList = (xPath.evaluate("/root/child/text()", doc, XPathConstants.NODESET) as NodeList)
+          def nodeList = (xPath.evaluate("/program/@name", doc, XPathConstants.NODESET) as NodeList)
           nodeList.item(0).textContent
       }
+    )
+}
+
+// Dom4j + Jaxen
+def measureJaxen(xml) {
+    Document document = DocumentHelper.parseText(xml);
+    return measureExecutionTime(
+      "Jaxen",
+      "/program/@name",
+      { document.selectSingleNode("/program/@name").getText() }
     )
 }
 
 def measureXnav(xml) {
     def xnav = new Xnav(xml)
     return measureExecutionTime(
+      "Xnav",
+      ".element('program').attribute('name')",
       {
-          xnav.element("root")
-            .element("child")
+          xnav.element("program")
+            .attribute("name")
             .text()
             .orElse("No child")
       }
