@@ -39,13 +39,17 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper
 
 import java.nio.charset.StandardCharsets;
-
+import java.nio.file.Files
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 def xml = prepareXml();
-println measureSaxon(xml)
-println measureJaxen(xml)
-println measureJaxp(xml)
-println measureXnav(xml)
+def results = []
+results << measureSaxon(xml)
+results << measureJaxen(xml)
+results << measureJaxp(xml)
+results << measureXnav(xml)
+saveResults(results)
 
 def prepareXml() {
     def clazz = Collections.class.name.replace('.', '/') + '.class'
@@ -60,7 +64,7 @@ def prepareXml() {
     }
 }
 
-def measureExecutionTime(label, operation, closure) {
+static def measureExecutionTime(label, operation, closure) {
     def start = System.nanoTime()
     def result = closure.call()
     def end = System.nanoTime()
@@ -68,7 +72,7 @@ def measureExecutionTime(label, operation, closure) {
 }
 
 // Saxon
-def measureSaxon(xml) {
+static def measureSaxon(xml) {
     Processor processor = new Processor(false);
     XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
     def compiler = processor.newXPathCompiler()
@@ -80,7 +84,7 @@ def measureSaxon(xml) {
 }
 
 // JAXP
-def measureJaxp(xml) {
+static def measureJaxp(xml) {
     def factory = DocumentBuilderFactory.newInstance()
     def builder = factory.newDocumentBuilder()
     def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
@@ -106,7 +110,7 @@ def measureJaxen(xml) {
     )
 }
 
-def measureXnav(xml) {
+static def measureXnav(xml) {
     def xnav = new Xnav(xml)
     return measureExecutionTime(
       "Xnav",
@@ -118,4 +122,19 @@ def measureXnav(xml) {
             .orElse("No child")
       }
     )
+}
+
+static saveResults(results) {
+    def content = """
+# Benchmark Results
+
+| Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
+|---------|------------------|---------------------|---------------------|--------|
+"""
+    results.each {
+        content += "| ${it.label} | ${it.operation} | ${it.time} | ${it.time / 1_000_000} | ${it.result} |\n"
+    }
+    def path = Paths.get("benchmark.md")
+    Files.write(path, content.getBytes(StandardCharsets.UTF_8))
+    println "Benchmark results written to $path"
 }
