@@ -28,6 +28,7 @@ the following snippet in your `pom.xml`:
 Xnav provides a fluent API for navigating and querying XML. Here's a basic
 example of how to use it:
 <!-- EXAMPLE START -->
+
 ```java
 import com.github.lombrozo.xnav.Xnav;
 
@@ -44,7 +45,27 @@ public final class XnavUsage {
     }
 }
 ```
+
 <!-- EXAMPLE END -->
+
+## Benchmarks
+
+The library not only provides an intuitive API but also addresses performance
+issues that arise when using XPath on large XML files. Below is one example of
+how Xnav can outperform other libraries:
+
+<!-- BENCHMARK START -->
+
+| Library | XPath Expression | Execution Time (ms) |
+|---------|------------------|---------------------|
+| Saxon | `/program/@name` | 99.89 |
+| Jaxen | `/program/@name` | 46.71 |
+| JAXP | `/program/@name` | 58.33 |
+| Xnav | `.element('program').attribute('name')` | 3.05 |
+
+<!-- BENCHMARK END -->
+
+You can find more benchmarks [here](benchmark.md).
 
 ## Building from Source
 
@@ -66,6 +87,12 @@ this, run:
 
 ```bash
 mvn process-resources -Pdocs
+```
+
+To run benchmarks, use the following command:
+
+```bash
+mvn clean verify -Pbenchmark
 ```
 
 ## Contribution
