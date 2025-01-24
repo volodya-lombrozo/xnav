@@ -135,7 +135,7 @@ static saveFullResults(results) {
 |---------|------------------|---------------------|---------------------|--------|
 """
     results.each {
-        content += "| ${it.label} | ${it.operation} | ${it.time} | ${it.time / 1_000_000} | ${it.result} |\n"
+        content += "| ${it.label} | `${it.operation}` | ${it.time} | ${it.time / 1_000_000} | ${it.result} |\n"
     }
     def path = Paths.get("benchmark.md")
     Files.write(path, content.getBytes(StandardCharsets.UTF_8))
@@ -149,7 +149,7 @@ static updateReadme(results) {
 |---------|------------------|---------------------|
 """
     results.each {
-        block += "| ${it.label} | ${it.operation} | ${String.format("%.2f", it.time / 1_000_000)} |\n"
+        block += "| ${it.label} | `${it.operation}` | ${String.format("%.2f", it.time / 1_000_000)} |\n"
     }
     String updated = new String(Files.readAllBytes(readme))
       .replaceAll(/(?s)(<!-- BENCHMARK START -->).*?(<!-- BENCHMARK END -->)/, "\$1\n${block}\n\$2")

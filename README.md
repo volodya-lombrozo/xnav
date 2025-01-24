@@ -55,6 +55,14 @@ issues that arise when using XPath on large XML files. Below is one example of
 how Xnav can outperform other libraries:
 
 <!-- BENCHMARK START -->
+
+| Library | XPath Expression | Execution Time (ms) |
+|---------|------------------|---------------------|
+| Saxon | `/program/@name` | 99.89 |
+| Jaxen | `/program/@name` | 46.71 |
+| JAXP | `/program/@name` | 58.33 |
+| Xnav | `.element('program').attribute('name')` | 3.05 |
+
 <!-- BENCHMARK END -->
 
 You can find more benchmarks [here](benchmark.md).
