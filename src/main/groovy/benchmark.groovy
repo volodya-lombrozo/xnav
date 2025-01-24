@@ -32,10 +32,34 @@ import javax.xml.xpath.*;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 
+import org.eolang.jeo.representation.BytecodeRepresentation;
+import org.eolang.jeo.representation.bytecode.Bytecode;
+
 import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
+import org.dom4j.DocumentHelper
+
+import java.nio.charset.StandardCharsets;
+
 
 def xml = "<root><child>hello</child></root>"
+prepareXml();
+println measureSaxon(xml)
+println measureJaxen(xml)
+println measureJaxp(xml)
+println measureXnav(xml)
+
+def prepareXml() {
+    def clazz = Collections.class.name.replace('.', '/') + '.class'
+    def input = Thread.currentThread().getContextClassLoader().getResourceAsStream(clazz)
+    if (input) {
+        def res = new BytecodeRepresentation(new Bytecode(input.bytes)).toEO().toString()
+        def kb = res.getBytes(StandardCharsets.UTF_8).length / 1024.0;
+        println String.format("Size of XML: %.2f KB", kb)
+        return res
+    } else {
+        throw new IllegalStateException("Could not find class file for ${Collections.class.name}")
+    }
+}
 
 // Timing function
 def measureExecutionTime(closure) {
@@ -82,12 +106,10 @@ def measureXnav(xml) {
     def xnav = new Xnav(xml)
     return measureExecutionTime(
       {
-          xnav.element("root").element("child").text().orElse("No child")
+          xnav.element("root")
+            .element("child")
+            .text()
+            .orElse("No child")
       }
     )
 }
-
-println measureSaxon(xml)
-println measureJaxen(xml)
-println measureJaxp(xml)
-println measureXnav(xml)

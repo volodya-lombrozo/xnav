@@ -350,6 +350,11 @@ SOFTWARE.
                     <artifactId>jaxen</artifactId>
                     <version>1.2.0</version>
                 </dependency>
+                <dependency>
+ <groupId>org.eolang</groupId>
+      <artifactId>jeo-maven-plugin</artifactId>
+      <version>0.7.2</version>
+</dependency>
             <dependency>
                 <groupId>net.sf.saxon</groupId>
                 <artifactId>Saxon-HE</artifactId>
