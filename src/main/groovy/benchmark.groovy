@@ -49,7 +49,8 @@ results << measureSaxon(xml)
 results << measureJaxen(xml)
 results << measureJaxp(xml)
 results << measureXnav(xml)
-saveResults(results)
+saveFullResults(results)
+updateReadme(results)
 
 def prepareXml() {
     def clazz = Collections.class.name.replace('.', '/') + '.class'
@@ -124,9 +125,11 @@ static def measureXnav(xml) {
     )
 }
 
-static saveResults(results) {
+static saveFullResults(results) {
     def content = """
 # Benchmark Results
+
+
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
@@ -137,4 +140,18 @@ static saveResults(results) {
     def path = Paths.get("benchmark.md")
     Files.write(path, content.getBytes(StandardCharsets.UTF_8))
     println "Benchmark results written to $path"
+}
+
+static updateReadme(results) {
+    Path readme = Paths.get(System.getProperty("user.dir")).resolve("README.md")
+    def block = """
+| Library | XPath Expression | Execution Time (ms) |
+|---------|------------------|---------------------|
+"""
+    results.each {
+        block += "| ${it.label} | ${it.operation} | ${String.format("%.2f", it.time / 1_000_000)} |\n"
+    }
+    String updated = new String(Files.readAllBytes(readme))
+      .replaceAll(/(?s)(<!-- BENCHMARK START -->).*?(<!-- BENCHMARK END -->)/, "\$1\n${block}\n\$2")
+    Files.write(readme, updated.bytes)
 }

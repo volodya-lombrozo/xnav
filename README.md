@@ -48,6 +48,17 @@ public final class XnavUsage {
 
 <!-- EXAMPLE END -->
 
+## Benchmarks
+
+The library not only provides an intuitive API but also addresses performance
+issues that arise when using XPath on large XML files. Below is one example of
+how Xnav can outperform other libraries:
+
+<!-- BENCHMARK START -->
+<!-- BENCHMARK END -->
+
+You can find more benchmarks [here](benchmark.md).
+
 ## Building from Source
 
 To build the library from source, clone the repository and run the following
