@@ -28,21 +28,38 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
 import javax.xml.transform.stream.StreamSource;
 
+import javax.xml.xpath.*;
+import javax.xml.parsers.*;
+import org.w3c.dom.*;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 
 def xml = "<root><child>hello</child></root>"
+
+// saxon
 Processor processor = new Processor(false);
 XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
 XdmValue result = processor.newXPathCompiler().evaluate("/root/child/text()", xdm);
 println result;
 
-// The following two lines don't work
-//Document document = DocumentHelper.parseText(xml);
-//println document.selectSingleNode("/root/child/text()").getText()
+// dom4j + Jaxen
+Document document = DocumentHelper.parseText(xml);
+println document.selectSingleNode("/root/child/text()").getText()
 
+// xnav
 println new Xnav(xml)
   .element("root")
   .element("child")
   .text()
   .orElse("No child")
+
+// JAXP
+def factory = DocumentBuilderFactory.newInstance()
+def builder = factory.newDocumentBuilder()
+def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
+def xPathFactory = XPathFactory.newInstance()
+def xPath = xPathFactory.newXPath()
+def expression = "/root/child/text()"
+def nodeList = xPath.evaluate(expression, doc, XPathConstants.NODESET) as NodeList
+println nodeList.item(0).textContent;
