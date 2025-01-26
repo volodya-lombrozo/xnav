@@ -363,7 +363,7 @@ SOFTWARE.
               <dependency>
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>4.0.24</version>
+                <version>4.0.25</version>
                 <scope>runtime</scope>
               </dependency>
             </dependencies>
@@ -399,7 +399,7 @@ SOFTWARE.
               <dependency>
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy</artifactId>
-                <version>4.0.24</version>
+                <version>4.0.25</version>
                 <scope>runtime</scope>
               </dependency>
             </dependencies>
