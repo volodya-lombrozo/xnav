@@ -58,10 +58,10 @@ how Xnav can outperform other libraries:
 
 | Library | XPath Expression | Execution Time (ms) |
 |---------|------------------|---------------------|
-| Saxon | `/program/@name` | 99.89 |
-| Jaxen | `/program/@name` | 46.71 |
-| JAXP | `/program/@name` | 58.33 |
-| Xnav | `.element('program').attribute('name')` | 3.05 |
+| Saxon | `/program/@name` | 112.52 |
+| Jaxen | `/program/@name` | 57.73 |
+| JAXP | `/program/@name` | 61.65 |
+| Xnav | `.element('program').attribute('name')` | 2.98 |
 
 <!-- BENCHMARK END -->
 

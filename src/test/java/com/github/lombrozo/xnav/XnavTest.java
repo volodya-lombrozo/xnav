@@ -104,7 +104,7 @@ final class XnavTest {
     }
 
     @Test
-    void verifiesThreadSafety() {
+    void retrievesElementsConcurrently() {
         final Xnav xnav = new Xnav("<root><a>1</a><b>2</b><c>3</c></root>");
         final List<String> res = new Together<>(
             3,
@@ -116,10 +116,30 @@ final class XnavTest {
             }
         ).asList();
         MatcherAssert.assertThat(
+            "We expect the navigator to retrieve elements concurrently",
             res,
-            Matchers.allOf(
-                Matchers.hasSize(3)
-            )
+            Matchers.contains("1 2 3", "1 2 3", "1 2 3")
+        );
+    }
+
+    @Test
+    void retrievesAttributesConcurrently() {
+        final Xnav root = new Xnav(
+            "<root><a attr='1'>1</a><b attr='2'>2</b><c attr='3'>3</c></root>"
+        ).element("root");
+        final List<String> res = new Together<>(
+            3,
+            idx -> {
+                final String first = root.element("a").attribute("attr").text().orElseThrow();
+                final String second = root.element("b").attribute("attr").text().orElseThrow();
+                final String third = root.element("c").attribute("attr").text().orElseThrow();
+                return String.format("%s %s %s", first, second, third);
+            }
+        ).asList();
+        MatcherAssert.assertThat(
+            "We expect the navigator to retrieve attributes concurrently",
+            res,
+            Matchers.contains("1 2 3", "1 2 3", "1 2 3")
         );
     }
 
