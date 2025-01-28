@@ -39,7 +39,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * XML abstraction over XML document.
+ * XML abstraction over an XML document.
+ * This class is thread-safe.
  *
  * @since 0.1
  */
@@ -186,13 +187,15 @@ final class Xml {
      * @return Children.
      */
     Stream<Xml> children() {
-        final NodeList nodes = this.inner.getChildNodes();
-        final int length = nodes.getLength();
-        return Stream.iterate(0, idx -> idx + 1)
-            .limit(length)
-            .map(nodes::item)
-            .filter(Objects::nonNull)
-            .map(Xml::new);
+        synchronized (this.inner) {
+            final NodeList nodes = this.inner.getChildNodes();
+            final int length = nodes.getLength();
+            return Stream.iterate(0, idx -> idx + 1)
+                .limit(length)
+                .map(nodes::item)
+                .filter(Objects::nonNull)
+                .map(Xml::new);
+        }
     }
 
     /**

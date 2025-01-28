@@ -32,6 +32,8 @@ import org.w3c.dom.Node;
 /**
  * XML navigator.
  * Allows navigating through an XML document.
+ * This class is thread-safe.
+ *
  * @since 0.1
  */
 @ToString
@@ -45,6 +47,7 @@ public final class Xnav {
 
     /**
      * Ctor.
+     *
      * @param join XML document as a string.
      */
     public Xnav(final String join) {
@@ -53,6 +56,7 @@ public final class Xnav {
 
     /**
      * Ctor.
+     *
      * @param node XML document node.
      */
     public Xnav(final Node node) {
@@ -61,6 +65,7 @@ public final class Xnav {
 
     /**
      * Ctor.
+     *
      * @param xml XML document node.
      */
     public Xnav(final Xml xml) {
@@ -69,6 +74,7 @@ public final class Xnav {
 
     /**
      * Get a child node by its name.
+     *
      * @param name Element name.
      * @return Navigator for the child.
      */
@@ -78,6 +84,7 @@ public final class Xnav {
 
     /**
      * Get all child nodes by their name.
+     *
      * @param filters Filters to apply.
      * @return Stream of navigators for the children.
      */
@@ -87,6 +94,7 @@ public final class Xnav {
 
     /**
      * Get an attribute by its name.
+     *
      * @param name Attribute name.
      * @return Navigator for the attribute.
      */
@@ -102,6 +110,7 @@ public final class Xnav {
 
     /**
      * Make a deep copy of the navigator.
+     *
      * @return Deep copy of the navigator.
      */
     public Xnav copy() {
@@ -110,6 +119,7 @@ public final class Xnav {
 
     /**
      * Get the text of the current node.
+     *
      * @return Text of the node.
      */
     public Optional<String> text() {
@@ -118,6 +128,7 @@ public final class Xnav {
 
     /**
      * Get current node.
+     *
      * @return Current node.
      */
     public Node node() {
