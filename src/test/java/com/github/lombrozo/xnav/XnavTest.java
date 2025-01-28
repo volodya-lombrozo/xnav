@@ -23,6 +23,7 @@
  */
 package com.github.lombrozo.xnav;
 
+import com.yegor256.Together;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Test case for {@link Xnav}.
+ *
  * @since 0.1
  */
 final class XnavTest {
@@ -101,6 +103,26 @@ final class XnavTest {
         );
     }
 
+    @Test
+    void verifiesThreadSafety() {
+        final Xnav xnav = new Xnav("<root><a>1</a><b>2</b><c>3</c></root>");
+        final List<String> res = new Together<>(
+            3,
+            idx -> {
+                final String first = xnav.element("root").element("a").text().orElseThrow();
+                final String second = xnav.element("root").element("b").text().orElseThrow();
+                final String third = xnav.element("root").element("c").text().orElseThrow();
+                return String.format("%s %s %s", first, second, third);
+            }
+        ).asList();
+        MatcherAssert.assertThat(
+            res,
+            Matchers.allOf(
+                Matchers.hasSize(3)
+            )
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
@@ -136,6 +158,7 @@ final class XnavTest {
      * Provide navigators to test.
      * This method provides a stream of arguments to the test method:
      * {@link #retrievesTextFromElements(Xnav, String)}.
+     *
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
@@ -177,6 +200,7 @@ final class XnavTest {
     /**
      * Provide filters to test.
      * This method provides a stream of arguments to the test method.
+     *
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")
@@ -223,6 +247,7 @@ final class XnavTest {
      * Provide navigators to test.
      * This method provides a stream of arguments to the test method:
      * {@link #retrievesTextFromElements(Xnav, String)}.
+     *
      * @return Stream of arguments.
      */
     @SuppressWarnings("PMD.UnusedPrivateMethod")

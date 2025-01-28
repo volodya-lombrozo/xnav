@@ -40,6 +40,7 @@ import org.w3c.dom.NodeList;
 
 /**
  * XML abstraction over XML document.
+ *
  * @since 0.1
  */
 final class Xml {
@@ -56,6 +57,7 @@ final class Xml {
 
     /**
      * Ctor.
+     *
      * @param xml XML document as a string.
      */
     Xml(final String xml) {
@@ -64,6 +66,7 @@ final class Xml {
 
     /**
      * Ctor.
+     *
      * @param node XML document node.
      */
     Xml(final Node node) {
@@ -118,58 +121,68 @@ final class Xml {
 
     /**
      * Get a child node by its name.
+     *
      * @param element Element name.
      * @return Child.
      */
     Xml child(final String element) {
-        final NodeList nodes = this.inner.getChildNodes();
-        final int length = nodes.getLength();
-        for (int idx = 0; idx < length; ++idx) {
-            final Node child = nodes.item(idx);
-            if (child.getNodeType() == Node.ELEMENT_NODE
-                && child.getNodeName().equals(element)) {
-                return new Xml(child);
+        synchronized (this.inner) {
+            final NodeList nodes = this.inner.getChildNodes();
+            final int length = nodes.getLength();
+            for (int idx = 0; idx < length; ++idx) {
+                final Node child = nodes.item(idx);
+                if (child.getNodeType() == Node.ELEMENT_NODE
+                    && child.getNodeName().equals(element)) {
+                    return new Xml(child);
+                }
             }
+            throw new IllegalStateException(
+                String.format("Element '%s' not found in '%s'", element, this)
+            );
         }
-        throw new IllegalStateException(
-            String.format("Element '%s' not found in '%s'", element, this)
-        );
     }
 
     /**
      * Get an attribute by its name.
+     *
      * @param name Attribute name.
      * @return Attribute.
      */
     Optional<Xml> attribute(final String name) {
-        final Node item = this.inner.getAttributes().getNamedItem(name);
-        final Optional<Xml> result;
-        if (Objects.nonNull(item)) {
-            result = Optional.of(new Xml(item));
-        } else {
-            result = Optional.empty();
+        synchronized (this.inner) {
+            final Node item = this.inner.getAttributes().getNamedItem(name);
+            final Optional<Xml> result;
+            if (Objects.nonNull(item)) {
+                result = Optional.of(new Xml(item));
+            } else {
+                result = Optional.empty();
+            }
+            return result;
         }
-        return result;
     }
 
     /**
      * Get the text of the current node.
+     *
      * @return Text of the node.
      */
     Optional<String> text() {
-        final Optional<String> result;
-        if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
-            result = Optional.of("");
-        } else if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
-            result = Optional.of(this.inner.getNodeValue());
-        } else {
-            result = Optional.of(this.inner).map(Node::getTextContent);
+        synchronized (this.inner) {
+            final Optional<String> result;
+            if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
+                result = Optional.of("");
+            } else if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
+                result = Optional.of(this.inner.getNodeValue());
+            } else {
+                result = Optional.of(this.inner).map(Node::getTextContent);
+            }
+            return result;
         }
-        return result;
     }
 
     /**
      * Get children of the current node.
+     *
      * @return Children.
      */
     Stream<Xml> children() {
@@ -184,6 +197,7 @@ final class Xml {
 
     /**
      * Get the name of the node.
+     *
      * @return Node name.
      */
     String name() {
@@ -192,6 +206,7 @@ final class Xml {
 
     /**
      * Copy the XML document.
+     *
      * @return Copy of the document.
      */
     Xml copy() {
@@ -200,6 +215,7 @@ final class Xml {
 
     /**
      * Get the actual node.
+     *
      * @return Node.
      */
     Node node() {
