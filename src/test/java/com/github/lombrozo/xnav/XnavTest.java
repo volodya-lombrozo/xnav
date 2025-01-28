@@ -40,6 +40,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * @since 0.1
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class XnavTest {
 
     @Test
@@ -105,41 +106,45 @@ final class XnavTest {
 
     @Test
     void retrievesElementsConcurrently() {
-        final Xnav xnav = new Xnav("<root><a>1</a><b>2</b><c>3</c></root>");
+        final Xnav xnav = new Xnav("<base><a>1</a><b>2</b><c>3</c></base>");
         final List<String> res = new Together<>(
             3,
             idx -> {
-                final String first = xnav.element("root").element("a").text().orElseThrow();
-                final String second = xnav.element("root").element("b").text().orElseThrow();
-                final String third = xnav.element("root").element("c").text().orElseThrow();
+                final String root = "base";
+                final String first = xnav.element(root).element("a").text().orElseThrow();
+                final String second = xnav.element(root).element("b").text().orElseThrow();
+                final String third = xnav.element(root).element("c").text().orElseThrow();
                 return String.format("%s %s %s", first, second, third);
             }
         ).asList();
+        final String expected = "1 2 3";
         MatcherAssert.assertThat(
             "We expect the navigator to retrieve elements concurrently",
             res,
-            Matchers.contains("1 2 3", "1 2 3", "1 2 3")
+            Matchers.contains(expected, expected, expected)
         );
     }
 
     @Test
     void retrievesAttributesConcurrently() {
         final Xnav root = new Xnav(
-            "<root><a attr='1'>1</a><b attr='2'>2</b><c attr='3'>3</c></root>"
-        ).element("root");
+            "<main><a at='a'>1</a><b at='b'>2</b><c at='c'>3</c></main>"
+        ).element("main");
         final List<String> res = new Together<>(
             3,
             idx -> {
-                final String first = root.element("a").attribute("attr").text().orElseThrow();
-                final String second = root.element("b").attribute("attr").text().orElseThrow();
-                final String third = root.element("c").attribute("attr").text().orElseThrow();
+                final String attribute = "at";
+                final String first = root.element("a").attribute(attribute).text().orElseThrow();
+                final String second = root.element("b").attribute(attribute).text().orElseThrow();
+                final String third = root.element("c").attribute(attribute).text().orElseThrow();
                 return String.format("%s %s %s", first, second, third);
             }
         ).asList();
+        final String expected = "a b c";
         MatcherAssert.assertThat(
             "We expect the navigator to retrieve attributes concurrently",
             res,
-            Matchers.contains("1 2 3", "1 2 3", "1 2 3")
+            Matchers.contains(expected, expected, expected)
         );
     }
 
