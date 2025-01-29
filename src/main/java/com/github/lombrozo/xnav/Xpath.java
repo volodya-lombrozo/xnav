@@ -27,7 +27,6 @@ package com.github.lombrozo.xnav;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,40 +42,68 @@ import lombok.ToString;
  */
 final class Xpath {
 
+    /**
+     * Where to start.
+     */
     private final Xml root;
+
+    /**
+     * The path.
+     * This is the reduced version of the XPath.
+     */
     private final String path;
 
+    /**
+     * Constructor.
+     *
+     * @param root The root XML document.
+     * @param path The reduced version of the XPath.
+     */
     Xpath(final Xml root, final String path) {
         this.path = path;
         this.root = root;
     }
 
+    /**
+     * Find nodes that match the XPath.
+     *
+     * @return The nodes that match the XPath.
+     */
     Stream<Xml> nodes() {
-        new XPathLexer(this.path)
-            .tokens()
-            .forEach(System.out::println);
-        final XpathNode xpath = new XPathParser(new XPathLexer(this.path).tokens())
-            .relativePath();
-        System.out.println(xpath);
-        return xpath.nodes(this.root);
+        return new XPathParser(new XPathLexer(this.path).tokens()).relativePath().nodes(this.root);
     }
 
-    private class XPathParser {
+    /**
+     * XPath parser.
+     */
+    private final class XPathParser {
+
+        /**
+         * Tokens.
+         */
         private final List<Token> tokens;
-        private int pos = 0;
 
-        public XPathParser(final Stream<Token> tokens) {
+        /**
+         * Current position.
+         */
+        private int pos;
+
+        /**
+         * Constructor.
+         *
+         * @param tokens Tokens.
+         */
+        private XPathParser(final Stream<Token> tokens) {
             this.tokens = tokens.collect(Collectors.toList());
+            this.pos = 0;
         }
 
-        private Token consume() {
-            final Token token = this.tokens.get(this.pos);
-            this.pos++;
-            return token;
-        }
-
-
-        public XpathNode relativePath() {
+        /**
+         * Parse relative path.
+         *
+         * @return Relative path.
+         */
+        XpathNode relativePath() {
             List<XpathNode> steps = new ArrayList<>();
             while (!this.eof() && this.tokens.get(this.pos).type == Type.SLASH) {
                 this.consume(); // consume slash
@@ -85,11 +112,12 @@ final class Xpath {
             return new RelativePath(steps);
         }
 
-        private boolean eof() {
-            return this.pos >= this.tokens.size();
-        }
-
-        public XpathNode step() {
+        /**
+         * Parse next step.
+         *
+         * @return Next step.
+         */
+        XpathNode step() {
             final Token token = this.consume();
             if (token.type == Type.NAME) {
                 return new Step(token.lexeme());
@@ -101,15 +129,48 @@ final class Xpath {
             );
         }
 
+        /**
+         * Consume next token.
+         *
+         * @return Next token.
+         */
+        private Token consume() {
+            final Token token = this.tokens.get(this.pos);
+            this.pos++;
+            return token;
+        }
 
+        /**
+         * Check if the end of the tokens.
+         *
+         * @return True if the end of the tokens.
+         */
+        private boolean eof() {
+            return this.pos >= this.tokens.size();
+        }
     }
 
+    /**
+     * Relative path.
+     * This is a sequence of steps.
+     *
+     * @since 0.1
+     */
     @ToString
     @EqualsAndHashCode
-    private class RelativePath implements XpathNode {
+    private final static class RelativePath implements XpathNode {
+
+        /**
+         * Steps.
+         */
         private final List<XpathNode> steps;
 
-        public RelativePath(final List<XpathNode> steps) {
+        /**
+         * Constructor.
+         *
+         * @param steps Steps.
+         */
+        private RelativePath(final List<XpathNode> steps) {
             this.steps = steps;
         }
 
@@ -125,13 +186,27 @@ final class Xpath {
         }
     }
 
+    /**
+     * Step node.
+     * This is a step in the XPath.
+     *
+     * @since 0.1
+     */
     @ToString
     @EqualsAndHashCode
-    private class Step implements XpathNode {
+    private static final class Step implements XpathNode {
 
+        /**
+         * Step name.
+         */
         private final String name;
 
-        public Step(final String name) {
+        /**
+         * Constructor.
+         *
+         * @param name Step name.
+         */
+        private Step(final String name) {
             this.name = name;
         }
 
@@ -143,40 +218,83 @@ final class Xpath {
 
     /**
      * Attribute node.
+     *
+     * @since 0.1
      */
     @ToString
     @EqualsAndHashCode
-    private class Attribute implements XpathNode {
+    private static final class Attribute implements XpathNode {
+
+        /**
+         * Attribute name.
+         */
         private final String name;
 
-        public Attribute(final String name) {
+        /**
+         * Constructor.
+         *
+         * @param name Attribute name.
+         */
+        private Attribute(final String name) {
             this.name = name;
         }
 
         @Override
         public Stream<Xml> nodes(final Xml xml) {
-            final Optional<Xml> attribute = xml.attribute(this.name);
-            return attribute.stream();
+            return xml.attribute(this.name).stream();
         }
     }
 
 
+    /**
+     * Interface for a node in the XPath.
+     */
     private interface XpathNode {
+
+        /**
+         * Find nodes that match the XPath.
+         *
+         * @param xml The XML document.
+         * @return XML nodes that match the XPath.
+         */
         Stream<Xml> nodes(Xml xml);
     }
 
+    /**
+     * XPath lexer.
+     * It is used to tokenize the XPath.
+     *
+     * @since 0.1
+     */
+    private static final class XPathLexer {
 
-    private class XPathLexer {
+        /**
+         * Lexer pattern.
+         */
+        private static final Pattern PATTERN = Type.pattern();
+
+        /**
+         * String to tokenize.
+         */
         private final String path;
 
-        public XPathLexer(final String path) {
+        /**
+         * Constructor.
+         *
+         * @param path String to tokenize.
+         */
+        private XPathLexer(final String path) {
             this.path = path;
         }
 
-        public Stream<Token> tokens() {
-            final Pattern pattern = Type.pattern();
-            final Matcher matcher = pattern.matcher(this.path);
-            List<Token> tokens = new ArrayList<>(0);
+        /**
+         * Tokenize the string.
+         *
+         * @return Tokens.
+         */
+        Stream<Token> tokens() {
+            final Matcher matcher = XPathLexer.PATTERN.matcher(this.path);
+            final List<Token> tokens = new ArrayList<>(0);
             while (matcher.find()) {
                 Type type = this.type(matcher);
                 final String value = matcher.group();
@@ -185,55 +303,121 @@ final class Xpath {
             return tokens.stream();
         }
 
+        /**
+         * Understand the token type.
+         *
+         * @param matcher Matcher.
+         * @return Token type.
+         */
         private Type type(final Matcher matcher) {
             for (final Type type : Type.values()) {
                 if (matcher.group(type.name()) != null) {
                     return type;
                 }
             }
-            throw new IllegalStateException("Unknown token type");
+            throw new IllegalStateException(
+                String.format("Unknown token type for %s", matcher.group())
+            );
         }
 
     }
 
+    /**
+     * Token.
+     * This is a token for the XPath lexer.
+     *
+     * @since 0.1
+     */
     @ToString
     @EqualsAndHashCode
-    private class Token {
+    private static class Token {
+
+        /**
+         * Token type.
+         */
         private final Type type;
+
+        /**
+         * Lexeme.
+         */
         private final String lexeme;
 
-        public Token(final Type type, final String lexeme) {
+        /**
+         * Constructor.
+         *
+         * @param type Type of the token.
+         * @param lexeme Lexeme of the token.
+         */
+        private Token(final Type type, final String lexeme) {
             this.type = type;
             this.lexeme = lexeme;
         }
 
-        public String lexeme() {
+        /**
+         * Get the lexeme.
+         *
+         * @return The lexeme.
+         */
+        String lexeme() {
             return this.lexeme;
         }
     }
 
+    /**
+     * Token types.
+     * This is the token types for the XPath lexer.
+     *
+     * @since 0.1
+     */
     private enum Type {
 
+        /**
+         * Slash.
+         */
         SLASH("/"),
 
+        /**
+         * At.
+         */
         AT("@"),
 
+        /**
+         * Name.
+         */
         NAME("[a-zA-Z_][a-zA-Z0-9_]+");
-        private final String lexeme;
 
-        Type(final String lexeme) {
-            this.lexeme = lexeme;
+        /**
+         * Token pattern.
+         */
+        private final String pattern;
+
+        /**
+         * Constructor.
+         *
+         * @param pattern Token pattern.
+         */
+        Type(final String pattern) {
+            this.pattern = pattern;
         }
 
-        public String lexeme() {
-            return this.lexeme;
+        /**
+         * Get the lexeme.
+         *
+         * @return The lexeme.
+         */
+        String lexeme() {
+            return this.pattern;
         }
 
-        static Pattern pattern() {
+        /**
+         * Get the pattern.
+         *
+         * @return The pattern.
+         */
+        private static Pattern pattern() {
             return Pattern.compile(Arrays.stream(Type.values())
                 .map((a) -> String.format("(?<%s>%s)", a.name(), a.lexeme()))
                 .collect(Collectors.joining("|")));
         }
     }
-
 }

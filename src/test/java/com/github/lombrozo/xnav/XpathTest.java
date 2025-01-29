@@ -24,7 +24,6 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.Optional;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
