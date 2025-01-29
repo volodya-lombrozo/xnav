@@ -53,9 +53,12 @@ updateReadme(results)
 
 def tables = []
 tables << buildSingleTable("XPath vs Navigation", results)
-tables << buildSingleTable("/program/@name", compareXpaths(xml, "/program/@name"))
+tables << buildSingleTable("/program/objects/o/@base", compareXpaths(xml, "/program/objects/o/@base"))
 def report = buildFullReport(tables)
 saveFullResults(report)
+
+// Uncomment this to save XML
+// Files.write(Paths.get("example.xml"), xml.toString().getBytes(StandardCharsets.UTF_8))
 
 def prepareXml() {
     def clazz = Collections.class.name.replace('.', '/') + '.class'
@@ -119,7 +122,7 @@ def measureJaxen(xml, xpath) {
     Document document = DocumentHelper.parseText(xml);
     return measureExecutionTime(
       "Jaxen",
-      "/program/@name",
+      xpath,
       { document.selectSingleNode(xpath).getText() }
     )
 }

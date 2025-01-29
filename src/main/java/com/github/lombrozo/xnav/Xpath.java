@@ -250,6 +250,7 @@ final class Xpath {
 
     /**
      * Interface for a node in the XPath.
+     *
      * @since 0.1
      */
     private interface XpathNode {
@@ -282,12 +283,18 @@ final class Xpath {
         private final String path;
 
         /**
+         * Trace flag.
+         */
+        private final boolean trace;
+
+        /**
          * Constructor.
          *
          * @param path String to tokenize.
          */
         private XPathLexer(final String path) {
             this.path = path;
+            this.trace = false;
         }
 
         /**
@@ -301,7 +308,10 @@ final class Xpath {
             while (matcher.find()) {
                 final Type type = XPathLexer.type(matcher);
                 final String value = matcher.group();
-                tokens.add(new Token(type, value));
+                tokens.add(new Token(type, value, matcher.start()));
+            }
+            if (this.trace) {
+                tokens.forEach(System.out::println);
             }
             return tokens.stream();
         }
@@ -346,14 +356,20 @@ final class Xpath {
         private final String text;
 
         /**
+         * Position.
+         */
+        private final int position;
+
+        /**
          * Constructor.
          *
          * @param type Type of the token.
          * @param lexeme Lexeme of the token.
          */
-        private Token(final Type type, final String lexeme) {
+        private Token(final Type type, final String lexeme, final int position) {
             this.type = type;
             this.text = lexeme;
+            this.position = position;
         }
 
         /**
@@ -387,7 +403,7 @@ final class Xpath {
         /**
          * Name.
          */
-        NAME("[a-zA-Z_][a-zA-Z0-9_]+");
+        NAME("[a-zA-Z_][a-zA-Z0-9_]*");
 
         /**
          * Token pattern.

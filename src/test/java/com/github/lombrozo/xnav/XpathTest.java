@@ -66,6 +66,17 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void doesNotFindElement() {
+        MatcherAssert.assertThat(
+            "We expect to not find the element",
+            new Xpath(new Xml("<animal><cat/></animal>"), "/program/objects/o/@base")
+                .nodes()
+                .findFirst()
+                .isEmpty()
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("xpaths")
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
