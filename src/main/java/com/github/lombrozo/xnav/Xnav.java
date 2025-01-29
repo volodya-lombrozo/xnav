@@ -109,6 +109,16 @@ public final class Xnav {
     }
 
     /**
+     * Get nodes by XPath expression.
+     *
+     * @param path XPath expression.
+     * @return Stream of navigators for the nodes.
+     */
+    public Stream<Xnav> path(final String path) {
+        return new Xpath(this.xml, path).nodes().map(Xnav::new);
+    }
+
+    /**
      * Make a deep copy of the navigator.
      *
      * @return Deep copy of the navigator.
