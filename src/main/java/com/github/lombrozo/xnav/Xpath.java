@@ -176,12 +176,11 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Xml xml) {
-            Stream<Xml> current = Stream.of(xml);
-            for (int i = 0; i < this.steps.size(); i++) {
-                final XpathNode step = this.steps.get(i);
-                current = current.flatMap(step::nodes);
-            }
-            return current;
+            return this.steps.stream().reduce(
+                Stream.of(xml),
+                (current, step) -> current.flatMap(step::nodes),
+                Stream::concat
+            );
         }
     }
 
