@@ -49,8 +49,12 @@ results << measureSaxon(xml)
 results << measureJaxen(xml)
 results << measureJaxp(xml)
 results << measureXnav(xml)
-saveFullResults(results)
 updateReadme(results)
+
+def tables = []
+tables << buildSingleTable("XPath vs Navigation", results)
+def report = buildFullReport(tables)
+saveFullResults(report)
 
 def prepareXml() {
     def clazz = Collections.class.name.replace('.', '/') + '.class'
@@ -125,11 +129,9 @@ static def measureXnav(xml) {
     )
 }
 
-static saveFullResults(results) {
+static buildSingleTable(title, results) {
     def content = """
-# Benchmark Results
-
-
+## ${title}
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
@@ -137,6 +139,22 @@ static saveFullResults(results) {
     results.each {
         content += "| ${it.label} | `${it.operation}` | ${it.time} | ${it.time / 1_000_000} | ${it.result} |\n"
     }
+    content += "\n"
+    return content;
+}
+
+static buildFullReport(tables) {
+    def content = """
+# Benchmark Results
+
+"""
+    tables.each {
+        content += "${it}\n"
+    }
+    return content;
+}
+
+static saveFullResults(content) {
     def path = Paths.get("benchmark.md")
     Files.write(path, content.getBytes(StandardCharsets.UTF_8))
     println "Benchmark results written to $path"
