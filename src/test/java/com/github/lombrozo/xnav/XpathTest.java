@@ -43,7 +43,7 @@ final class XpathTest {
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
-            Matchers.equalTo(new Xml("<cat/>"))
+            Matchers.equalTo(new Xml("<cat/>").child("cat"))
         );
     }
 }
