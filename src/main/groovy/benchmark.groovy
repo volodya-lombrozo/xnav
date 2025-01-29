@@ -45,14 +45,15 @@ import java.nio.file.Paths;
 
 def xml = prepareXml();
 def results = []
-results << measureSaxon(xml)
-results << measureJaxen(xml)
-results << measureJaxp(xml)
+results << measureSaxon(xml, "/program/@name")
+results << measureJaxen(xml, "/program/@name")
+results << measureJaxp(xml, "/program/@name")
 results << measureXnav(xml)
 updateReadme(results)
 
 def tables = []
 tables << buildSingleTable("XPath vs Navigation", results)
+tables << buildSingleTable("/program/@name", compareXpaths(xml, "/program/@name"))
 def report = buildFullReport(tables)
 saveFullResults(report)
 
@@ -69,6 +70,14 @@ def prepareXml() {
     }
 }
 
+def compareXpaths(xml, xpath) {
+    def saxon = measureSaxon(xml, xpath)
+    def jaxen = measureJaxen(xml, xpath)
+    def jaxp = measureJaxp(xml, xpath)
+    def xnav = measureXnav(xml, xpath)
+    return [saxon, jaxen, jaxp, xnav]
+}
+
 static def measureExecutionTime(label, operation, closure) {
     def start = System.nanoTime()
     def result = closure.call()
@@ -77,19 +86,19 @@ static def measureExecutionTime(label, operation, closure) {
 }
 
 // Saxon
-static def measureSaxon(xml) {
+static def measureSaxon(xml, xpath) {
     Processor processor = new Processor(false);
     XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
     def compiler = processor.newXPathCompiler()
     return measureExecutionTime(
       "Saxon",
-      "/program/@name",
-      { compiler.evaluate("/program/@name", xdm).getTypedValue() }
+      xpath,
+      { compiler.evaluate(xpath, xdm).getTypedValue() }
     )
 }
 
 // JAXP
-static def measureJaxp(xml) {
+static def measureJaxp(xml, xpath) {
     def factory = DocumentBuilderFactory.newInstance()
     def builder = factory.newDocumentBuilder()
     def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
@@ -97,21 +106,36 @@ static def measureJaxp(xml) {
     def xPath = xPathFactory.newXPath()
     return measureExecutionTime(
       "JAXP",
-      "/program/@name",
+      xpath,
       {
-          def nodeList = (xPath.evaluate("/program/@name", doc, XPathConstants.NODESET) as NodeList)
+          def nodeList = (xPath.evaluate(xpath, doc, XPathConstants.NODESET) as NodeList)
           nodeList.item(0).textContent
       }
     )
 }
 
 // Dom4j + Jaxen
-def measureJaxen(xml) {
+def measureJaxen(xml, xpath) {
     Document document = DocumentHelper.parseText(xml);
     return measureExecutionTime(
       "Jaxen",
       "/program/@name",
-      { document.selectSingleNode("/program/@name").getText() }
+      { document.selectSingleNode(xpath).getText() }
+    )
+}
+
+static def measureXnav(xml, xpath) {
+    def xnav = new Xnav(xml)
+    return measureExecutionTime(
+      "Xnav",
+      xpath,
+      {
+          xnav.path(xpath)
+            .findFirst()
+            .orElseThrow()
+            .text()
+            .orElse("No child")
+      }
     )
 }
 

@@ -6,9 +6,20 @@
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
-| Saxon | `/program/@name` | 113551162 | 113.551162 | j$Collections |
-| Jaxen | `/program/@name` | 48297871 | 48.297871 | j$Collections |
-| JAXP | `/program/@name` | 56986195 | 56.986195 | j$Collections |
-| Xnav | `.element('program').attribute('name')` | 2549444 | 2.549444 | j$Collections |
+| Saxon | `/program/@name` | 110584153 | 110.584153 | j$Collections |
+| Jaxen | `/program/@name` | 49069702 | 49.069702 | j$Collections |
+| JAXP | `/program/@name` | 55676732 | 55.676732 | j$Collections |
+| Xnav | `.element('program').attribute('name')` | 2868098 | 2.868098 | j$Collections |
+
+
+
+## /program/@name
+
+| Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
+|---------|------------------|---------------------|---------------------|--------|
+| Saxon | `/program/@name` | 510590 | 0.51059 | j$Collections |
+| Jaxen | `/program/@name` | 189891 | 0.189891 | j$Collections |
+| JAXP | `/program/@name` | 24261965 | 24.261965 | j$Collections |
+| Xnav | `/program/@name` | 12924630 | 12.92463 | j$Collections |
 
 
