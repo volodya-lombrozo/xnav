@@ -73,7 +73,8 @@ final class XpathTest {
             new Xpath(new Xml("<animal><cat/></animal>"), "/program/objects/o/@base")
                 .nodes()
                 .findFirst()
-                .isEmpty()
+                .isEmpty(),
+            Matchers.is(true)
         );
     }
 

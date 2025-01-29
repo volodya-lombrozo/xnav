@@ -365,6 +365,7 @@ final class Xpath {
          *
          * @param type Type of the token.
          * @param lexeme Lexeme of the token.
+         * @param position Position of the token.
          */
         private Token(final Type type, final String lexeme, final int position) {
             this.type = type;
