@@ -113,7 +113,7 @@ final class Xpath {
         }
 
         /**
-         * Parse next step.
+         * Parse the next step.
          *
          * @return Next step.
          */
@@ -158,7 +158,7 @@ final class Xpath {
      */
     @ToString
     @EqualsAndHashCode
-    private final static class RelativePath implements XpathNode {
+    private static final class RelativePath implements XpathNode {
 
         /**
          * Steps.
@@ -176,13 +176,12 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Xml xml) {
-            Xml current = xml;
-            for (int indx = 0; indx < this.steps.size(); indx++) {
-                current = this.steps.get(indx).nodes(current)
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No nodes found"));
+            Stream<Xml> current = Stream.of(xml);
+            for (int i = 0; i < this.steps.size(); i++) {
+                final XpathNode step = this.steps.get(i);
+                current = current.flatMap(step::nodes);
             }
-            return Stream.of(current);
+            return current;
         }
     }
 
@@ -212,7 +211,7 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Xml xml) {
-            return Stream.of(xml.child(this.name));
+            return xml.children().filter(Filter.withName(this.name));
         }
     }
 
@@ -296,7 +295,7 @@ final class Xpath {
             final Matcher matcher = XPathLexer.PATTERN.matcher(this.path);
             final List<Token> tokens = new ArrayList<>(0);
             while (matcher.find()) {
-                Type type = this.type(matcher);
+                final Type type = this.type(matcher);
                 final String value = matcher.group();
                 tokens.add(new Token(type, value));
             }
