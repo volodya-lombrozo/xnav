@@ -27,6 +27,8 @@ package com.github.lombrozo.xnav;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Tests for {@link Xpath}.
@@ -62,5 +64,32 @@ final class XpathTest {
                     .orElseThrow()
             )
         );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("xpaths")
+    void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
+        MatcherAssert.assertThat(
+            "We expect to retrieve the xpath text correctly",
+            new Xpath(xml, xpath).nodes().findFirst().orElseThrow().text().orElseThrow(),
+            Matchers.equalTo(expected)
+        );
+    }
+
+    /**
+     * Arguments for the test.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] xpaths() {
+        final Xml xml = new Xml(
+            "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'/></animal></zoo>"
+        );
+        return new Object[][]{
+            {"/zoo/animal/cat/@legs", xml, "4"},
+            {"/zoo/animal/dog", xml, "4"},
+            {"/zoo/animal/bird/@legs", xml, "2"},
+        };
     }
 }
