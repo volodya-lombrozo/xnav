@@ -24,6 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.Optional;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,23 @@ final class XpathTest {
                 .findFirst()
                 .orElseThrow(),
             Matchers.equalTo(new Xml("<cat/>").child("cat"))
+        );
+    }
+
+    @Test
+    void retrievesAttribute() {
+        MatcherAssert.assertThat(
+            "We expect to retrieve the attribute correctly",
+            new Xpath(
+                new Xml("<building><room number='100'/></building>"),
+                "/building/room/@number"
+            ).nodes().findFirst().orElseThrow(),
+            Matchers.equalTo(
+                new Xml("<room number='100'/>")
+                    .child("room")
+                    .attribute("number")
+                    .orElseThrow()
+            )
         );
     }
 }

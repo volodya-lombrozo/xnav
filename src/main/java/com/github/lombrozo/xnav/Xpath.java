@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -92,8 +93,12 @@ final class Xpath {
             final Token token = this.consume();
             if (token.type == Type.NAME) {
                 return new Step(token.lexeme());
+            } else if (token.type == Type.AT) {
+                return new Attribute(this.consume().lexeme);
             }
-            throw new IllegalStateException(String.format("Expected step, but got %s", token));
+            throw new IllegalStateException(
+                String.format("Expected one more step, but got %s", token)
+            );
         }
 
 
@@ -133,6 +138,25 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Xml xml) {
             return Stream.of(xml.child(this.name));
+        }
+    }
+
+    /**
+     * Attribute node.
+     */
+    @ToString
+    @EqualsAndHashCode
+    private class Attribute implements XpathNode {
+        private final String name;
+
+        public Attribute(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Xml xml) {
+            final Optional<Xml> attribute = xml.attribute(this.name);
+            return attribute.stream();
         }
     }
 
@@ -191,6 +215,8 @@ final class Xpath {
     private enum Type {
 
         SLASH("/"),
+
+        AT("@"),
 
         NAME("[a-zA-Z_][a-zA-Z0-9_]+");
         private final String lexeme;
