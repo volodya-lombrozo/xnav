@@ -75,6 +75,8 @@ final class Xpath {
 
     /**
      * XPath parser.
+     *
+     * @since 0.1
      */
     private final class XPathParser {
 
@@ -104,9 +106,9 @@ final class Xpath {
          * @return Relative path.
          */
         XpathNode relativePath() {
-            List<XpathNode> steps = new ArrayList<>();
+            final List<XpathNode> steps = new ArrayList<>(0);
             while (!this.eof() && this.tokens.get(this.pos).type == Type.SLASH) {
-                this.consume(); // consume slash
+                this.consume();
                 steps.add(this.step());
             }
             return new RelativePath(steps);
@@ -118,15 +120,18 @@ final class Xpath {
          * @return Next step.
          */
         XpathNode step() {
+            final XpathNode result;
             final Token token = this.consume();
             if (token.type == Type.NAME) {
-                return new Step(token.lexeme());
+                result = new Step(token.lexeme());
             } else if (token.type == Type.AT) {
-                return new Attribute(this.consume().lexeme);
+                result = new Attribute(this.consume().text);
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected one more step, but got %s", token)
+                );
             }
-            throw new IllegalStateException(
-                String.format("Expected one more step, but got %s", token)
-            );
+            return result;
         }
 
         /**
@@ -136,7 +141,7 @@ final class Xpath {
          */
         private Token consume() {
             final Token token = this.tokens.get(this.pos);
-            this.pos++;
+            this.pos = this.pos + 1;
             return token;
         }
 
@@ -243,9 +248,9 @@ final class Xpath {
         }
     }
 
-
     /**
      * Interface for a node in the XPath.
+     * @since 0.1
      */
     private interface XpathNode {
 
@@ -294,7 +299,7 @@ final class Xpath {
             final Matcher matcher = XPathLexer.PATTERN.matcher(this.path);
             final List<Token> tokens = new ArrayList<>(0);
             while (matcher.find()) {
-                final Type type = this.type(matcher);
+                final Type type = XPathLexer.type(matcher);
                 final String value = matcher.group();
                 tokens.add(new Token(type, value));
             }
@@ -307,7 +312,7 @@ final class Xpath {
          * @param matcher Matcher.
          * @return Token type.
          */
-        private Type type(final Matcher matcher) {
+        private static Type type(final Matcher matcher) {
             for (final Type type : Type.values()) {
                 if (matcher.group(type.name()) != null) {
                     return type;
@@ -328,7 +333,7 @@ final class Xpath {
      */
     @ToString
     @EqualsAndHashCode
-    private static class Token {
+    private static final class Token {
 
         /**
          * Token type.
@@ -338,7 +343,7 @@ final class Xpath {
         /**
          * Lexeme.
          */
-        private final String lexeme;
+        private final String text;
 
         /**
          * Constructor.
@@ -348,7 +353,7 @@ final class Xpath {
          */
         private Token(final Type type, final String lexeme) {
             this.type = type;
-            this.lexeme = lexeme;
+            this.text = lexeme;
         }
 
         /**
@@ -357,7 +362,7 @@ final class Xpath {
          * @return The lexeme.
          */
         String lexeme() {
-            return this.lexeme;
+            return this.text;
         }
     }
 
@@ -387,7 +392,7 @@ final class Xpath {
         /**
          * Token pattern.
          */
-        private final String pattern;
+        private final String subpattern;
 
         /**
          * Constructor.
@@ -395,7 +400,7 @@ final class Xpath {
          * @param pattern Token pattern.
          */
         Type(final String pattern) {
-            this.pattern = pattern;
+            this.subpattern = pattern;
         }
 
         /**
@@ -404,7 +409,7 @@ final class Xpath {
          * @return The lexeme.
          */
         String lexeme() {
-            return this.pattern;
+            return this.subpattern;
         }
 
         /**
@@ -413,9 +418,11 @@ final class Xpath {
          * @return The pattern.
          */
         private static Pattern pattern() {
-            return Pattern.compile(Arrays.stream(Type.values())
-                .map((a) -> String.format("(?<%s>%s)", a.name(), a.lexeme()))
-                .collect(Collectors.joining("|")));
+            return Pattern.compile(
+                Arrays.stream(Type.values())
+                    .map(a -> String.format("(?<%s>%s)", a.name(), a.lexeme()))
+                    .collect(Collectors.joining("|"))
+            );
         }
     }
 }
