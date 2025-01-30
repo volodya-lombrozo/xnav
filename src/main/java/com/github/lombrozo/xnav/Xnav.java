@@ -23,6 +23,10 @@
  */
 package com.github.lombrozo.xnav;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
@@ -44,6 +48,24 @@ public final class Xnav {
      * Actual XML document node.
      */
     private final Xml xml;
+
+    /**
+     * Constructor.
+     *
+     * @param file XML document file.
+     */
+    public Xnav(final Path file) {
+        this(Xnav.from(file));
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param file XML document file.
+     */
+    public Xnav(final File file) {
+        this(Xnav.from(file.toPath()));
+    }
 
     /**
      * Ctor.
@@ -143,5 +165,22 @@ public final class Xnav {
      */
     public Node node() {
         return this.xml.node();
+    }
+
+    /**
+     * Get the XML document from the file.
+     *
+     * @param file XML file.
+     * @return XML document.
+     */
+    private static Xml from(final Path file) {
+        try {
+            return new Xml(Files.readString(file));
+        } catch (final IOException exception) {
+            throw new IllegalStateException(
+                String.format("Failed to read file '%s'", file),
+                exception
+            );
+        }
     }
 }

@@ -24,13 +24,19 @@
 package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -42,6 +48,43 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 @SuppressWarnings("PMD.TooManyMethods")
 final class XnavTest {
+
+    @Test
+    void createsXnavFromPath(@TempDir final Path temp) throws IOException {
+        final Path file = temp.resolve("path.xml");
+        Files.write(
+            file,
+            "<path>point</path>".getBytes(StandardCharsets.UTF_8)
+        );
+        MatcherAssert.assertThat(
+            "We expect the navigator to be created from path",
+            new Xnav(file).toString(),
+            Matchers.containsString("point")
+        );
+    }
+
+    @Test
+    void createsXnavFromFile(@TempDir final Path temp) throws IOException {
+        final Path file = temp.resolve("file.xml");
+        Files.write(
+            file,
+            "<file>content</file>".getBytes(StandardCharsets.UTF_8)
+        );
+        MatcherAssert.assertThat(
+            "We expect the navigator to be created from file",
+            new Xnav(file.toFile()).toString(),
+            Matchers.containsString("content")
+        );
+    }
+
+    @Test
+    void failsToCreateXnavFromNonExistentFile(@TempDir final Path temp) {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> new Xnav(temp.resolve("nonexistent.xml")),
+            "We expect the navigator to fail creating from non-existent file"
+        );
+    }
 
     @Test
     void convertsToString() {
