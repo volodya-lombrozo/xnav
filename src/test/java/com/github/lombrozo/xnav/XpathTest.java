@@ -72,7 +72,7 @@ final class XpathTest {
     void doesNotFindElement() {
         MatcherAssert.assertThat(
             "We expect to not find the element",
-            new Xpath(new Xml("<animal><cat/></animal>"), "/program/objects/o/@base")
+            new Xpath(new Xml("<animal><dog/></animal>"), "/program/objects/o/@base")
                 .nodes()
                 .findFirst()
                 .isEmpty(),
@@ -97,8 +97,8 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the second element",
             new Xpath(
-                new Xml("<zoo><animal><cat/></animal><animal><dog/></animal></zoo>"),
-                "/zoo/animal[1]/dog"
+                new Xml("<zoo><animal><cat/></animal><animal><pig/></animal></zoo>"),
+                "/zoo/animal[1]/pig"
             ).nodes().findFirst().isPresent(),
             Matchers.is(false)
         );
@@ -164,21 +164,29 @@ final class XpathTest {
      */
     private static Object[][] attributeFilters() {
         final Xml xml = new Xml(
-            "<zoo><animal legs='4'><elephant/></animal><animal>bacteria</animal><animal legs='2'><bird >eagle</bird></animal></zoo>"
+            String.join(
+                "\n",
+                "<zoo>",
+                "  <animal legs='4'><elephant>big</elephant></animal>",
+                "  <animal>bacteria</animal>",
+                "  <animal legs='2'><bird>eagle</bird></animal>",
+                "</zoo>"
+            )
+
         );
         return new Object[][]{
             {"/zoo/anima[@legs][1]", xml, "elephant"},
             {"/zoo/animal[@legs][2]", xml, "bird"},
             {"/zoo/animal[@legs][3]", xml, ""},
-            {"/zoo/animal[@legs='4']/elephant", xml, ""},
+            {"/zoo/animal[@legs='4']/elephant", xml, "big"},
             {"/zoo/animal[@legs='2']/bird", xml, "eagle"},
             {"/zoo/animal[@legs='3']/bird", xml, ""},
             {"/zoo/animal[@legs='4']/bird", xml, ""},
+            {"/zoo/animal[@legs='0']/bird", xml, ""},
             {"/zoo/animal[@legs='2']/elephant", xml, ""},
             {"/zoo/animal[@legs='3']/elephant", xml, ""},
-            {"/zoo/animal[@legs='4']/bird", xml, ""},
-            {"/zoo/animal[@legs='4']", xml, "elephant"},
-            {"/zoo/animal[@legs='2']", xml, "bird"},
+            {"/zoo/animal[@legs='4']", xml, "<elephant>big</elephant>"},
+            {"/zoo/animal[@legs='2']", xml, "<bird>eagle</bird>"},
             {"/zoo/animal[@legs='3']", xml, ""},
         };
     }
