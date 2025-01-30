@@ -27,6 +27,7 @@ import com.github.lombrozo.xnav.Xnav
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.lib.FeatureKeys;
 import net.sf.saxon.s9api.XdmSequenceIterator;
 import javax.xml.transform.stream.StreamSource;
 
@@ -96,6 +97,7 @@ static def measureExecutionTime(label, operation, closure) {
 // Saxon
 static def measureSaxon(String xml, String xpath) {
     Processor processor = new Processor(false);
+    processor.setConfigurationProperty(FeatureKeys.OPTIMIZATION_LEVEL, "0")
     XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
     def compiler = processor.newXPathCompiler()
     return measureExecutionTime(
