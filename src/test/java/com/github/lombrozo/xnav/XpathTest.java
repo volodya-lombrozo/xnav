@@ -78,6 +78,18 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsSecondElement() {
+        MatcherAssert.assertThat(
+            "We expect to find the second element",
+            new Xpath(
+                new Xml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
+                "/zoo/animal[2]"
+            ).nodes().findFirst().orElseThrow(),
+            Matchers.equalTo(new Xml("<animal>dog</animal>").child("animal"))
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("xpaths")
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
@@ -95,12 +107,23 @@ final class XpathTest {
      */
     private static Object[][] xpaths() {
         final Xml xml = new Xml(
-            "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'/></animal></zoo>"
+            "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'>eagle</bird></animal></zoo>"
         );
         return new Object[][]{
             {"/zoo/animal/cat/@legs", xml, "4"},
             {"/zoo/animal/dog", xml, "4"},
             {"/zoo/animal/bird/@legs", xml, "2"},
+            {"/zoo/animal[3]/bird", xml, "eagle"},
+            {"/zoo/animal/bird", xml, "eagle"},
+            {"/zoo/animal[2]/dog", xml, "4"},
+            {"/zoo/animal[1]/cat/@legs", xml, "4"},
+            {"/zoo/animal[1]/cat", xml, ""},
+            {"/zoo/animal[1]/dog", xml, ""},
+            {"/zoo/animal[1]/bird", xml, ""},
+            {"/zoo/animal[2]/cat", xml, ""},
+            {"/zoo/animal[2]/bird", xml, ""},
+            {"/zoo/animal[3]/cat", xml, ""},
+            {"/zoo/animal[3]/dog", xml, ""},
         };
     }
 }
