@@ -58,10 +58,10 @@ how Xnav can outperform other libraries:
 
 | Library | XPath Expression | Execution Time (ms) |
 |---------|------------------|---------------------|
-| Saxon | `/program/@name` | 106.24 |
-| Jaxen | `/program/@name` | 40.35 |
-| JAXP | `/program/@name` | 71.91 |
-| Xnav | `.element('program').attribute('name')` | 3.28 |
+| Saxon | `/program/@name` | 139.09 |
+| Jaxen | `/program/@name` | 36.20 |
+| JAXP | `/program/@name` | 60.29 |
+| Xnav | `.element('program').attribute('name')` | 2.99 |
 
 <!-- BENCHMARK END -->
 
@@ -92,7 +92,7 @@ mvn process-resources -Pdocs
 To run benchmarks, use the following command:
 
 ```bash
-mvn clean verify -Pbenchmark
+mvn clean verify -Pbenchmark -DskipTests
 ```
 
 ## Contribution

@@ -1,5 +1,3 @@
-import com.github.lombrozo.xnav.Xnav
-
 /*
  * MIT License
  *
@@ -23,6 +21,9 @@ import com.github.lombrozo.xnav.Xnav
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+import com.github.lombrozo.xnav.Xnav
+
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
@@ -41,14 +42,19 @@ import org.dom4j.DocumentHelper
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.Paths
+import java.util.stream.Stream;
 
-def xml = prepareXml();
+String xml = prepareXml();
+
+// Uncomment this to save XML
+// Files.write(Paths.get("example.xml"), xml.toString().getBytes(StandardCharsets.UTF_8))
+
 def results = []
 results << measureSaxon(xml, "/program/@name")
 results << measureJaxen(xml, "/program/@name")
 results << measureJaxp(xml, "/program/@name")
-results << measureXnav(xml)
+results << measureXnavNavigation(xml)
 updateReadme(results)
 
 def tables = []
@@ -57,14 +63,11 @@ tables << buildSingleTable("/program/objects/o/@base", compareXpaths(xml, "/prog
 def report = buildFullReport(tables)
 saveFullResults(report)
 
-// Uncomment this to save XML
-// Files.write(Paths.get("example.xml"), xml.toString().getBytes(StandardCharsets.UTF_8))
-
-def prepareXml() {
+String prepareXml() {
     def clazz = Collections.class.name.replace('.', '/') + '.class'
     def input = Thread.currentThread().getContextClassLoader().getResourceAsStream(clazz)
     if (input) {
-        def res = new BytecodeRepresentation(new Bytecode(input.bytes)).toEO().toString()
+        String res = new BytecodeRepresentation(new Bytecode(input.bytes)).toEO().toString()
         def kb = res.getBytes(StandardCharsets.UTF_8).length / 1024.0;
         println String.format("Size of XML: %.2f KB", kb)
         return res
@@ -73,7 +76,7 @@ def prepareXml() {
     }
 }
 
-def compareXpaths(xml, xpath) {
+def compareXpaths(String xml, String xpath) {
     def saxon = measureSaxon(xml, xpath)
     def jaxen = measureJaxen(xml, xpath)
     def jaxp = measureJaxp(xml, xpath)
@@ -89,7 +92,7 @@ static def measureExecutionTime(label, operation, closure) {
 }
 
 // Saxon
-static def measureSaxon(xml, xpath) {
+static def measureSaxon(String xml, String xpath) {
     Processor processor = new Processor(false);
     XdmNode xdm = processor.newDocumentBuilder().build(new StreamSource(new StringReader(xml)));
     def compiler = processor.newXPathCompiler()
@@ -101,7 +104,7 @@ static def measureSaxon(xml, xpath) {
 }
 
 // JAXP
-static def measureJaxp(xml, xpath) {
+static def measureJaxp(String xml, String xpath) {
     def factory = DocumentBuilderFactory.newInstance()
     def builder = factory.newDocumentBuilder()
     def doc = builder.parse(new ByteArrayInputStream(xml.bytes))
@@ -127,22 +130,22 @@ def measureJaxen(xml, xpath) {
     )
 }
 
-static def measureXnav(xml, xpath) {
-    def xnav = new Xnav(xml)
+static def measureXnav(String xml, String xpath) {
+    Xnav navigator = new Xnav(xml)
     return measureExecutionTime(
       "Xnav",
       xpath,
       {
-          xnav.path(xpath)
+          return navigator.path(xpath)
             .findFirst()
-            .orElseThrow()
+            .get()
             .text()
-            .orElse("No child")
+            .orElse("No node found") // Handle missing nodes
       }
     )
 }
 
-static def measureXnav(xml) {
+static def measureXnavNavigation(xml) {
     def xnav = new Xnav(xml)
     return measureExecutionTime(
       "Xnav",
