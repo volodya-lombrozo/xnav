@@ -6,10 +6,21 @@
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
-| Saxon | `/program/@name` | 151562270 | 151.56227 | j$Collections |
-| Jaxen | `/program/@name` | 47037981 | 47.037981 | j$Collections |
-| JAXP | `/program/@name` | 62629052 | 62.629052 | j$Collections |
-| Xnav | `.element('program').attribute('name')` | 3963254 | 3.963254 | j$Collections |
+| Saxon | `/program/@name` | 255634872 | 255.634872 | j$Collections |
+| Jaxen | `/program/@name` | 46568672 | 46.568672 | j$Collections |
+| JAXP | `/program/@name` | 75097159 | 75.097159 | j$Collections |
+| Xnav | `.element('program').attribute('name')` | 2801441 | 2.801441 | j$Collections |
+
+
+
+## /program/@name
+
+| Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
+|---------|------------------|---------------------|---------------------|--------|
+| Saxon | `/program/@name` | 564686 | 0.564686 | j$Collections |
+| Jaxen | `/program/@name` | 245547 | 0.245547 | j$Collections |
+| JAXP | `/program/@name` | 31218813 | 31.218813 | j$Collections |
+| Xnav | `/program/@name` | 14974886 | 14.974886 | j$Collections |
 
 
 
@@ -17,10 +28,10 @@
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
-| Saxon | `/program/objects/o/@base` | 522288 | 0.522288 | jeo.class |
-| Jaxen | `/program/objects/o/@base` | 2495899 | 2.495899 | jeo.class |
-| JAXP | `/program/objects/o/@base` | 94524467 | 94.524467 | jeo.class |
-| Xnav | `/program/objects/o/@base` | 22815038 | 22.815038 | jeo.class |
+| Saxon | `/program/objects/o/@base` | 529216 | 0.529216 | jeo.class |
+| Jaxen | `/program/objects/o/@base` | 2018911 | 2.018911 | jeo.class |
+| JAXP | `/program/objects/o/@base` | 33283360 | 33.28336 | jeo.class |
+| Xnav | `/program/objects/o/@base` | 301154 | 0.301154 | jeo.class |
 
 
 
@@ -28,9 +39,9 @@
 
 | Library | XPath Expression | Execution Time (ns) | Execution Time (ms) | Result |
 |---------|------------------|---------------------|---------------------|--------|
-| Saxon | `/program/objects/o/o/o/o/@base` | 12328695 | 12.328695 | org.eolang.bytes |
-| Jaxen | `/program/objects/o/o/o/o/@base` | 18278175 | 18.278175 | org.eolang.bytes |
-| JAXP | `/program/objects/o/o/o/o/@base` | 56327028 | 56.327028 | org.eolang.bytes |
-| Xnav | `/program/objects/o/o/o/o/@base` | 335511 | 0.335511 | org.eolang.bytes |
+| Saxon | `/program/objects/o/o/o/o/@base` | 23503428 | 23.503428 | org.eolang.bytes |
+| Jaxen | `/program/objects/o/o/o/o/@base` | 20821581 | 20.821581 | org.eolang.bytes |
+| JAXP | `/program/objects/o/o/o/o/@base` | 36426896 | 36.426896 | org.eolang.bytes |
+| Xnav | `/program/objects/o/o/o/o/@base` | 334407 | 0.334407 | org.eolang.bytes |
 
 

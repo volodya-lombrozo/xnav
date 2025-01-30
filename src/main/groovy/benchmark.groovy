@@ -61,6 +61,7 @@ updateReadme(results)
 
 def tables = []
 tables << buildSingleTable("XPath vs Navigation", results)
+tables << buildSingleTable("/program/@name", compareXpaths(xml, "/program/@name"))
 tables << buildSingleTable("/program/objects/o/@base", compareXpaths(xml, "/program/objects/o/@base"))
 tables << buildSingleTable("/program/objects/o/o/o/@base", compareXpaths(xml, "/program/objects/o/o/o/o/@base"))
 def report = buildFullReport(tables)
