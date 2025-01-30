@@ -26,7 +26,6 @@ package com.github.lombrozo.xnav;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -206,68 +205,11 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-
             return this.steps.stream().reduce(
                 xml,
                 (current, step) -> step.nodes(current),
                 Stream::concat
             );
-
-//            return this.steps.stream().reduce(
-//                xml,
-//                (current, step) -> current.flatMap(stream -> step.nodes(Stream.of(stream))),
-//                Stream::concat
-//            );
-//
-//            final List<Xml> collect = xml.collect(Collectors.toList());
-//            final List<List<Xml>> res = new ArrayList<>(0);
-//            for (final Xml x : collect) {
-//                final List<Xml> sub = this.steps.stream().reduce(
-//                    Stream.of(x),
-//                    (current, step) -> current.flatMap(y -> step.nodes(Stream.of(y))),
-//                    Stream::concat
-//                ).collect(Collectors.toList());
-//                res.add(sub);
-//            }
-//
-//            return res.stream().flatMap(List::stream);
-
-
-//            return xml.flatMap(
-//                x -> {
-//                    return this.steps.stream().reduce(
-//                        Stream.of(x),
-//                        (current, step) -> step.nodes(current),
-//                        Stream::concat
-//                    );
-//                }
-//            );
-//
-
-//            return xml.flatMap(
-//                x -> {
-//                    return this.steps.stream().reduce(
-//                        Stream.of(x),
-//                        (current, step) -> step.nodes(current),
-//                        Stream::concat
-//                    );
-//                }
-//            );
-//
-//
-//            return xml.flatMap(
-//                x -> this.steps.stream().reduce(
-//                    Stream.of(x),
-//                    (current, step) -> current.flatMap(y -> step.nodes(Stream.of(y))),
-//                    Stream::concat
-//                )
-//            );
-
-//            return this.steps.stream().reduce(
-//                xml,
-//                (current, step) -> current.flatMap(step::nodes),
-//                Stream::concat
-//            );
         }
     }
 
@@ -313,7 +255,7 @@ final class Xpath {
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             final Stream<Xml> res = xml
                 .peek(System.out::println)
-                .skip(this.number - 1);
+                .skip(this.number - 1).findFirst().stream();
             final List<Xml> sub = res.collect(Collectors.toList());
             return sub.stream();
         }

@@ -24,6 +24,8 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -90,12 +92,40 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void doesNotFindFirstElement() {
+        MatcherAssert.assertThat(
+            "We expect to not find the second element",
+            new Xpath(
+                new Xml("<zoo><animal><cat/></animal><animal><dog/></animal></zoo>"),
+                "/zoo/animal[1]/dog"
+            ).nodes().findFirst().isPresent(),
+            Matchers.is(false)
+        );
+    }
+
+    @Test
+    void doesNotFindThirdElement() {
+        MatcherAssert.assertThat(
+            "We expect to not find the third element",
+            new Xpath(
+                new Xml("<zoo><animal>rabbit</animal><animal>elephant</animal></zoo>"),
+                "/zoo/animal[3]"
+            ).nodes().collect(Collectors.toList()),
+            Matchers.empty()
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("xpaths")
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
-            new Xpath(xml, xpath).nodes().findFirst().orElseThrow().text().orElseThrow(),
+            new Xpath(xml, xpath).nodes().findFirst()
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .orElse(""),
             Matchers.equalTo(expected)
         );
     }
@@ -113,17 +143,17 @@ final class XpathTest {
             {"/zoo/animal/cat/@legs", xml, "4"},
             {"/zoo/animal/dog", xml, "4"},
             {"/zoo/animal/bird/@legs", xml, "2"},
-//            {"/zoo/animal[3]/bird", xml, "eagle"},
-//            {"/zoo/animal/bird", xml, "eagle"},
-//            {"/zoo/animal[2]/dog", xml, "4"},
-//            {"/zoo/animal[1]/cat/@legs", xml, "4"},
-//            {"/zoo/animal[1]/cat", xml, ""},
-//            {"/zoo/animal[1]/dog", xml, ""},
-//            {"/zoo/animal[1]/bird", xml, ""},
-//            {"/zoo/animal[2]/cat", xml, ""},
-//            {"/zoo/animal[2]/bird", xml, ""},
-//            {"/zoo/animal[3]/cat", xml, ""},
-//            {"/zoo/animal[3]/dog", xml, ""},
+            {"/zoo/animal[3]/bird", xml, "eagle"},
+            {"/zoo/animal/bird", xml, "eagle"},
+            {"/zoo/animal[2]/dog", xml, "4"},
+            {"/zoo/animal[1]/cat/@legs", xml, "4"},
+            {"/zoo/animal[1]/cat", xml, ""},
+            {"/zoo/animal[1]/dog", xml, ""},
+            {"/zoo/animal[1]/bird", xml, ""},
+            {"/zoo/animal[2]/cat", xml, ""},
+            {"/zoo/animal[2]/bird", xml, ""},
+            {"/zoo/animal[3]/cat", xml, ""},
+            {"/zoo/animal[3]/dog", xml, ""},
         };
     }
 }
