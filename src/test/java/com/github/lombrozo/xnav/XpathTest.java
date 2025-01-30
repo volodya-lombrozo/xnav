@@ -117,7 +117,7 @@ final class XpathTest {
     }
 
     @ParameterizedTest
-    @MethodSource("xpaths")
+    @MethodSource({"xpaths", "attributeFilters"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -154,6 +154,32 @@ final class XpathTest {
             {"/zoo/animal[2]/bird", xml, ""},
             {"/zoo/animal[3]/cat", xml, ""},
             {"/zoo/animal[3]/dog", xml, ""},
+        };
+    }
+
+    /**
+     * Arguments for the test.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] attributeFilters() {
+        final Xml xml = new Xml(
+            "<zoo><animal legs='4'><elephant/></animal><animal>bacteria</animal><animal legs='2'><bird >eagle</bird></animal></zoo>"
+        );
+        return new Object[][]{
+            {"/zoo/anima[@legs][1]", xml, "elephant"},
+            {"/zoo/animal[@legs][2]", xml, "bird"},
+            {"/zoo/animal[@legs][3]", xml, ""},
+            {"/zoo/animal[@legs='4']/elephant", xml, ""},
+            {"/zoo/animal[@legs='2']/bird", xml, "eagle"},
+            {"/zoo/animal[@legs='3']/bird", xml, ""},
+            {"/zoo/animal[@legs='4']/bird", xml, ""},
+            {"/zoo/animal[@legs='2']/elephant", xml, ""},
+            {"/zoo/animal[@legs='3']/elephant", xml, ""},
+            {"/zoo/animal[@legs='4']/bird", xml, ""},
+            {"/zoo/animal[@legs='4']", xml, "elephant"},
+            {"/zoo/animal[@legs='2']", xml, "bird"},
+            {"/zoo/animal[@legs='3']", xml, ""},
         };
     }
 }
