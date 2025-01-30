@@ -243,21 +243,31 @@ final class Xpath {
         }
     }
 
+    /**
+     * Number expression.
+     * This is a number in the XPath.
+     *
+     * @since 0.1
+     */
     private static final class NumberExpression implements XpathNode {
 
-        private final int number;
+        /**
+         * Index starting from 1.
+         */
+        private final int index;
 
-        public NumberExpression(final int number) {
-            this.number = number;
+        /**
+         * Constructor.
+         *
+         * @param number Index starting from 1.
+         */
+        NumberExpression(final int number) {
+            this.index = number;
         }
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            final Stream<Xml> res = xml
-                .peek(System.out::println)
-                .skip(this.number - 1).findFirst().stream();
-            final List<Xml> sub = res.collect(Collectors.toList());
-            return sub.stream();
+            return xml.skip(this.index - 1).findFirst().stream();
         }
     }
 
