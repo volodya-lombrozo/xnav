@@ -27,6 +27,7 @@ import com.github.lombrozo.xnav.Xnav
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 import javax.xml.transform.stream.StreamSource;
 
 import javax.xml.xpath.*;
@@ -48,7 +49,7 @@ import java.util.stream.Stream;
 String xml = prepareXml();
 
 // Uncomment this to save XML
-// Files.write(Paths.get("example.xml"), xml.toString().getBytes(StandardCharsets.UTF_8))
+//Files.write(Paths.get("example.xml"), xml.toString().getBytes(StandardCharsets.UTF_8))
 
 def results = []
 results << measureSaxon(xml, "/program/@name")
@@ -60,6 +61,7 @@ updateReadme(results)
 def tables = []
 tables << buildSingleTable("XPath vs Navigation", results)
 tables << buildSingleTable("/program/objects/o/@base", compareXpaths(xml, "/program/objects/o/@base"))
+tables << buildSingleTable("/program/objects/o/o/o/@base", compareXpaths(xml, "/program/objects/o/o/o/o/@base"))
 def report = buildFullReport(tables)
 saveFullResults(report)
 
@@ -99,7 +101,14 @@ static def measureSaxon(String xml, String xpath) {
     return measureExecutionTime(
       "Saxon",
       xpath,
-      { compiler.evaluate(xpath, xdm).getTypedValue() }
+      {
+          def evaluate = compiler.evaluate(xpath, xdm)
+          if (evaluate instanceof XdmValue && evaluate.size() > 0) {
+              return evaluate.itemAt(0).getStringValue()
+          } else {
+              return "No node found"
+          }
+      }
     )
 }
 
