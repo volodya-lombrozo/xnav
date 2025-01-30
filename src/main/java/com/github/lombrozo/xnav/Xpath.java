@@ -26,7 +26,9 @@ package com.github.lombrozo.xnav;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,7 +72,9 @@ final class Xpath {
      * @return The nodes that match the XPath.
      */
     Stream<Xml> nodes() {
-        return new XPathParser(new XPathLexer(this.path).tokens()).relativePath().nodes(this.root);
+        return new XPathParser(new XPathLexer(this.path).tokens())
+            .relativePath()
+            .nodes(Stream.of(this.root));
     }
 
     /**
@@ -126,12 +130,27 @@ final class Xpath {
                 result = new Step(token.lexeme());
             } else if (token.type == Type.AT) {
                 result = new Attribute(this.consume().text);
+            } else if (token.type == Type.LBRACKET) {
+                final XpathNode predicate = this.parseExpression();
+                this.consume();
+                result = predicate;
             } else {
                 throw new IllegalStateException(
                     String.format("Expected one more step, but got %s", token)
                 );
             }
             return result;
+        }
+
+        private XpathNode parseExpression() {
+            final Token token = this.consume();
+            if (token.type == Type.NUMBER) {
+                return new NumberExpression(Integer.parseInt(token.lexeme()));
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected number, but got %s", token)
+                );
+            }
         }
 
         /**
@@ -180,12 +199,69 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+
             return this.steps.stream().reduce(
-                Stream.of(xml),
-                (current, step) -> current.flatMap(step::nodes),
+                xml,
+                (current, step) -> step.nodes(current),
                 Stream::concat
             );
+
+//            return this.steps.stream().reduce(
+//                xml,
+//                (current, step) -> current.flatMap(stream -> step.nodes(Stream.of(stream))),
+//                Stream::concat
+//            );
+//
+//            final List<Xml> collect = xml.collect(Collectors.toList());
+//            final List<List<Xml>> res = new ArrayList<>(0);
+//            for (final Xml x : collect) {
+//                final List<Xml> sub = this.steps.stream().reduce(
+//                    Stream.of(x),
+//                    (current, step) -> current.flatMap(y -> step.nodes(Stream.of(y))),
+//                    Stream::concat
+//                ).collect(Collectors.toList());
+//                res.add(sub);
+//            }
+//
+//            return res.stream().flatMap(List::stream);
+
+
+//            return xml.flatMap(
+//                x -> {
+//                    return this.steps.stream().reduce(
+//                        Stream.of(x),
+//                        (current, step) -> step.nodes(current),
+//                        Stream::concat
+//                    );
+//                }
+//            );
+//
+
+//            return xml.flatMap(
+//                x -> {
+//                    return this.steps.stream().reduce(
+//                        Stream.of(x),
+//                        (current, step) -> step.nodes(current),
+//                        Stream::concat
+//                    );
+//                }
+//            );
+//
+//
+//            return xml.flatMap(
+//                x -> this.steps.stream().reduce(
+//                    Stream.of(x),
+//                    (current, step) -> current.flatMap(y -> step.nodes(Stream.of(y))),
+//                    Stream::concat
+//                )
+//            );
+
+//            return this.steps.stream().reduce(
+//                xml,
+//                (current, step) -> current.flatMap(step::nodes),
+//                Stream::concat
+//            );
         }
     }
 
@@ -214,8 +290,26 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
-            return xml.children().filter(Filter.withName(this.name));
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.flatMap(Xml::children).filter(Filter.withName(this.name));
+        }
+    }
+
+    private static final class NumberExpression implements XpathNode {
+
+        private final int number;
+
+        public NumberExpression(final int number) {
+            this.number = number;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            final Stream<Xml> res = xml
+                .peek(System.out::println)
+                .skip(this.number - 1);
+            final List<Xml> sub = res.collect(Collectors.toList());
+            return sub.stream();
         }
     }
 
@@ -243,8 +337,10 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
-            return xml.attribute(this.name).stream();
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.map(x -> x.attribute(this.name))
+                .filter(Optional::isPresent)
+                .map(Optional::get);
         }
     }
 
@@ -261,7 +357,7 @@ final class Xpath {
          * @param xml The XML document.
          * @return XML nodes that match the XPath.
          */
-        Stream<Xml> nodes(Xml xml);
+        Stream<Xml> nodes(Stream<Xml> xml);
     }
 
     /**
@@ -294,7 +390,7 @@ final class Xpath {
          */
         private XPathLexer(final String path) {
             this.path = path;
-            this.trace = false;
+            this.trace = true;
         }
 
         /**
@@ -400,6 +496,21 @@ final class Xpath {
          * At.
          */
         AT("@"),
+
+        /**
+         * Left bracket.
+         */
+        LBRACKET("\\["),
+
+        /**
+         * Right bracket.
+         */
+        RBRACKET("\\]"),
+
+        /**
+         * Number.
+         */
+        NUMBER("[0-9]+"),
 
         /**
          * Name.
