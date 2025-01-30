@@ -84,7 +84,7 @@ final class XpathTest {
             "We expect to find the second element",
             new Xpath(
                 new Xml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
-                "/zoo/animal/[2]"
+                "/zoo/animal[2]"
             ).nodes().findFirst().orElseThrow(),
             Matchers.equalTo(new Xml("<animal>dog</animal>").child("animal"))
         );

@@ -127,13 +127,15 @@ final class Xpath {
             final XpathNode result;
             final Token token = this.consume();
             if (token.type == Type.NAME) {
-                result = new Step(token.lexeme());
+                XpathNode step = new Step(token.lexeme());
+                if (!this.eof() && this.tokens.get(this.pos).type == Type.LBRACKET) {
+                    this.consume();
+                    step = new RelativePath(step, this.parseExpression());
+                    this.consume();
+                }
+                result = step;
             } else if (token.type == Type.AT) {
                 result = new Attribute(this.consume().text);
-            } else if (token.type == Type.LBRACKET) {
-                final XpathNode predicate = this.parseExpression();
-                this.consume();
-                result = predicate;
             } else {
                 throw new IllegalStateException(
                     String.format("Expected one more step, but got %s", token)
@@ -188,6 +190,10 @@ final class Xpath {
          * Steps.
          */
         private final List<XpathNode> steps;
+
+        private RelativePath(final XpathNode... nodes) {
+            this(Arrays.asList(nodes));
+        }
 
         /**
          * Constructor.
