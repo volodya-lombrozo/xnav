@@ -167,12 +167,15 @@ final class Xpath {
         }
 
         private XpathNode parseSingleExpression() {
-            final Token token = this.consume();
-            if (token.type == Type.NUMBER) {
+            final Token current = this.peek();
+            if (current.type == Type.NUMBER) {
+                final Token token = this.consume();
                 return new NumberExpression(Integer.parseInt(token.lexeme()));
-            } else if (token.type == Type.AT) {
+            } else if (current.type == Type.AT) {
+                this.consume();
                 return this.parseAttributeExpression();
-            } else if (token.type == Type.NAME) {
+            } else if (current.type == Type.NAME) {
+                final Token token = this.consume();
                 final XpathFunction func = this.parseFunction(token.text);
                 final Token eq = this.consume();// consume '='
                 if (eq.type == Type.EQUALS) {
@@ -193,7 +196,7 @@ final class Xpath {
                 }
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected number, but got %s", token)
+                    String.format("Expected number, but got %s", current)
                 );
             }
         }
@@ -204,9 +207,11 @@ final class Xpath {
             this.consume(); // Consume ')'
             if ("text".equals(name)) {
                 return new Text();
+//            } else if ("not".equals(name)) {
+//                return new Not();
             } else {
                 throw new IllegalStateException(
-                    String.format("Unknown function %s", name)
+                    String.format("Unknown function '%s'", name)
                 );
             }
         }
@@ -238,6 +243,15 @@ final class Xpath {
             final Token token = this.tokens.get(this.pos);
             this.pos = this.pos + 1;
             return token;
+        }
+
+        /**
+         * Peek at the current token.
+         *
+         * @return Current token.
+         */
+        private Token peek() {
+            return this.tokens.get(this.pos);
         }
 
         /**
@@ -362,8 +376,22 @@ final class Xpath {
 
     private interface XpathFunction {
 
-        String execute(Xml xml);
+        Object execute(Xml xml);
 
+    }
+
+    private class Not implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public Not(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return !((boolean) this.original.execute(xml));
+        }
     }
 
     private class Text implements XpathFunction {

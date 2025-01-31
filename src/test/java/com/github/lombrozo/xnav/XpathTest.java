@@ -184,9 +184,23 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByInversion() {
+        MatcherAssert.assertThat(
+            "We expect to find the element by inversion",
+            new Xpath(
+                new DomXml(
+                    "<films><film>inception</film><film>interstellar</film></films>"
+                ),
+                "/films/film[not(text()='inception')]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("interstellar")
+        );
+    }
+
 
     @ParameterizedTest
-    @MethodSource({"xpaths", "attributeFilters", "binaryOperators"})
+    @MethodSource({"xpaths", "attributeFilters", "binaryOperators", "inversion"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -306,6 +320,29 @@ final class XpathTest {
             {"/building/room[@height='200' or text()='pantry']", xml, pantry},
             {"/building/room[@height='100' or text()='balcony']", xml, ""},
         };
+    }
 
+    /**
+     * Arguments for the test.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] inversion() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<school>",
+                "  <class people='23'>A</class>",
+                "  <class people='30'>B</class>",
+                "  <class people='25' ill='1'>C</class>",
+                "</school>"
+            )
+        );
+        return new Object[][]{
+            {"/school/class[not(@ill)]", xml, "A"},
+            {"/school/class[not(@people)]", xml, ""},
+            {"/school/class[not(@ill='1')]", xml, "A"},
+            {"/school/class[not(text()='A' or text()='B')]", xml, "C"}
+        };
     }
 }
