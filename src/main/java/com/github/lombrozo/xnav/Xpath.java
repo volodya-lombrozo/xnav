@@ -148,12 +148,30 @@ final class Xpath {
             if (token.type == Type.NUMBER) {
                 return new NumberExpression(Integer.parseInt(token.lexeme()));
             } else if (token.type == Type.AT) {
-                return new AttributeExpession(this.consume().text);
+                return parseAttributeExpression();
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", token)
                 );
             }
+        }
+
+        private XpathNode parseAttributeExpression() {
+            final Token consumed = this.consume();
+            if (this.eof() || this.tokens.get(this.pos).type != Type.EQUALS) {
+                return new AttributeExpession(consumed.text);
+            }
+            this.consume();
+            final Token value = this.consume();
+            if (value.type != Type.VALUE) {
+                throw new IllegalStateException(
+                    String.format("Expected value, but got %s", value)
+                );
+            }
+            return new AttributeEqualityExperssion(
+                consumed.text,
+                value.text.substring(1, value.text.length() - 1)
+            );
         }
 
         /**
@@ -284,6 +302,22 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.filter(Filter.hasAttribute(this.name));
+        }
+    }
+
+    private class AttributeEqualityExperssion implements XpathNode {
+
+        private final String attribute;
+        private final String value;
+
+        public AttributeEqualityExperssion(final String attribute, final String value) {
+            this.attribute = attribute;
+            this.value = value;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(Filter.withAttribute(this.attribute, this.value));
         }
     }
 
@@ -485,6 +519,16 @@ final class Xpath {
          * Number.
          */
         NUMBER("[0-9]+"),
+
+        /**
+         * Equals sign.
+         */
+        EQUALS("="),
+
+        /**
+         * Quoted value.
+         */
+        VALUE("'[^']*'|\"[^\"]*\""),
 
         /**
          * Name.

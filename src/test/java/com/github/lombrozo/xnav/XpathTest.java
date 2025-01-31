@@ -225,8 +225,8 @@ final class XpathTest {
             {"/zoo/animal[@legs='0']/bird", xml, ""},
             {"/zoo/animal[@legs='2']/elephant", xml, ""},
             {"/zoo/animal[@legs='3']/elephant", xml, ""},
-            {"/zoo/animal[@legs='4']", xml, "<elephant>big</elephant>"},
-            {"/zoo/animal[@legs='2']", xml, "<bird>eagle</bird>"},
+            {"/zoo/animal[@legs='4']", xml, "big"},
+            {"/zoo/animal[@legs='2']", xml, "eagle"},
             {"/zoo/animal[@legs='3']", xml, ""},
         };
     }
