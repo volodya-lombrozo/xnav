@@ -349,7 +349,7 @@ SOFTWARE.
               <dependency>
                 <groupId>com.github.volodya-lombrozo</groupId>
                 <artifactId>xnav</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
               </dependency>
               <dependency>
                 <groupId>org.dom4j</groupId>

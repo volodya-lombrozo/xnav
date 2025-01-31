@@ -41,11 +41,11 @@ final class XpathTest {
     void retrievesElement() {
         MatcherAssert.assertThat(
             "We expect to retrieve the child element correctly",
-            new Xpath(new Xml("<animal><cat/></animal>"), "/animal/cat")
+            new Xpath(new DomXml("<animal><cat/></animal>"), "/animal/cat")
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
-            Matchers.equalTo(new Xml("<cat/>").child("cat"))
+            Matchers.equalTo(new DomXml("<cat/>").child("cat"))
         );
     }
 
@@ -54,11 +54,11 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to retrieve the attribute correctly",
             new Xpath(
-                new Xml("<building><room number='100'/></building>"),
+                new DomXml("<building><room number='100'/></building>"),
                 "/building/room/@number"
             ).nodes().findFirst().orElseThrow(),
             Matchers.equalTo(
-                new Xml("<room number='100'/>")
+                new DomXml("<room number='100'/>")
                     .child("room")
                     .attribute("number")
                     .orElseThrow()
@@ -70,7 +70,7 @@ final class XpathTest {
     void doesNotFindElement() {
         MatcherAssert.assertThat(
             "We expect to not find the element",
-            new Xpath(new Xml("<animal><cat/></animal>"), "/program/objects/o/@base")
+            new Xpath(new DomXml("<animal><cat/></animal>"), "/program/objects/o/@base")
                 .nodes()
                 .findFirst()
                 .isEmpty(),
@@ -80,7 +80,7 @@ final class XpathTest {
 
     @ParameterizedTest
     @MethodSource("xpaths")
-    void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
+    void checksManyXpaths(final String xpath, final DomXml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
             new Xpath(xml, xpath).nodes().findFirst().orElseThrow().text().orElseThrow(),
@@ -94,7 +94,7 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] xpaths() {
-        final Xml xml = new Xml(
+        final DomXml xml = new DomXml(
             "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'/></animal></zoo>"
         );
         return new Object[][]{
