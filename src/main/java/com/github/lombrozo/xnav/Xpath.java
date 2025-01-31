@@ -127,7 +127,7 @@ final class Xpath {
             final Token token = this.consume();
             if (token.type == Type.NAME) {
                 XpathNode step = new Step(token.lexeme());
-                if (!this.eof() && this.tokens.get(this.pos).type == Type.LBRACKET) {
+                while (!this.eof() && this.tokens.get(this.pos).type == Type.LBRACKET) {
                     this.consume();
                     step = new RelativePath(step, this.parseExpression());
                     this.consume();

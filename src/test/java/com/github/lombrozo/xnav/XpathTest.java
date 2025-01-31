@@ -137,7 +137,7 @@ final class XpathTest {
                     "<parking><car>audi</car><car number='1'>bmw</car><car number='1'>kia</car></parking>"
                 ),
                 "/parking/car[@number][2]"
-            ).nodes().findFirst().map(Xml::text).orElseThrow(),
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
             Matchers.equalTo("kia")
         );
     }
@@ -201,8 +201,8 @@ final class XpathTest {
             )
         );
         return new Object[][]{
-            {"/zoo/animal[@legs][1]", xml, "elephant"},
-            {"/zoo/animal[@legs][2]", xml, "bird"},
+            {"/zoo/animal[@legs][1]", xml, "big"},
+            {"/zoo/animal[@legs][2]", xml, "eagle"},
             {"/zoo/animal[@legs][3]", xml, ""},
             {"/zoo/animal[@legs='4']/elephant", xml, "big"},
             {"/zoo/animal[@legs='2']/bird", xml, "eagle"},
