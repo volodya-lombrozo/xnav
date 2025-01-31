@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -171,9 +172,41 @@ final class Xpath {
                 return new NumberExpression(Integer.parseInt(token.lexeme()));
             } else if (token.type == Type.AT) {
                 return this.parseAttributeExpression();
+            } else if (token.type == Type.NAME) {
+                final XpathFunction func = this.parseFunction(token.text);
+                final Token eq = this.consume();// consume '='
+                if (eq.type == Type.EQUALS) {
+                    final Token value = this.consume();
+                    if (value.type != Type.VALUE) {
+                        throw new IllegalStateException(
+                            String.format("Expected value, but got %s", value)
+                        );
+                    }
+                    return new EqualityExpression(
+                        func,
+                        value.text.substring(1, value.text.length() - 1)
+                    );
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected '=', but got %s", eq)
+                    );
+                }
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", token)
+                );
+            }
+        }
+
+        private XpathFunction parseFunction(String name) {
+            this.consume(); // Consume '('
+            //todo: params
+            this.consume(); // Consume ')'
+            if ("text".equals(name)) {
+                return new Text();
+            } else {
+                throw new IllegalStateException(
+                    String.format("Unknown function %s", name)
                 );
             }
         }
@@ -327,6 +360,38 @@ final class Xpath {
         }
     }
 
+    private interface XpathFunction {
+
+        String execute(Xml xml);
+
+    }
+
+    private class Text implements XpathFunction {
+
+        @Override
+        public String execute(final Xml xml) {
+            return xml.text().orElseThrow(
+                () -> new IllegalStateException("Text not found")
+            );
+        }
+    }
+
+    private class EqualityExpression implements XpathNode {
+
+        private final XpathFunction function;
+        private final String value;
+
+        public EqualityExpression(final XpathFunction function, final String value) {
+            this.function = function;
+            this.value = value;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(x -> this.function.execute(x).equals(this.value));
+        }
+    }
+
     private class AttributeEqualityExperssion implements XpathNode {
 
         private final String attribute;
@@ -408,6 +473,7 @@ final class Xpath {
                 .map(Optional::get);
         }
     }
+
 
     /**
      * Interface for a node in the XPath.
@@ -561,6 +627,16 @@ final class Xpath {
          * At.
          */
         AT("@"),
+
+        /**
+         * Left parenthesis.
+         */
+        LPAREN("\\("),
+
+        /**
+         * Right parenthesis.
+         */
+        RPAREN("\\)"),
 
         /**
          * Left bracket.

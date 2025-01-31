@@ -170,6 +170,21 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByText() {
+        MatcherAssert.assertThat(
+            "We expect to find the element by text",
+            new Xpath(
+                new DomXml(
+                    "<films><film>matrix</film><film>inception</film><film>interstellar</film></films>"
+                ),
+                "/films/film[text()='inception']"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("inception")
+        );
+    }
+
+
     @ParameterizedTest
     @MethodSource({"xpaths", "attributeFilters", "binaryOperators"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
@@ -270,7 +285,6 @@ final class XpathTest {
             {"/building/room[@height='300' and @width='600']", xml, ""},
             {"/building/room[@height='400' and @width='700']", xml, ""},
             {"/building/room[@height='200' and @width]", xml, pantry},
-
             {"/building/room[@height='400' or @width='600']", xml, canteen},
             {"/building/room[@height='300' or @width='700']", xml, bedroom},
             {"/building/room[@height='200' or @width='800']", xml, pantry},
@@ -278,7 +292,6 @@ final class XpathTest {
             {"/building/room[@height='400' or @width='700']", xml, canteen},
             {"/building/room[@height='200' or @width]", xml, canteen},
             {"/building/room[@height='200' or @length]", xml, pantry},
-
             {"/building/room[@height='400' and text()='canteen']", xml, canteen},
             {"/building/room[@height='300' and text()='bedroom']", xml, bedroom},
             {"/building/room[@height='200' and text()='pantry']", xml, pantry},
