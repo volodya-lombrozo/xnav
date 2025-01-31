@@ -221,8 +221,49 @@ final class Xpath {
             }
             if (this.peek().type == Type.EQUALS) {
                 return this.parseEqualityExpression(result);
+            } else if (this.peek().type == Type.GT) {
+                return this.parseGreaterThanExpression(result);
+            } else if (this.peek().type == Type.LT) {
+                return this.parseLessThanExpression(result);
+            } else {
+                return result;
             }
-            return result;
+        }
+
+        private XpathFunction parseLessThanExpression(final XpathFunction result) {
+            final Token lt = this.consume();
+            if (lt.type == Type.LT) {
+                if (this.peek().type == Type.NUMBER) {
+                    final Token value = this.consume();
+                    return new LessThanExpression(result, Integer.parseInt(value.text));
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected number, but got %s", lt)
+                    );
+                }
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '<', but got %s", lt)
+                );
+            }
+        }
+
+        private XpathFunction parseGreaterThanExpression(final XpathFunction result) {
+            final Token gt = this.consume();
+            if (gt.type == Type.GT) {
+                if (this.peek().type == Type.NUMBER) {
+                    final Token value = this.consume();
+                    return new GreaterThanExpression(result, Integer.parseInt(value.text));
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected number, but got %s", gt)
+                    );
+                }
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '>', but got %s", gt)
+                );
+            }
         }
 
         private XpathFunction parseEqualityExpression(XpathFunction original) {
@@ -480,6 +521,38 @@ final class Xpath {
         @Override
         public Object execute(final Xml xml) {
             return this.function.execute(xml).equals(this.value);
+        }
+    }
+
+    private class GreaterThanExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final int right;
+
+        public GreaterThanExpression(final XpathFunction left, final int right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (int) this.left.execute(xml) > this.right;
+        }
+    }
+
+    private class LessThanExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final int right;
+
+        public LessThanExpression(final XpathFunction left, final int right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (int) this.left.execute(xml) < right;
         }
     }
 
@@ -745,6 +818,16 @@ final class Xpath {
          * Number.
          */
         NUMBER("[0-9]+"),
+
+        /**
+         * Less than sign.
+         */
+        LT("\\<"),
+
+        /**
+         * Greater than sign.
+         */
+        GT("\\>"),
 
         /**
          * Equals sign.
