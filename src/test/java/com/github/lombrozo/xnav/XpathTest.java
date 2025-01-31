@@ -198,8 +198,37 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByStringLength() {
+        MatcherAssert.assertThat(
+            "We expect to find the element where string-length is greater than 3",
+            new Xpath(
+                new DomXml(
+                    "<words><word>abc</word><word>hello</word><word>xy</word></words>"
+                ),
+                "/words/word[string-length(text()) > 3]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("hello")
+        );
+    }
+
+    @Test
+    void findsByExactStringLength() {
+        MatcherAssert.assertThat(
+            "We expect to find the element where string-length is exactly 5",
+            new Xpath(
+                new DomXml(
+                    "<words><word>hello</word><word>abc</word><word>12345</word></words>"
+                ),
+                "/words/word[string-length(text()) = 5]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("hello")
+        );
+    }
+
+
     @ParameterizedTest
-    @MethodSource({"xpaths", "attributeFilters", "binaryOperators", "inversion"})
+    @MethodSource({"xpaths", "attributeFilters", "binaryOperators", "inversion", "stringLength"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -344,4 +373,23 @@ final class XpathTest {
             {"/school/class[not(text()='A' or text()='B')]", xml, "C"}
         };
     }
+
+    /**
+     * Arguments for string-length() tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] stringLength() {
+        final Xml xml = new DomXml(
+            "<words>  <word>hi</word>  <word>hello</word>  <word>bye</word>  <word>greetings</word></words>"
+        );
+        return new Object[][]{
+            {"/words/word[string-length(text()) > 3]", xml, "hello"},
+            {"/words/word[string-length(text()) = 2]", xml, "hi"},
+            {"/words/word[string-length(text()) < 4]", xml, "hi"},
+            {"/words/word[string-length(text()) = 9]", xml, "greetings"},
+            {"/words/word[string-length(text()) > 10]", xml, ""},
+        };
+    }
+
 }
