@@ -226,8 +226,43 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByNormalizeSpace() {
+        MatcherAssert.assertThat(
+            "We expect to find the element after removing leading and trailing spaces",
+            new Xpath(
+                new DomXml(
+                    "<messages><message> hel   lo </message><message>world</message><message>   trimmed   </message></messages>"
+                ),
+                "/messages/message[normalize-space(text()) = 'hel lo']"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo(" hel   lo ")
+        );
+    }
+
+    @Test
+    void findsByNormalizeSpaceAndStringLength() {
+        MatcherAssert.assertThat(
+            "We expect to find elements with non-empty normalized text",
+            new Xpath(
+                new DomXml(
+                    "<messages><message> </message><message> nonempty </message><message>   </message></messages>"
+                ),
+                "/messages/message[string-length(normalize-space(text())) > 0]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo(" nonempty ")
+        );
+    }
+
     @ParameterizedTest
-    @MethodSource({"xpaths", "attributeFilters", "binaryOperators", "inversion", "stringLength"})
+    @MethodSource({
+        "xpaths",
+        "attributeFilters",
+        "binaryOperators",
+        "inversion",
+        "stringLength",
+        "normalizeSpace"}
+    )
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -388,6 +423,28 @@ final class XpathTest {
             {"/words/word[string-length(text()) < 4]", xml, "hi"},
             {"/words/word[string-length(text()) = 9]", xml, "greetings"},
             {"/words/word[string-length(text()) > 10]", xml, ""},
+        };
+    }
+
+    /**
+     * Arguments for normalize-space() tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] normalizeSpace() {
+        final Xml xml = new DomXml(
+            "<messages>" +
+                "  <message> hello </message>" +
+                "  <message>  world   </message>" +
+                "  <message> </message>" +
+                "  <message>   trimmed   </message>" +
+                "</messages>"
+        );
+        return new Object[][]{
+            {"/messages/message[normalize-space(text()) = 'hello']", xml, " hello "},
+            {"/messages/message[normalize-space(text()) = 'world']", xml, "  world   "},
+            {"/messages/message[normalize-space(text()) = '']", xml, " "},
+            {"/messages/message[string-length(normalize-space(text())) > 0]", xml, " hello "},
         };
     }
 

@@ -214,6 +214,11 @@ final class Xpath {
                 final XpathFunction arg = this.parseExpression();
                 this.consume(); // Consume ')'
                 result = new StringLength(arg);
+            } else if ("normalize-space".equals(name)) {
+                this.consume(); // Consume '('
+                final XpathFunction arg = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new NormalizeSpace(arg);
             } else {
                 throw new IllegalStateException(
                     String.format("Unknown function '%s'", name)
@@ -271,9 +276,10 @@ final class Xpath {
             if (eq.type == Type.EQUALS) {
                 final Token value = this.consume();
                 if (value.type == Type.VALUE) {
+                    final String substring = value.text.substring(1, value.text.length() - 1);
                     return new EqualityExpression(
                         original,
-                        value.text.substring(1, value.text.length() - 1)
+                        substring
                     );
                 } else if (value.type == Type.NUMBER) {
                     return new EqualityExpression(
@@ -498,6 +504,20 @@ final class Xpath {
         }
     }
 
+    private class NormalizeSpace implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public NormalizeSpace(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return String.valueOf(this.original.execute(xml)).trim().replaceAll(" +", " ");
+        }
+    }
+
     private class Text implements XpathFunction {
 
         @Override
@@ -520,7 +540,8 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return this.function.execute(xml).equals(this.value);
+            final Object execute = this.function.execute(xml);
+            return execute.equals(this.value);
         }
     }
 
