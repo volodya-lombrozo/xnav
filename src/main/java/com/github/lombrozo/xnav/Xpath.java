@@ -144,11 +144,33 @@ final class Xpath {
         }
 
         private XpathNode parseExpression() {
+            final XpathNode left = this.parseSingleExpression();
+            if (this.eof()) {
+                return left;
+            }
+            final Type current = this.tokens.get(this.pos).type;
+            if (current == Type.AND || current == Type.OR) {
+                final Token token = this.consume();
+                if (token.type == Type.AND) {
+                    return new AndExpression(left, this.parseExpression());
+                } else if (token.type == Type.OR) {
+                    return new OrExpression(left, this.parseExpression());
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected AND or OR, but got %s", token)
+                    );
+                }
+            } else {
+                return left;
+            }
+        }
+
+        private XpathNode parseSingleExpression() {
             final Token token = this.consume();
             if (token.type == Type.NUMBER) {
                 return new NumberExpression(Integer.parseInt(token.lexeme()));
             } else if (token.type == Type.AT) {
-                return parseAttributeExpression();
+                return this.parseAttributeExpression();
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", token)
@@ -318,6 +340,41 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.filter(Filter.withAttribute(this.attribute, this.value));
+        }
+    }
+
+    private static class AndExpression implements XpathNode {
+
+        private final XpathNode left;
+        private final XpathNode right;
+
+        public AndExpression(final XpathNode left, final XpathNode right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return this.right.nodes(this.left.nodes(xml));
+        }
+    }
+
+    private static class OrExpression implements XpathNode {
+
+        private final XpathNode left;
+        private final XpathNode right;
+
+        public OrExpression(final XpathNode left, final XpathNode right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(
+                x -> this.left.nodes(Stream.of(x)).findAny().isPresent() ||
+                    this.right.nodes(Stream.of(x)).findAny().isPresent()
+            );
         }
     }
 
@@ -529,6 +586,16 @@ final class Xpath {
          * Quoted value.
          */
         VALUE("'[^']*'|\"[^\"]*\""),
+
+        /**
+         * And operator.
+         */
+        AND("and|AND"),
+
+        /**
+         * Or operator.
+         */
+        OR("or|OR"),
 
         /**
          * Name.
