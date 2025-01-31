@@ -304,7 +304,7 @@ final class XpathTest {
             {"/building/room[@height='500' or text()='canteen']", xml, canteen},
             {"/building/room[@height='300' or text()='balcony']", xml, bedroom},
             {"/building/room[@height='200' or text()='pantry']", xml, pantry},
-            {"/building/room[@height='200' or text()='balcony']", xml, ""},
+            {"/building/room[@height='100' or text()='balcony']", xml, ""},
         };
 
     }
