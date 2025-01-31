@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -125,23 +124,37 @@ final class Xpath {
          */
         XpathNode step() {
             final XpathNode result;
-            final Token token = this.consume();
-            if (token.type == Type.NAME) {
-                XpathNode step = new Step(token.lexeme());
-                while (!this.eof() && this.tokens.get(this.pos).type == Type.LBRACKET) {
-                    this.consume();
-                    step = new RelativePath(step, this.parseExpression());
-                    this.consume();
-                }
-                result = step;
-            } else if (token.type == Type.AT) {
+            final Token current = this.peek();
+            if (current.type == Type.NAME) {
+                result = this.parsePredicatedStep();
+            } else if (current.type == Type.AT) {
+                this.consume();
                 result = new Attribute(this.consume().text);
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected one more step, but got %s", token)
+                    String.format("Expected one more step, but got %s", current)
                 );
             }
             return result;
+        }
+
+        private XpathNode parsePredicatedStep() {
+            final Token token = this.consume();
+            XpathNode step = new Step(token.lexeme());
+            while (!this.eof() && this.peek().type == Type.LBRACKET) {
+                this.consume();
+                if (this.peek().type == Type.NUMBER) {
+                    final String lexeme = this.consume().lexeme();
+                    step = new RelativePath(
+                        step,
+                        new NumberExpression(Integer.parseInt(lexeme))
+                    );
+                } else {
+                    step = new RelativePath(step, this.parseExpression());
+                }
+                this.consume();
+            }
+            return step;
         }
 
         private XpathNode parseExpression() {
@@ -168,15 +181,11 @@ final class Xpath {
 
         private XpathNode parseSingleExpression() {
             final Token current = this.peek();
-            if (current.type == Type.NUMBER) {
-                final Token token = this.consume();
-                return new NumberExpression(Integer.parseInt(token.lexeme()));
-            } else if (current.type == Type.AT) {
+            if (current.type == Type.AT) {
                 this.consume();
                 return this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
-                final Token token = this.consume();
-                final XpathFunction func = this.parseFunction(token.text);
+                final XpathFunction func = this.parseFunction();
                 final Token eq = this.consume();// consume '='
                 if (eq.type == Type.EQUALS) {
                     final Token value = this.consume();
@@ -201,14 +210,15 @@ final class Xpath {
             }
         }
 
-        private XpathFunction parseFunction(String name) {
-            this.consume(); // Consume '('
-            //todo: params
-            this.consume(); // Consume ')'
+        private XpathFunction parseFunction() {
+            final Token token = this.consume();
+            final String name = token.text;
             if ("text".equals(name)) {
+                this.consume(); // Consume '('
+                this.consume(); // Consume ')'
                 return new Text();
-//            } else if ("not".equals(name)) {
-//                return new Not();
+            } else if ("not".equals(name)) {
+                return new Not(this.parseFunction());
             } else {
                 throw new IllegalStateException(
                     String.format("Unknown function '%s'", name)
@@ -299,6 +309,20 @@ final class Xpath {
                 (current, step) -> step.nodes(current),
                 Stream::concat
             );
+        }
+    }
+
+    private static class Predicated implements XpathNode {
+
+        private final XpathFunction predicate;
+
+        public Predicated(final XpathFunction predicate) {
+            this.predicate = predicate;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(x -> (boolean) this.predicate.execute(x));
         }
     }
 
@@ -401,6 +425,22 @@ final class Xpath {
             return xml.text().orElseThrow(
                 () -> new IllegalStateException("Text not found")
             );
+        }
+    }
+
+    private class EqualityFuntion implements XpathFunction {
+
+        private final XpathFunction function;
+        private final String value;
+
+        public EqualityFuntion(final XpathFunction function, final String value) {
+            this.function = function;
+            this.value = value;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return this.function.execute(xml).equals(this.value);
         }
     }
 
