@@ -85,10 +85,10 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the second element",
             new Xpath(
-                new Xml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
+                new DomXml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
                 "/zoo/animal[2]"
             ).nodes().findFirst().orElseThrow(),
-            Matchers.equalTo(new Xml("<animal>dog</animal>").child("animal"))
+            Matchers.equalTo(new DomXml("<animal>dog</animal>").child("animal"))
         );
     }
 
@@ -97,7 +97,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the second element",
             new Xpath(
-                new Xml("<zoo><animal><cat/></animal><animal><pig/></animal></zoo>"),
+                new DomXml("<zoo><animal><cat/></animal><animal><pig/></animal></zoo>"),
                 "/zoo/animal[1]/pig"
             ).nodes().findFirst().isPresent(),
             Matchers.is(false)
@@ -109,7 +109,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the third element",
             new Xpath(
-                new Xml("<zoo><animal>rabbit</animal><animal>elephant</animal></zoo>"),
+                new DomXml("<zoo><animal>rabbit</animal><animal>elephant</animal></zoo>"),
                 "/zoo/animal[3]"
             ).nodes().collect(Collectors.toList()),
             Matchers.empty()
@@ -163,7 +163,7 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] attributeFilters() {
-        final Xml xml = new Xml(
+        final Xml xml = new DomXml(
             String.join(
                 "\n",
                 "<zoo>",
@@ -172,7 +172,6 @@ final class XpathTest {
                 "  <animal legs='2'><bird>eagle</bird></animal>",
                 "</zoo>"
             )
-
         );
         return new Object[][]{
             {"/zoo/anima[@legs][1]", xml, "elephant"},
