@@ -142,6 +142,20 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByAttributeEquality() {
+        MatcherAssert.assertThat(
+            "We expect to find the element by attribute equality expression",
+            new Xpath(
+                new DomXml(
+                    "<parking><car number='1'>audi</car><car number='2'>bmw</car></parking>"
+                ),
+                "/parking/car[@number='2']"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("bmw")
+        );
+    }
+
 
     @ParameterizedTest
     @MethodSource({"xpaths", "attributeFilters"})
