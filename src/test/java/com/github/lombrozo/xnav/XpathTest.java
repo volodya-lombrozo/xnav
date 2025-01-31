@@ -254,6 +254,20 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByParenthesesWithOrOperator() {
+        MatcherAssert.assertThat(
+            "We expect to find the correct element using parentheses with OR operator",
+            new Xpath(
+                new DomXml(
+                    "<values><val type='X'>apple</val><val type='Y'>banana</val><val type='X'>cherry</val></values>"
+                ),
+                "/values/val[(text()='apple' or text()='banana') and @type='X']"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("apple")
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({
         "xpaths",
@@ -261,8 +275,9 @@ final class XpathTest {
         "binaryOperators",
         "inversion",
         "stringLength",
-        "normalizeSpace"}
-    )
+        "normalizeSpace",
+        "parentheses"
+    })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -445,6 +460,28 @@ final class XpathTest {
             {"/messages/message[normalize-space(text()) = 'world']", xml, "  world   "},
             {"/messages/message[normalize-space(text()) = '']", xml, " "},
             {"/messages/message[string-length(normalize-space(text())) > 0]", xml, " hello "},
+        };
+    }
+
+
+    /**
+     * Arguments for parentheses () precedence tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] parentheses() {
+        final Xml xml = new DomXml(
+            "<values>" +
+                "  <val type='A' active='true'>one</val>" +
+                "  <val type='B' active='false'>two</val>" +
+                "  <val type='A' active='false'>three</val>" +
+                "</values>"
+        );
+        return new Object[][]{
+            {"/values/val[(string-length(text()) > 3) and @active='false']", xml, "three"},
+            {"/values/val[(@active='true') and (@type='A')]", xml, "one"},
+            {"/values/val[(text()='one' or text()='three') and @type='A']", xml, "one"},
+            {"/values/val[(text()='one' or text()='three') and @type='B']", xml, ""},
         };
     }
 
