@@ -30,16 +30,17 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link Xnav}.
+ * Test case for {@link DomXml}.
+ *
  * @since 0.1
  */
-final class XmlTest {
+final class DomXmlTest {
 
     @Test
     void convertsDocumentToString() {
         MatcherAssert.assertThat(
             "Document is not converted to string",
-            new Xml("<doc></doc>").toString(),
+            new DomXml("<doc></doc>").toString(),
             Matchers.equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc/>")
         );
     }
@@ -48,7 +49,7 @@ final class XmlTest {
     void convertsNodeToString() {
         MatcherAssert.assertThat(
             "Node is not converted to string",
-            new Xml("<doc><node>text</node></doc>").child("doc").child("node").toString(),
+            new DomXml("<doc><node>text</node></doc>").child("doc").child("node").toString(),
             Matchers.equalTo("<node>text</node>")
         );
     }
@@ -57,7 +58,7 @@ final class XmlTest {
     void failsToCreateCorruptedDocument() {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new Xml("<doc..."),
+            () -> new DomXml("<doc..."),
             "Corrupted document is not created, exception is expected"
         );
     }
@@ -66,20 +67,20 @@ final class XmlTest {
     void retrievesChildren() {
         MatcherAssert.assertThat(
             "Children are not retrieved",
-            new Xml("<doc><node>first</node><node>second</node></doc>")
+            new DomXml("<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                new Xml("<node>first</node>").child("node"),
-                new Xml("<node>second</node>").child("node")
+                new DomXml("<node>first</node>").child("node"),
+                new DomXml("<node>second</node>").child("node")
             )
         );
     }
 
     @Test
     void copiesNode() {
-        final Xml xml = new Xml("<doc><node>text</node></doc>");
+        final DomXml xml = new DomXml("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
             "Node is not copied",
             xml.copy().toString(),
@@ -91,7 +92,7 @@ final class XmlTest {
     void retrievesNode() {
         MatcherAssert.assertThat(
             "We expect the node to be retrieved",
-            new Xml("<doc><node attr='value'>text</node></doc>")
+            new DomXml("<doc><node attr='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .node()

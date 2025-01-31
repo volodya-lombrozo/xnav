@@ -73,7 +73,7 @@ public final class Xnav {
      * @param join XML document as a string.
      */
     public Xnav(final String join) {
-        this(new Xml(join));
+        this(new DomXml(join));
     }
 
     /**
@@ -82,7 +82,7 @@ public final class Xnav {
      * @param node XML document node.
      */
     public Xnav(final Node node) {
-        this(new Xml(node));
+        this(new DomXml(node));
     }
 
     /**
@@ -175,7 +175,7 @@ public final class Xnav {
      */
     private static Xml from(final Path file) {
         try {
-            return new Xml(Files.readString(file));
+            return new DomXml(Files.readString(file));
         } catch (final IOException exception) {
             throw new IllegalStateException(
                 String.format("Failed to read file '%s'", file),
