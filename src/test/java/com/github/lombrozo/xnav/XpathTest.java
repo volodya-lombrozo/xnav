@@ -116,6 +116,33 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void retrievesSingleElementWithAttribute() {
+        MatcherAssert.assertThat(
+            "We expect to retrieve the single element with attribute",
+            new Xpath(
+                new DomXml("<parking><car/><car number='1'/><car/></parking>"),
+                "/parking/car[@number]"
+            ).nodes().count(),
+            Matchers.equalTo(1L)
+        );
+    }
+
+    @Test
+    void retrievesSecondEelementWithAttribute() {
+        MatcherAssert.assertThat(
+            "We expect to retrieve the second element with attribute",
+            new Xpath(
+                new DomXml(
+                    "<parking><car>audi</car><car number='1'>bmw</car><car number='1'>kia</car></parking>"
+                ),
+                "/parking/car[@number][2]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow(),
+            Matchers.equalTo("kia")
+        );
+    }
+
+
     @ParameterizedTest
     @MethodSource({"xpaths", "attributeFilters"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
@@ -174,7 +201,7 @@ final class XpathTest {
             )
         );
         return new Object[][]{
-            {"/zoo/anima[@legs][1]", xml, "elephant"},
+            {"/zoo/animal[@legs][1]", xml, "elephant"},
             {"/zoo/animal[@legs][2]", xml, "bird"},
             {"/zoo/animal[@legs][3]", xml, ""},
             {"/zoo/animal[@legs='4']/elephant", xml, "big"},

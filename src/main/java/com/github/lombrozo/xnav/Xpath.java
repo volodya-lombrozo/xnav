@@ -147,6 +147,8 @@ final class Xpath {
             final Token token = this.consume();
             if (token.type == Type.NUMBER) {
                 return new NumberExpression(Integer.parseInt(token.lexeme()));
+            } else if (token.type == Type.AT) {
+                return new AttributeExpession(this.consume().text);
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", token)
@@ -268,6 +270,20 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.skip(this.index - 1).findFirst().stream();
+        }
+    }
+
+    private class AttributeExpession implements XpathNode {
+
+        private final String name;
+
+        public AttributeExpession(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(Filter.hasAttribute(this.name));
         }
     }
 
