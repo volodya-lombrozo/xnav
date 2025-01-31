@@ -156,9 +156,22 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByAndOperator() {
+        MatcherAssert.assertThat(
+            "We expect to find the element by AND operator",
+            new Xpath(
+                new DomXml(
+                    "<parking><car number='1'>audi</car><car number='1' wheels='4'>bmw</car></parking>"
+                ),
+                "/parking/car[@number='1' and @wheels]"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("bmw")
+        );
+    }
 
     @ParameterizedTest
-    @MethodSource({"xpaths", "attributeFilters"})
+    @MethodSource({"xpaths", "attributeFilters", "binaryOperators"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
             "We expect to retrieve the xpath text correctly",
@@ -229,5 +242,48 @@ final class XpathTest {
             {"/zoo/animal[@legs='2']", xml, "eagle"},
             {"/zoo/animal[@legs='3']", xml, ""},
         };
+    }
+
+    /**
+     * Arguments for the test.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] binaryOperators() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<building>",
+                "  <room height='400' width='600'>canteen</room>",
+                "  <room height='300' width='700'>bedroom</room>",
+                "  <room height='200' width='800'>pantry</room>",
+                "</building>"
+            )
+        );
+        final String canteen = "canteen";
+        final String bedroom = "bedroom";
+        final String pantry = "pantry";
+        return new Object[][]{
+            {"/building/room[@height='400' and @width='600']", xml, canteen},
+            {"/building/room[@height='300' and @width='700']", xml, bedroom},
+            {"/building/room[@height='200' and @width='800']", xml, pantry},
+            {"/building/room[@height='300' and @width='600']", xml, ""},
+            {"/building/room[@height='400' and @width='700']", xml, ""},
+            {"/building/room[@height='200' and @width]", xml, pantry},
+            {"/building/room[@height='400' and text()='canteen']", xml, canteen},
+            {"/building/room[@height='300' and text()='bedroom']", xml, bedroom},
+            {"/building/room[@height='200' and text()='pantry']", xml, pantry},
+            {"/building/room[@height='400' and text()='bedroom']", xml, ""},
+            {"/building/room[@height='300' and text()='canteen']", xml, ""},
+            {"/building/room[@height='200' and text()='canteen']", xml, ""},
+            {"/building/room[@height='400' and text()='pantry']", xml, ""},
+            {"/building/room[@height='300' and text()='pantry']", xml, ""},
+            {"/building/room[@height='200' and text()='bedroom']", xml, ""},
+            {"/building/room[@height='500' or text()='canteen']", xml, canteen},
+            {"/building/room[@height='300' or text()='balcony']", xml, bedroom},
+            {"/building/room[@height='200' or text()='pantry']", xml, pantry},
+            {"/building/room[@height='200' or text()='balcony']", xml, ""},
+        };
+
     }
 }
