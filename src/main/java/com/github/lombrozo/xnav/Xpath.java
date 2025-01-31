@@ -209,6 +209,11 @@ final class Xpath {
                 final XpathFunction original = this.parseExpression();
                 this.consume(); // Consume ')'
                 result = new Not(original);
+            } else if ("string-length".equals(name)) {
+                this.consume(); // Consume '('
+                final XpathFunction arg = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new StringLength(arg);
             } else {
                 throw new IllegalStateException(
                     String.format("Unknown function '%s'", name)
@@ -224,15 +229,21 @@ final class Xpath {
             final Token eq = this.consume();// consume '='
             if (eq.type == Type.EQUALS) {
                 final Token value = this.consume();
-                if (value.type != Type.VALUE) {
+                if (value.type == Type.VALUE) {
+                    return new EqualityExpression(
+                        original,
+                        value.text.substring(1, value.text.length() - 1)
+                    );
+                } else if (value.type == Type.NUMBER) {
+                    return new EqualityExpression(
+                        original,
+                        Integer.parseInt(value.text)
+                    );
+                } else {
                     throw new IllegalStateException(
-                        String.format("Expected value, but got %s", value)
+                        String.format("Expected a value or a number, but got %s", value)
                     );
                 }
-                return new EqualityExpression(
-                    original,
-                    value.text.substring(1, value.text.length() - 1)
-                );
             } else {
                 throw new IllegalStateException(
                     String.format("Expected '=', but got %s", eq)
@@ -432,6 +443,20 @@ final class Xpath {
         }
     }
 
+    private class StringLength implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public StringLength(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return String.valueOf(this.original.execute(xml)).length();
+        }
+    }
+
     private class Text implements XpathFunction {
 
         @Override
@@ -445,9 +470,9 @@ final class Xpath {
     private class EqualityExpression implements XpathFunction {
 
         private final XpathFunction function;
-        private final String value;
+        private final Object value;
 
-        public EqualityExpression(final XpathFunction function, final String value) {
+        public EqualityExpression(final XpathFunction function, final Object value) {
             this.function = function;
             this.value = value;
         }
@@ -744,7 +769,7 @@ final class Xpath {
         /**
          * Name.
          */
-        NAME("[a-zA-Z_][a-zA-Z0-9_]*");
+        NAME("[a-zA-Z_][a-zA-Z0-9_-]*");
 
         /**
          * Token pattern.

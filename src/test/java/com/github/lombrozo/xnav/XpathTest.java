@@ -226,7 +226,6 @@ final class XpathTest {
         );
     }
 
-
     @ParameterizedTest
     @MethodSource({"xpaths", "attributeFilters", "binaryOperators", "inversion", "stringLength"})
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
