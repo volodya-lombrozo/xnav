@@ -188,24 +188,7 @@ final class Xpath {
                 this.consume();
                 return this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
-                final XpathFunction func = this.parseFunction();
-                final Token eq = this.consume();// consume '='
-                if (eq.type == Type.EQUALS) {
-                    final Token value = this.consume();
-                    if (value.type != Type.VALUE) {
-                        throw new IllegalStateException(
-                            String.format("Expected value, but got %s", value)
-                        );
-                    }
-                    return new EqualityExpression(
-                        func,
-                        value.text.substring(1, value.text.length() - 1)
-                    );
-                } else {
-                    throw new IllegalStateException(
-                        String.format("Expected '=', but got %s", eq)
-                    );
-                }
+                return this.parseFunction();
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", current)
@@ -216,15 +199,43 @@ final class Xpath {
         private XpathFunction parseFunction() {
             final Token token = this.consume();
             final String name = token.text;
+            final XpathFunction result;
             if ("text".equals(name)) {
                 this.consume(); // Consume '('
                 this.consume(); // Consume ')'
-                return new Text();
+                result = new Text();
             } else if ("not".equals(name)) {
-                return new Not(this.parseFunction());
+                this.consume(); // Consume '('
+                final XpathFunction original = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new Not(original);
             } else {
                 throw new IllegalStateException(
                     String.format("Unknown function '%s'", name)
+                );
+            }
+            if (this.peek().type == Type.EQUALS) {
+                return this.parseEqualityExpression(result);
+            }
+            return result;
+        }
+
+        private XpathFunction parseEqualityExpression(XpathFunction original) {
+            final Token eq = this.consume();// consume '='
+            if (eq.type == Type.EQUALS) {
+                final Token value = this.consume();
+                if (value.type != Type.VALUE) {
+                    throw new IllegalStateException(
+                        String.format("Expected value, but got %s", value)
+                    );
+                }
+                return new EqualityExpression(
+                    original,
+                    value.text.substring(1, value.text.length() - 1)
+                );
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '=', but got %s", eq)
                 );
             }
         }
@@ -394,11 +405,6 @@ final class Xpath {
         public AttributeExpession(final String name) {
             this.name = name;
         }
-
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return xml.filter(Filter.hasAttribute(this.name));
-//        }
 
         @Override
         public Object execute(final Xml xml) {
