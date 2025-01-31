@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,7 +71,9 @@ final class Xpath {
      * @return The nodes that match the XPath.
      */
     Stream<Xml> nodes() {
-        return new XPathParser(new XPathLexer(this.path).tokens()).relativePath().nodes(this.root);
+        return new XPathParser(new XPathLexer(this.path).tokens())
+            .relativePath()
+            .nodes(Stream.of(this.root));
     }
 
     /**
@@ -121,17 +124,196 @@ final class Xpath {
          */
         XpathNode step() {
             final XpathNode result;
-            final Token token = this.consume();
-            if (token.type == Type.NAME) {
-                result = new Step(token.lexeme());
-            } else if (token.type == Type.AT) {
+            final Token current = this.peek();
+            if (current.type == Type.NAME) {
+                result = this.parsePredicatedStep();
+            } else if (current.type == Type.AT) {
+                this.consume();
                 result = new Attribute(this.consume().text);
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected one more step, but got %s", token)
+                    String.format("Expected one more step, but got %s", current)
                 );
             }
             return result;
+        }
+
+        private XpathNode parsePredicatedStep() {
+            final Token token = this.consume();
+            XpathNode step = new Step(token.lexeme());
+            while (!this.eof() && this.peek().type == Type.LBRACKET) {
+                this.consume();
+                if (this.peek().type == Type.NUMBER) {
+                    final String lexeme = this.consume().lexeme();
+                    step = new RelativePath(
+                        step,
+                        new NumberExpression(Integer.parseInt(lexeme))
+                    );
+                } else {
+                    step = new RelativePath(
+                        step,
+                        new Predicated(this.parseExpression())
+                    );
+                }
+                this.consume();
+            }
+            return step;
+        }
+
+        private XpathFunction parseExpression() {
+            final XpathFunction left = this.parseSingleExpression();
+            if (this.eof()) {
+                return left;
+            }
+            final Type current = this.tokens.get(this.pos).type;
+            if (current == Type.AND || current == Type.OR) {
+                final Token token = this.consume();
+                if (token.type == Type.AND) {
+                    return new AndExpression(left, this.parseExpression());
+                } else if (token.type == Type.OR) {
+                    return new OrExpression(left, this.parseExpression());
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected AND or OR, but got %s", token)
+                    );
+                }
+            } else {
+                return left;
+            }
+        }
+
+        private XpathFunction parseSingleExpression() {
+            final Token current = this.peek();
+            if (current.type == Type.AT) {
+                this.consume();
+                return this.parseAttributeExpression();
+            } else if (current.type == Type.NAME) {
+                return this.parseFunction();
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected number, but got %s", current)
+                );
+            }
+        }
+
+        private XpathFunction parseFunction() {
+            final Token token = this.consume();
+            final String name = token.text;
+            final XpathFunction result;
+            if ("text".equals(name)) {
+                this.consume(); // Consume '('
+                this.consume(); // Consume ')'
+                result = new Text();
+            } else if ("not".equals(name)) {
+                this.consume(); // Consume '('
+                final XpathFunction original = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new Not(original);
+            } else if ("string-length".equals(name)) {
+                this.consume(); // Consume '('
+                final XpathFunction arg = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new StringLength(arg);
+            } else if ("normalize-space".equals(name)) {
+                this.consume(); // Consume '('
+                final XpathFunction arg = this.parseExpression();
+                this.consume(); // Consume ')'
+                result = new NormalizeSpace(arg);
+            } else {
+                throw new IllegalStateException(
+                    String.format("Unknown function '%s'", name)
+                );
+            }
+            if (this.peek().type == Type.EQUALS) {
+                return this.parseEqualityExpression(result);
+            } else if (this.peek().type == Type.GT) {
+                return this.parseGreaterThanExpression(result);
+            } else if (this.peek().type == Type.LT) {
+                return this.parseLessThanExpression(result);
+            } else {
+                return result;
+            }
+        }
+
+        private XpathFunction parseLessThanExpression(final XpathFunction result) {
+            final Token lt = this.consume();
+            if (lt.type == Type.LT) {
+                if (this.peek().type == Type.NUMBER) {
+                    final Token value = this.consume();
+                    return new LessThanExpression(result, Integer.parseInt(value.text));
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected number, but got %s", lt)
+                    );
+                }
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '<', but got %s", lt)
+                );
+            }
+        }
+
+        private XpathFunction parseGreaterThanExpression(final XpathFunction result) {
+            final Token gt = this.consume();
+            if (gt.type == Type.GT) {
+                if (this.peek().type == Type.NUMBER) {
+                    final Token value = this.consume();
+                    return new GreaterThanExpression(result, Integer.parseInt(value.text));
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected number, but got %s", gt)
+                    );
+                }
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '>', but got %s", gt)
+                );
+            }
+        }
+
+        private XpathFunction parseEqualityExpression(XpathFunction original) {
+            final Token eq = this.consume();// consume '='
+            if (eq.type == Type.EQUALS) {
+                final Token value = this.consume();
+                if (value.type == Type.VALUE) {
+                    final String substring = value.text.substring(1, value.text.length() - 1);
+                    return new EqualityExpression(
+                        original,
+                        substring
+                    );
+                } else if (value.type == Type.NUMBER) {
+                    return new EqualityExpression(
+                        original,
+                        Integer.parseInt(value.text)
+                    );
+                } else {
+                    throw new IllegalStateException(
+                        String.format("Expected a value or a number, but got %s", value)
+                    );
+                }
+            } else {
+                throw new IllegalStateException(
+                    String.format("Expected '=', but got %s", eq)
+                );
+            }
+        }
+
+        private XpathFunction parseAttributeExpression() {
+            final Token consumed = this.consume();
+            if (this.eof() || this.tokens.get(this.pos).type != Type.EQUALS) {
+                return new AttributeExpession(consumed.text);
+            }
+            this.consume();
+            final Token value = this.consume();
+            if (value.type != Type.VALUE) {
+                throw new IllegalStateException(
+                    String.format("Expected value, but got %s", value)
+                );
+            }
+            return new AttributeEqualityExperssion(
+                consumed.text,
+                value.text.substring(1, value.text.length() - 1)
+            );
         }
 
         /**
@@ -143,6 +325,15 @@ final class Xpath {
             final Token token = this.tokens.get(this.pos);
             this.pos = this.pos + 1;
             return token;
+        }
+
+        /**
+         * Peek at the current token.
+         *
+         * @return Current token.
+         */
+        private Token peek() {
+            return this.tokens.get(this.pos);
         }
 
         /**
@@ -170,6 +361,10 @@ final class Xpath {
          */
         private final List<XpathNode> steps;
 
+        private RelativePath(final XpathNode... nodes) {
+            this(Arrays.asList(nodes));
+        }
+
         /**
          * Constructor.
          *
@@ -180,12 +375,26 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
             return this.steps.stream().reduce(
-                Stream.of(xml),
-                (current, step) -> current.flatMap(step::nodes),
+                xml,
+                (current, step) -> step.nodes(current),
                 Stream::concat
             );
+        }
+    }
+
+    private static class Predicated implements XpathNode {
+
+        private final XpathFunction predicate;
+
+        public Predicated(final XpathFunction predicate) {
+            this.predicate = predicate;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.filter(x -> (boolean) this.predicate.execute(x));
         }
     }
 
@@ -214,8 +423,210 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
-            return xml.children().filter(Filter.withName(this.name));
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.flatMap(Xml::children).filter(Filter.withName(this.name));
+        }
+    }
+
+    /**
+     * Number expression.
+     * This is a number in the XPath.
+     *
+     * @since 0.1
+     */
+    private static final class NumberExpression implements XpathNode {
+
+        /**
+         * Index starting from 1.
+         */
+        private final int index;
+
+        /**
+         * Constructor.
+         *
+         * @param number Index starting from 1.
+         */
+        NumberExpression(final int number) {
+            this.index = number;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.skip(this.index - 1).findFirst().stream();
+        }
+    }
+
+    private class AttributeExpession implements XpathFunction {
+
+        private final String name;
+
+        public AttributeExpession(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return xml.attribute(this.name).isPresent();
+        }
+    }
+
+    private interface XpathFunction {
+
+        Object execute(Xml xml);
+
+    }
+
+    private class Not implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public Not(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return !((boolean) this.original.execute(xml));
+        }
+    }
+
+    private class StringLength implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public StringLength(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return String.valueOf(this.original.execute(xml)).length();
+        }
+    }
+
+    private class NormalizeSpace implements XpathFunction {
+
+        private final XpathFunction original;
+
+        public NormalizeSpace(final XpathFunction original) {
+            this.original = original;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return String.valueOf(this.original.execute(xml)).trim().replaceAll(" +", " ");
+        }
+    }
+
+    private class Text implements XpathFunction {
+
+        @Override
+        public String execute(final Xml xml) {
+            return xml.text().orElseThrow(
+                () -> new IllegalStateException("Text not found")
+            );
+        }
+    }
+
+    private class EqualityExpression implements XpathFunction {
+
+        private final XpathFunction function;
+        private final Object value;
+
+        public EqualityExpression(final XpathFunction function, final Object value) {
+            this.function = function;
+            this.value = value;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            final Object execute = this.function.execute(xml);
+            return execute.equals(this.value);
+        }
+    }
+
+    private class GreaterThanExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final int right;
+
+        public GreaterThanExpression(final XpathFunction left, final int right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (int) this.left.execute(xml) > this.right;
+        }
+    }
+
+    private class LessThanExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final int right;
+
+        public LessThanExpression(final XpathFunction left, final int right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (int) this.left.execute(xml) < right;
+        }
+    }
+
+    private class AttributeEqualityExperssion implements XpathFunction {
+
+        private final String attribute;
+        private final String value;
+
+        public AttributeEqualityExperssion(final String attribute, final String value) {
+            this.attribute = attribute;
+            this.value = value;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return xml.attribute(this.attribute)
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(v -> v.equals(this.value))
+                .orElse(false);
+        }
+    }
+
+    private static class AndExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final XpathFunction right;
+
+        public AndExpression(final XpathFunction left, final XpathFunction right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (boolean) this.left.execute(xml) && (boolean) this.right.execute(xml);
+        }
+    }
+
+    private static class OrExpression implements XpathFunction {
+
+        private final XpathFunction left;
+        private final XpathFunction right;
+
+        public OrExpression(final XpathFunction left, final XpathFunction right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return (boolean) this.left.execute(xml) || (boolean) this.right.execute(xml);
         }
     }
 
@@ -243,10 +654,13 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Xml xml) {
-            return xml.attribute(this.name).stream();
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.map(x -> x.attribute(this.name))
+                .filter(Optional::isPresent)
+                .map(Optional::get);
         }
     }
+
 
     /**
      * Interface for a node in the XPath.
@@ -261,7 +675,7 @@ final class Xpath {
          * @param xml The XML document.
          * @return XML nodes that match the XPath.
          */
-        Stream<Xml> nodes(Xml xml);
+        Stream<Xml> nodes(Stream<Xml> xml);
     }
 
     /**
@@ -294,7 +708,7 @@ final class Xpath {
          */
         private XPathLexer(final String path) {
             this.path = path;
-            this.trace = false;
+            this.trace = true;
         }
 
         /**
@@ -402,9 +816,64 @@ final class Xpath {
         AT("@"),
 
         /**
+         * Left parenthesis.
+         */
+        LPAREN("\\("),
+
+        /**
+         * Right parenthesis.
+         */
+        RPAREN("\\)"),
+
+        /**
+         * Left bracket.
+         */
+        LBRACKET("\\["),
+
+        /**
+         * Right bracket.
+         */
+        RBRACKET("\\]"),
+
+        /**
+         * Number.
+         */
+        NUMBER("[0-9]+"),
+
+        /**
+         * Less than sign.
+         */
+        LT("\\<"),
+
+        /**
+         * Greater than sign.
+         */
+        GT("\\>"),
+
+        /**
+         * Equals sign.
+         */
+        EQUALS("="),
+
+        /**
+         * Quoted value.
+         */
+        VALUE("'[^']*'|\"[^\"]*\""),
+
+        /**
+         * And operator.
+         */
+        AND("and|AND"),
+
+        /**
+         * Or operator.
+         */
+        OR("or|OR"),
+
+        /**
          * Name.
          */
-        NAME("[a-zA-Z_][a-zA-Z0-9_]*");
+        NAME("[a-zA-Z_][a-zA-Z0-9_-]*");
 
         /**
          * Token pattern.
