@@ -150,15 +150,18 @@ final class Xpath {
                         new NumberExpression(Integer.parseInt(lexeme))
                     );
                 } else {
-                    step = new RelativePath(step, this.parseExpression());
+                    step = new RelativePath(
+                        step,
+                        new Predicated(this.parseExpression())
+                    );
                 }
                 this.consume();
             }
             return step;
         }
 
-        private XpathNode parseExpression() {
-            final XpathNode left = this.parseSingleExpression();
+        private XpathFunction parseExpression() {
+            final XpathFunction left = this.parseSingleExpression();
             if (this.eof()) {
                 return left;
             }
@@ -179,7 +182,7 @@ final class Xpath {
             }
         }
 
-        private XpathNode parseSingleExpression() {
+        private XpathFunction parseSingleExpression() {
             final Token current = this.peek();
             if (current.type == Type.AT) {
                 this.consume();
@@ -226,7 +229,7 @@ final class Xpath {
             }
         }
 
-        private XpathNode parseAttributeExpression() {
+        private XpathFunction parseAttributeExpression() {
             final Token consumed = this.consume();
             if (this.eof() || this.tokens.get(this.pos).type != Type.EQUALS) {
                 return new AttributeExpession(consumed.text);
@@ -384,7 +387,7 @@ final class Xpath {
         }
     }
 
-    private class AttributeExpession implements XpathNode {
+    private class AttributeExpession implements XpathFunction {
 
         private final String name;
 
@@ -392,9 +395,14 @@ final class Xpath {
             this.name = name;
         }
 
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xml) {
+//            return xml.filter(Filter.hasAttribute(this.name));
+//        }
+
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.filter(Filter.hasAttribute(this.name));
+        public Object execute(final Xml xml) {
+            return xml.attribute(this.name).isPresent();
         }
     }
 
@@ -444,7 +452,7 @@ final class Xpath {
         }
     }
 
-    private class EqualityExpression implements XpathNode {
+    private class EqualityExpression implements XpathFunction {
 
         private final XpathFunction function;
         private final String value;
@@ -454,13 +462,18 @@ final class Xpath {
             this.value = value;
         }
 
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xml) {
+//            return xml.filter(x -> this.function.execute(x).equals(this.value));
+//        }
+
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.filter(x -> this.function.execute(x).equals(this.value));
+        public Object execute(final Xml xml) {
+            return this.function.execute(xml).equals(this.value);
         }
     }
 
-    private class AttributeEqualityExperssion implements XpathNode {
+    private class AttributeEqualityExperssion implements XpathFunction {
 
         private final String attribute;
         private final String value;
@@ -470,44 +483,64 @@ final class Xpath {
             this.value = value;
         }
 
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xml) {
+//            return xml.filter(Filter.withAttribute(this.attribute, this.value));
+//        }
+
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.filter(Filter.withAttribute(this.attribute, this.value));
+        public Object execute(final Xml xml) {
+            return xml.attribute(this.attribute)
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(v -> v.equals(this.value))
+                .orElse(false);
         }
     }
 
-    private static class AndExpression implements XpathNode {
+    private static class AndExpression implements XpathFunction {
 
-        private final XpathNode left;
-        private final XpathNode right;
+        private final XpathFunction left;
+        private final XpathFunction right;
 
-        public AndExpression(final XpathNode left, final XpathNode right) {
+        public AndExpression(final XpathFunction left, final XpathFunction right) {
             this.left = left;
             this.right = right;
         }
 
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xml) {
+//            return this.right.nodes(this.left.nodes(xml));
+//        }
+
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return this.right.nodes(this.left.nodes(xml));
+        public Object execute(final Xml xml) {
+            return (boolean) this.left.execute(xml) && (boolean) this.right.execute(xml);
         }
     }
 
-    private static class OrExpression implements XpathNode {
+    private static class OrExpression implements XpathFunction {
 
-        private final XpathNode left;
-        private final XpathNode right;
+        private final XpathFunction left;
+        private final XpathFunction right;
 
-        public OrExpression(final XpathNode left, final XpathNode right) {
+        public OrExpression(final XpathFunction left, final XpathFunction right) {
             this.left = left;
             this.right = right;
         }
 
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xml) {
+//            return xml.filter(
+//                x -> this.left.nodes(Stream.of(x)).findAny().isPresent() ||
+//                    this.right.nodes(Stream.of(x)).findAny().isPresent()
+//            );
+//        }
+
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.filter(
-                x -> this.left.nodes(Stream.of(x)).findAny().isPresent() ||
-                    this.right.nodes(Stream.of(x)).findAny().isPresent()
-            );
+        public Object execute(final Xml xml) {
+            return (boolean) this.left.execute(xml) || (boolean) this.right.execute(xml);
         }
     }
 
