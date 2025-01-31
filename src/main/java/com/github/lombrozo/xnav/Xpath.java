@@ -442,22 +442,6 @@ final class Xpath {
         }
     }
 
-    private class EqualityFuntion implements XpathFunction {
-
-        private final XpathFunction function;
-        private final String value;
-
-        public EqualityFuntion(final XpathFunction function, final String value) {
-            this.function = function;
-            this.value = value;
-        }
-
-        @Override
-        public Object execute(final Xml xml) {
-            return this.function.execute(xml).equals(this.value);
-        }
-    }
-
     private class EqualityExpression implements XpathFunction {
 
         private final XpathFunction function;
@@ -467,11 +451,6 @@ final class Xpath {
             this.function = function;
             this.value = value;
         }
-
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return xml.filter(x -> this.function.execute(x).equals(this.value));
-//        }
 
         @Override
         public Object execute(final Xml xml) {
@@ -488,11 +467,6 @@ final class Xpath {
             this.attribute = attribute;
             this.value = value;
         }
-
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return xml.filter(Filter.withAttribute(this.attribute, this.value));
-//        }
 
         @Override
         public Object execute(final Xml xml) {
@@ -515,11 +489,6 @@ final class Xpath {
             this.right = right;
         }
 
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return this.right.nodes(this.left.nodes(xml));
-//        }
-
         @Override
         public Object execute(final Xml xml) {
             return (boolean) this.left.execute(xml) && (boolean) this.right.execute(xml);
@@ -535,14 +504,6 @@ final class Xpath {
             this.left = left;
             this.right = right;
         }
-
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return xml.filter(
-//                x -> this.left.nodes(Stream.of(x)).findAny().isPresent() ||
-//                    this.right.nodes(Stream.of(x)).findAny().isPresent()
-//            );
-//        }
 
         @Override
         public Object execute(final Xml xml) {
