@@ -272,7 +272,8 @@ final class XpathTest {
     void retrievesRecursiveElement() {
         MatcherAssert.assertThat(
             "We expect to retrieve the element recursively",
-            new Xpath(new DomXml("<root><level1><level2><target/></level2></level1></root>"), "//target")
+            new Xpath(
+                new DomXml("<root><level1><level2><target/></level2></level1></root>"), "//target")
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
@@ -291,6 +292,7 @@ final class XpathTest {
         "parentheses",
         "predicatesOverResults",
         "recursivePaths",
+        "subpathExpressions",
         "complexXpaths"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
@@ -572,6 +574,27 @@ final class XpathTest {
             {"//language[@name='Java' and @type='OOP']//feature[2]", xml, "Robust"},
             {"//language[@name='C++' and @type='OOP']//feature[1]", xml, "Performance"},
             {"//language[@name='Python' and not(@type='OOP')]//feature[1]", xml, "Easy to learn"},
+        };
+    }
+
+    private static Object[][] subpathExpressions() {
+        final Xml xml = new DomXml(
+            "<root>" +
+                "  <o><o base='true'><o>basetrue</o></o></o>" +
+                "  <o base='false'><o>other</o></o>" +
+                "  <o><o base='true'>nested</o></o>" +
+                "  <o><o base='false'><o>other</o></o></o>" +
+                "</root>"
+        );
+        final String content = "basetrue";
+        final String other = "other";
+        return new Object[][]{
+            {"//o[o[@base='true']]", xml, content},
+            {"//o[@base='false']]", xml, other},
+            {"//o[o[@base='false']]", xml, other},
+            {"//o[o[@base='true'] and text()='nested']", xml, "nested"},
+            {"//o[o[@base='true'] and not(text()='nested')]", xml, content},
+            {"//o[o[@base='false'] and text()='other']", xml, other},
         };
     }
 

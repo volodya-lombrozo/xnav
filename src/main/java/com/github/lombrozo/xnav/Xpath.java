@@ -115,6 +115,8 @@ final class Xpath {
                 if (current.type == Type.SLASH) {
                     this.consume();
                     steps.add(this.step());
+                } else if (current.type == Type.NAME) {
+                    steps.add(this.step());
                 } else if (current.type == Type.DSLASH) {
                     this.consume();
                     steps.add(new RecursivePath(this.step()));
@@ -222,7 +224,6 @@ final class Xpath {
                 this.consume();
                 return this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
-//                return this.parseFunction();
                 return this.parseClause();
             } else if (current.type == Type.LPAREN) {
                 this.consume();
@@ -237,21 +238,26 @@ final class Xpath {
         }
 
         private XpathFunction parseClause() {
-            final Token name = this.consume();
-            if (this.peek().type == Type.LPAREN) {
-                return this.parseFunction(name.text);
+            if (this.peek().type == Type.NAME) {
+                if (this.tokens.get(this.pos + 1).type == Type.LPAREN) {
+                    return this.parseFunction();
+                } else {
+                    return this.parseSubExpression();
+                }
             } else {
-                return this.parseSubExpression(name.text);
+                throw new IllegalStateException(
+                    String.format("Expected name, but got %s", this.peek())
+                );
             }
         }
 
-        private XpathFunction parseSubExpression(final String text) {
-            throw new UnsupportedOperationException("Not implemented yet");
+        private XpathFunction parseSubExpression() {
+            return new SubpathExpression(this.rootPath());
         }
 
-        private XpathFunction parseFunction(final String name) {
-//            final Token token = this.consume();
-//            final String name = token.text;
+        private XpathFunction parseFunction() {
+            final Token token = this.consume();
+            final String name = token.text;
             final XpathFunction result;
             if ("text".equals(name)) {
                 this.consume(); // Consume '('
@@ -472,6 +478,7 @@ final class Xpath {
         }
     }
 
+
     /**
      * Step node.
      * This is a step in the XPath.
@@ -548,6 +555,20 @@ final class Xpath {
 
         Object execute(Xml xml);
 
+    }
+
+    private class SubpathExpression implements XpathFunction {
+
+        private final XpathNode subpath;
+
+        public SubpathExpression(final XpathNode subpath) {
+            this.subpath = subpath;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return this.subpath.nodes(Stream.of(xml)).findFirst().isPresent();
+        }
     }
 
     private class Not implements XpathFunction {
