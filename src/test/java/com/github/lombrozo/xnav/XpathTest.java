@@ -604,14 +604,10 @@ final class XpathTest {
                 "\n",
                 "<root>",
                 "  <o name='one' atom='true' loc='here'>one</o>",
-                "  <o name='two' atom='true' base='org.eolang.two' loc='there'>two</o>",
+                "  <o name='two' atom='true' base='org.eolang.two' loc='there'><o base='bytes'>two</o></o>",
                 "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
                 "  <o name='four' atom='true' loc='nowhere'>four</o>",
-                "  <o base='org.eolang.bytes' skip='false'>",
-                "    <o base='bytes'>",
-                "      <o>content</o>",
-                "    </o>",
-                "  </o>",
+                "  <o base='org.eolang.bytes'><o base='bytes'>01</o></o>",
                 "  <x a='true'>x1</x>",
                 "  <x a='true' b='false'>x2</x>",
                 "</root>"
@@ -619,11 +615,11 @@ final class XpathTest {
         );
         return new Object[][]{
             {"(//o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
-            {"(//o[(@base='org.eolang.two' or @base='org.eolang.org.eolang.two') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "content"},
+            {"(//o[(@base='org.eolang.two' or @base='org.eolang.org.eolang.two') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "two"},
             {"(//x[@a and not(@b)])[1]", xml, "x1"},
             {"(//x[@a and not(@b)])[2]", xml, ""},
             {"(//x[@a and @b])[1]", xml, "x2"},
-            {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "content"}
+            {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "01"}
         };
     }
 
