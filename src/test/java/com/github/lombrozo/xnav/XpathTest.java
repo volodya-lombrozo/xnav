@@ -612,7 +612,8 @@ final class XpathTest {
                 "  <x a='true' b='false'>x2</x>",
                 "  <o base='Q.org.eolang.number'><o base='Q.org.eolang.bytes'>1-hex-content</o></o>",
                 "  <o base='Q.org.eolang.number'><o base='Q.org.eolang.bytes'>2-hex-content</o></o>",
-                "<o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>string-</o><o>content</o></o>",
+                "<o><o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>first-</o><o>content</o></o></o></o>",
+                "<o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>second-</o><o>content</o></o>",
                 "</root>"
             )
         );
@@ -624,7 +625,7 @@ final class XpathTest {
             {"(//x[@a and @b])[1]", xml, "x2"},
             {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "01"},
             {"(//o[@base='Q.org.eolang.number' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "1-hex-content"},
-            {"(//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "string-content"},
+            {"(//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "first-content"},
         };
     }
 
