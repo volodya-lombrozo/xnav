@@ -803,7 +803,7 @@ final class Xpath {
          */
         private XPathLexer(final String path) {
             this.path = path;
-            this.trace = true;
+            this.trace = false;
         }
 
         /**
