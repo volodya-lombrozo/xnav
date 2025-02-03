@@ -176,7 +176,8 @@ final class Xpath {
 
         private XpathNode parsePredicatedStep() {
             final Token token = this.consume();
-            XpathNode step = new Step(token.lexeme());
+            XpathNode step = new Logged(new Step(token.lexeme()));
+//            XpathNode step = new Predicated(x -> x.name().equals(token.lexeme()));
             while (!this.eof() && this.peek().type == Type.LBRACKET) {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
@@ -435,11 +436,26 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return this.steps.stream().reduce(
-                xml,
-                (current, step) -> step.nodes(current),
-                Stream::concat
+            return xml.flatMap(
+                x -> {
+                    Stream<Xml> result = Stream.of(x);
+                    for (int i = 0; i < this.steps.size(); i++) {
+                        result = this.step(i).nodes(result);
+                    }
+                    return result;
+                }
             );
+
+//            return this.steps.stream().reduce(
+//                xml,
+//                (current, step) -> step.nodes(current),
+//                Stream::concat
+//            );
+        }
+
+
+        XpathNode step(int deep) {
+            return this.steps.get(deep);
         }
     }
 
@@ -458,8 +474,8 @@ final class Xpath {
 
         private Stream<Xml> flat(final Xml xml) {
             return Stream.concat(
-                xml.children().flatMap(this::flat),
-                Stream.of(xml)
+                Stream.of(xml),
+                xml.children().flatMap(this::flat)
             );
         }
     }
@@ -506,6 +522,14 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.flatMap(Xml::children).filter(Filter.withName(this.name));
+//            return xml.flatMap(this::flat).filter(Filter.withName(this.name));
+        }
+
+        private Stream<Xml> flat(Xml xml) {
+            return Stream.concat(
+                Stream.of(xml),
+                xml.children().flatMap(this::flat)
+            );
         }
     }
 
@@ -842,6 +866,30 @@ final class Xpath {
             );
         }
 
+    }
+
+    private class Logged implements XpathNode {
+
+        private final XpathNode origin;
+
+        public Logged(final XpathNode origin) {
+            this.origin = origin;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            System.out.println("\n");
+            System.out.printf("XML nodes BEFORE: %s%n", this.origin);
+            final List<Xml> collect = xml.collect(Collectors.toList());
+            collect.forEach(System.out::println);
+            final List<Xml> after = origin.nodes(collect.stream()).collect(Collectors.toList());
+            System.out.println();
+            System.out.printf("XML nodes AFTER: %s%n", this.origin);
+            after.forEach(System.out::println);
+            System.out.println("_________");
+            System.out.println("\n");
+            return after.stream();
+        }
     }
 
     /**
