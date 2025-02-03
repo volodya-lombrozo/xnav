@@ -607,7 +607,6 @@ final class XpathTest {
                 "  <o name='two' atom='true' base='org.eolang.two' loc='there'><o base='bytes'>two</o></o>",
                 "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
                 "  <o name='four' atom='true' loc='nowhere'>four</o>",
-                "  <o base='org.eolang.bytes'><o base='bytes'>01</o></o>",
                 "  <x a='true'>x1</x>",
                 "  <x a='true' b='false'>x2</x>",
                 "  <o base='Q.org.eolang.number'><o base='Q.org.eolang.bytes'>1-hex-content</o></o>",
