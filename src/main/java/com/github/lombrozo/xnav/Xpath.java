@@ -115,6 +115,9 @@ final class Xpath {
                 if (current.type == Type.SLASH) {
                     this.consume();
                     steps.add(this.step());
+                } else if (current.type == Type.DSLASH) {
+                    this.consume();
+                    steps.add(new RecursivePath(this.step()));
                 } else if (current.type == Type.LPAREN) {
                     steps.add(this.parseParenthesizedPath());
                 } else {
@@ -416,6 +419,27 @@ final class Xpath {
                 xml,
                 (current, step) -> step.nodes(current),
                 Stream::concat
+            );
+        }
+    }
+
+    private static final class RecursivePath implements XpathNode {
+
+        private final XpathNode step;
+
+        private RecursivePath(final XpathNode step) {
+            this.step = step;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xmls) {
+            return this.step.nodes(xmls.flatMap(this::flat));
+        }
+
+        private Stream<Xml> flat(final Xml xml) {
+            return Stream.concat(
+                Stream.of(xml),
+                xml.children().flatMap(this::flat)
             );
         }
     }
@@ -840,6 +864,11 @@ final class Xpath {
      * @since 0.1
      */
     private enum Type {
+
+        /**
+         * Double slash.
+         */
+        DSLASH("//"),
 
         /**
          * Slash.
