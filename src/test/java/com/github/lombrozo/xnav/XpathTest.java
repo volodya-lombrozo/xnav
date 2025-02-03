@@ -290,7 +290,8 @@ final class XpathTest {
         "normalizeSpace",
         "parentheses",
         "predicatesOverResults",
-        "recursivePaths"
+        "recursivePaths",
+        "complexXpaths"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
@@ -571,6 +572,35 @@ final class XpathTest {
             {"//language[@name='Java' and @type='OOP']//feature[2]", xml, "Robust"},
             {"//language[@name='C++' and @type='OOP']//feature[1]", xml, "Performance"},
             {"//language[@name='Python' and not(@type='OOP')]//feature[1]", xml, "Easy to learn"},
+        };
+    }
+
+    private static Object[][] complexXpaths() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<root>",
+                "  <o name='one' atom='true' loc='here'>one</o>",
+                "  <o name='two' atom='true' base='org.eolang.two' loc='there'>two</o>",
+                "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
+                "  <o name='four' atom='true' loc='nowhere'>four</o>",
+                "  <o base='org.eolang.bytes' skip='false'>",
+                "    <o base='bytes'>",
+                "      <o>content</o>",
+                "    </o>",
+                "  </o>",
+                "  <x a='true'>x1</x>",
+                "  <x a='true' b='false'>x2</x>",
+                "</root>"
+            )
+        );
+        return new Object[][]{
+            {"(//o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
+            {"(//o[(@base='org.eolang.two' or @base='org.eolang.org.eolang.two') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "content"},
+            {"(//x[@a and not(@b)])[1]", xml, "x1"},
+            {"(//x[@a and not(@b)])[2]", xml, ""},
+            {"(//x[@a and @b])[1]", xml, "x2"},
+            {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "content"}
         };
     }
 
