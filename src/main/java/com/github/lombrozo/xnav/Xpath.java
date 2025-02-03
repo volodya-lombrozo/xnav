@@ -142,15 +142,9 @@ final class Xpath {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    expr = new Logged(new SequentialPath(
-                        expr,
-                        new Logged(new NumberExpression(Integer.parseInt(lexeme)))
-                    ));
+                    expr = new Logged(new NumberExpression(Integer.parseInt(lexeme), expr));
                 } else {
-                    expr = new Logged(new SequentialPath(
-                        expr,
-                        new Logged(new Predicated(this.parseExpression()))
-                    ));
+                    expr = new Logged(new Predicated(expr, this.parseExpression()));
                 }
                 this.consume();
             }
@@ -186,15 +180,9 @@ final class Xpath {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    step = new Logged(new SequentialPath(
-                        step,
-                        new Logged(new NumberExpression(Integer.parseInt(lexeme)))
-                    ));
+                    step = new Logged(new NumberExpression(Integer.parseInt(lexeme), step));
                 } else {
-                    step = new Logged(new SequentialPath(
-                        step,
-                        new Logged(new Predicated(this.parseExpression()))
-                    ));
+                    step = new Logged(new Predicated(step, this.parseExpression()));
                 }
                 this.consume();
             }
@@ -424,10 +412,6 @@ final class Xpath {
          */
         private final List<XpathNode> steps;
 
-        private SequentialPath(final XpathNode... nodes) {
-            this(Arrays.asList(nodes));
-        }
-
         /**
          * Constructor.
          *
@@ -439,20 +423,20 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return this.steps.stream().reduce(
-                xml,
-                (current, step) -> step.nodes(current),
-                Stream::concat
-            );
+            return xml.flatMap(x -> dfs(x, 0));
+        }
+
+        Stream<Xml> dfs(final Xml xml, final int deep) {
+            if (deep >= this.steps.size()) {
+                return Stream.of(xml);
+            }
+            return this.steps.get(deep).nodes(Stream.of(xml)).flatMap(x -> this.dfs(x, deep + 1));
         }
 
         @Override
         public String toString() {
-            return this.steps.stream().map(Object::toString).collect(Collectors.joining("/"));
-        }
-
-        XpathNode step(int deep) {
-            return this.steps.get(deep);
+            return "sec:" + this.steps.stream().map(Object::toString)
+                .collect(Collectors.joining("/"));
         }
 
     }
@@ -479,26 +463,28 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return "//" + this.step;
+            return "rec://" + this.step;
         }
     }
 
     private static class Predicated implements XpathNode {
 
+        private final XpathNode original;
         private final XpathFunction predicate;
 
-        public Predicated(final XpathFunction predicate) {
+        public Predicated(final XpathNode original, final XpathFunction predicate) {
+            this.original = original;
             this.predicate = predicate;
         }
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.filter(x -> (boolean) this.predicate.execute(x));
+            return this.original.nodes(xml).filter(x -> (boolean) this.predicate.execute(x));
         }
 
         @Override
         public String toString() {
-            return "[" + this.predicate + "]";
+            return original + "[" + this.predicate + "]";
         }
     }
 
@@ -550,24 +536,75 @@ final class Xpath {
          */
         private final int index;
 
+        private final XpathNode original;
+
         /**
          * Constructor.
          *
          * @param number Index starting from 1.
          */
-        NumberExpression(final int number) {
-            this.index = number;
+        public NumberExpression(final int index, final XpathNode original) {
+            this.index = index;
+            this.original = original;
         }
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.skip(this.index - 1).findFirst().stream();
+            return this.original.nodes(xml).skip(this.index - 1).findFirst().stream();
         }
 
         @Override
         public String toString() {
-            return "[" + this.index + "]";
+            return original + "[" + this.index + "]";
         }
+    }
+
+    /**
+     * Attribute node.
+     *
+     * @since 0.1
+     */
+    @ToString
+    @EqualsAndHashCode
+    private static final class Attribute implements XpathNode {
+
+        /**
+         * Attribute name.
+         */
+        private final String name;
+
+        /**
+         * Constructor.
+         *
+         * @param name Attribute name.
+         */
+        private Attribute(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return xml.map(x -> x.attribute(this.name))
+                .filter(Optional::isPresent)
+                .map(Optional::get);
+        }
+    }
+
+
+    /**
+     * Interface for a node in the XPath.
+     *
+     * @since 0.1
+     */
+    private interface XpathNode {
+
+        /**
+         * Find nodes that match the XPath.
+         *
+         * @param xml The XML document.
+         * @return XML nodes that match the XPath.
+         */
+        Stream<Xml> nodes(Stream<Xml> xml);
     }
 
     private class AttributeExpession implements XpathFunction {
@@ -766,54 +803,6 @@ final class Xpath {
         public Object execute(final Xml xml) {
             return (boolean) this.left.execute(xml) || (boolean) this.right.execute(xml);
         }
-    }
-
-    /**
-     * Attribute node.
-     *
-     * @since 0.1
-     */
-    @ToString
-    @EqualsAndHashCode
-    private static final class Attribute implements XpathNode {
-
-        /**
-         * Attribute name.
-         */
-        private final String name;
-
-        /**
-         * Constructor.
-         *
-         * @param name Attribute name.
-         */
-        private Attribute(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.map(x -> x.attribute(this.name))
-                .filter(Optional::isPresent)
-                .map(Optional::get);
-        }
-    }
-
-
-    /**
-     * Interface for a node in the XPath.
-     *
-     * @since 0.1
-     */
-    private interface XpathNode {
-
-        /**
-         * Find nodes that match the XPath.
-         *
-         * @param xml The XML document.
-         * @return XML nodes that match the XPath.
-         */
-        Stream<Xml> nodes(Stream<Xml> xml);
     }
 
     /**
