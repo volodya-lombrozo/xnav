@@ -24,10 +24,14 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -119,14 +123,14 @@ final class Xpath {
                     steps.add(this.step());
                 } else if (current.type == Type.DSLASH) {
                     this.consume();
-                    steps.add(new RecursivePath(this.step()));
+                    steps.add(new Logged(new RecursivePath(this.step())));
                 } else if (current.type == Type.LPAREN) {
                     steps.add(this.parseParenthesizedPath());
                 } else {
                     break;
                 }
             }
-            return new SequentialPath(steps);
+            return new Logged(new SequentialPath(steps));
         }
 
         private XpathNode parseParenthesizedPath() {
@@ -138,15 +142,15 @@ final class Xpath {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    expr = new SequentialPath(
+                    expr = new Logged(new SequentialPath(
                         expr,
-                        new NumberExpression(Integer.parseInt(lexeme))
-                    );
+                        new Logged(new NumberExpression(Integer.parseInt(lexeme)))
+                    ));
                 } else {
-                    expr = new SequentialPath(
+                    expr = new Logged(new SequentialPath(
                         expr,
-                        new Predicated(this.parseExpression())
-                    );
+                        new Logged(new Predicated(this.parseExpression()))
+                    ));
                 }
                 this.consume();
             }
@@ -165,7 +169,7 @@ final class Xpath {
                 result = this.parsePredicatedStep();
             } else if (current.type == Type.AT) {
                 this.consume();
-                result = new Attribute(this.consume().text);
+                result = new Logged(new Attribute(this.consume().text));
             } else {
                 throw new IllegalStateException(
                     String.format("Expected one more step, but got %s", current)
@@ -182,15 +186,15 @@ final class Xpath {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    step = new SequentialPath(
+                    step = new Logged(new SequentialPath(
                         step,
-                        new NumberExpression(Integer.parseInt(lexeme))
-                    );
+                        new Logged(new NumberExpression(Integer.parseInt(lexeme)))
+                    ));
                 } else {
-                    step = new SequentialPath(
+                    step = new Logged(new SequentialPath(
                         step,
-                        new Predicated(this.parseExpression())
-                    );
+                        new Logged(new Predicated(this.parseExpression()))
+                    ));
                 }
                 this.consume();
             }
@@ -412,7 +416,6 @@ final class Xpath {
      *
      * @since 0.1
      */
-    @ToString
     @EqualsAndHashCode
     private static final class SequentialPath implements XpathNode {
 
@@ -436,27 +439,22 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return xml.flatMap(
-                x -> {
-                    Stream<Xml> result = Stream.of(x);
-                    for (int i = 0; i < this.steps.size(); i++) {
-                        result = this.step(i).nodes(result);
-                    }
-                    return result;
-                }
+            return this.steps.stream().reduce(
+                xml,
+                (current, step) -> step.nodes(current),
+                Stream::concat
             );
-
-//            return this.steps.stream().reduce(
-//                xml,
-//                (current, step) -> step.nodes(current),
-//                Stream::concat
-//            );
         }
 
+        @Override
+        public String toString() {
+            return this.steps.stream().map(Object::toString).collect(Collectors.joining("/"));
+        }
 
         XpathNode step(int deep) {
             return this.steps.get(deep);
         }
+
     }
 
     private static final class RecursivePath implements XpathNode {
@@ -478,6 +476,11 @@ final class Xpath {
                 xml.children().flatMap(this::flat)
             );
         }
+
+        @Override
+        public String toString() {
+            return "//" + this.step;
+        }
     }
 
     private static class Predicated implements XpathNode {
@@ -492,6 +495,11 @@ final class Xpath {
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.filter(x -> (boolean) this.predicate.execute(x));
         }
+
+        @Override
+        public String toString() {
+            return "[" + this.predicate + "]";
+        }
     }
 
 
@@ -501,7 +509,6 @@ final class Xpath {
      *
      * @since 0.1
      */
-    @ToString
     @EqualsAndHashCode
     private static final class Step implements XpathNode {
 
@@ -522,14 +529,11 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.flatMap(Xml::children).filter(Filter.withName(this.name));
-//            return xml.flatMap(this::flat).filter(Filter.withName(this.name));
         }
 
-        private Stream<Xml> flat(Xml xml) {
-            return Stream.concat(
-                Stream.of(xml),
-                xml.children().flatMap(this::flat)
-            );
+        @Override
+        public String toString() {
+            return "step:" + this.name;
         }
     }
 
@@ -559,6 +563,11 @@ final class Xpath {
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return xml.skip(this.index - 1).findFirst().stream();
         }
+
+        @Override
+        public String toString() {
+            return "[" + this.index + "]";
+        }
     }
 
     private class AttributeExpession implements XpathFunction {
@@ -572,6 +581,11 @@ final class Xpath {
         @Override
         public Object execute(final Xml xml) {
             return xml.attribute(this.name).isPresent();
+        }
+
+        @Override
+        public String toString() {
+            return "@" + this.name;
         }
     }
 
@@ -592,6 +606,11 @@ final class Xpath {
         @Override
         public Object execute(final Xml xml) {
             return this.subpath.nodes(Stream.of(xml)).findFirst().isPresent();
+        }
+
+        @Override
+        public String toString() {
+            return this.subpath.toString();
         }
     }
 
@@ -868,9 +887,11 @@ final class Xpath {
 
     }
 
-    private class Logged implements XpathNode {
+    private static class Logged implements XpathNode {
 
         private final XpathNode origin;
+        private static final AtomicInteger tabs = new AtomicInteger(0);
+        private static final Deque<String> stack = new ArrayDeque<>(0);
 
         public Logged(final XpathNode origin) {
             this.origin = origin;
@@ -878,17 +899,48 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            System.out.println("\n");
-            System.out.printf("XML nodes BEFORE: %s%n", this.origin);
+//            System.out.println("\n");
+            this.print("{ '%s'", path());
             final List<Xml> collect = xml.collect(Collectors.toList());
-            collect.forEach(System.out::println);
+            collect.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
+            inc();
             final List<Xml> after = origin.nodes(collect.stream()).collect(Collectors.toList());
-            System.out.println();
-            System.out.printf("XML nodes AFTER: %s%n", this.origin);
-            after.forEach(System.out::println);
-            System.out.println("_________");
-            System.out.println("\n");
+            dec();
+            if (!after.isEmpty()) {
+                print("______");
+            }
+            after.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
+            this.print("'%s' }", path());
             return after.stream();
+        }
+
+        private String path() {
+//            return stack.stream().collect(Collectors.joining(" -> ")) + " -> " + this.origin;
+            return this.origin.toString();
+        }
+
+        private void inc() {
+            Logged.tabs.incrementAndGet();
+            stack.push(this.origin.toString());
+        }
+
+        private void dec() {
+            Logged.tabs.decrementAndGet();
+            stack.pop();
+        }
+
+
+        private static String clean(String str) {
+            return str.replaceAll("\n", "").replaceAll("\r", "").trim();
+        }
+
+        private void print(final String message, Object... args) {
+            System.out.println(" ".repeat(tabs.get()) + String.format(message, args));
+        }
+
+        @Override
+        public String toString() {
+            return this.origin.toString();
         }
     }
 
