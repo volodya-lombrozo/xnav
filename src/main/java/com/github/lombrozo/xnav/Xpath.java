@@ -222,7 +222,8 @@ final class Xpath {
                 this.consume();
                 return this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
-                return this.parseFunction();
+//                return this.parseFunction();
+                return this.parseClause();
             } else if (current.type == Type.LPAREN) {
                 this.consume();
                 XpathFunction expr = this.parseExpression();
@@ -235,9 +236,22 @@ final class Xpath {
             }
         }
 
-        private XpathFunction parseFunction() {
-            final Token token = this.consume();
-            final String name = token.text;
+        private XpathFunction parseClause() {
+            final Token name = this.consume();
+            if (this.peek().type == Type.LPAREN) {
+                return this.parseFunction(name.text);
+            } else {
+                return this.parseSubExpression(name.text);
+            }
+        }
+
+        private XpathFunction parseSubExpression(final String text) {
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
+
+        private XpathFunction parseFunction(final String name) {
+//            final Token token = this.consume();
+//            final String name = token.text;
             final XpathFunction result;
             if ("text".equals(name)) {
                 this.consume(); // Consume '('
