@@ -161,25 +161,25 @@ final class Xpath {
         }
 
         private XpathFunction parseExpression() {
-            final XpathFunction left = this.parseSingleExpression();
-            if (this.eof()) {
-                return left;
-            }
-            final Type current = this.tokens.get(this.pos).type;
-            if (current == Type.AND || current == Type.OR) {
-                final Token token = this.consume();
-                if (token.type == Type.AND) {
-                    return new AndExpression(left, this.parseExpression());
-                } else if (token.type == Type.OR) {
-                    return new OrExpression(left, this.parseExpression());
+            XpathFunction left = this.parseSingleExpression();
+            while (!this.eof()) {
+                final Type current = peek().type;
+                if (current == Type.AND || current == Type.OR) {
+                    final Token token = this.consume();
+                    if (token.type == Type.AND) {
+                        left = new AndExpression(left, this.parseExpression());
+                    } else if (token.type == Type.OR) {
+                        left = new OrExpression(left, this.parseExpression());
+                    } else {
+                        throw new IllegalStateException(
+                            String.format("Expected AND or OR, but got %s", token)
+                        );
+                    }
                 } else {
-                    throw new IllegalStateException(
-                        String.format("Expected AND or OR, but got %s", token)
-                    );
+                    break;
                 }
-            } else {
-                return left;
             }
+            return left;
         }
 
         private XpathFunction parseSingleExpression() {
@@ -189,6 +189,11 @@ final class Xpath {
                 return this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
                 return this.parseFunction();
+            } else if (current.type == Type.LPAREN) {
+                this.consume();
+                XpathFunction expr = this.parseExpression();
+                this.consume();
+                return expr;
             } else {
                 throw new IllegalStateException(
                     String.format("Expected number, but got %s", current)

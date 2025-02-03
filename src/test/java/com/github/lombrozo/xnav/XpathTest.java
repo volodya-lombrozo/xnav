@@ -448,12 +448,16 @@ final class XpathTest {
      */
     private static Object[][] normalizeSpace() {
         final Xml xml = new DomXml(
-            "<messages>" +
-                "  <message> hello </message>" +
-                "  <message>  world   </message>" +
-                "  <message> </message>" +
-                "  <message>   trimmed   </message>" +
+            String.join(
+                "\n",
+                "<messages>",
+                "  <message> hello </message>",
+                "  <message>  world   </message>",
+                "  <message> </message>",
+                "  <message>   trimmed   </message>",
                 "</messages>"
+            )
+
         );
         return new Object[][]{
             {"/messages/message[normalize-space(text()) = 'hello']", xml, " hello "},
@@ -471,17 +475,29 @@ final class XpathTest {
      */
     private static Object[][] parentheses() {
         final Xml xml = new DomXml(
-            "<values>" +
-                "  <val type='A' active='true'>one</val>" +
-                "  <val type='B' active='false'>two</val>" +
-                "  <val type='A' active='false'>three</val>" +
+            String.join(
+                "\n",
+                "<values>",
+                "  <val type='A' active='true'>one</val>",
+                "  <val type='B' active='false'>two</val>",
+                "  <val type='A' active='false'>three</val>",
+                "  <val type='C' active='true'>four</val>",
+                "  <val type='C' active='false'>five</val>",
                 "</values>"
+            )
         );
         return new Object[][]{
             {"/values/val[(string-length(text()) > 3) and @active='false']", xml, "three"},
             {"/values/val[(@active='true') and (@type='A')]", xml, "one"},
             {"/values/val[(text()='one' or text()='three') and @type='A']", xml, "one"},
             {"/values/val[(text()='one' or text()='three') and @type='B']", xml, ""},
+            {"/values/val[(text()='four' or text()='five') and @type='C']", xml, "four"},
+            {"/values/val[(text()='four' or text()='five') and @active='false']", xml, "five"},
+            {"/values/val[(text()='two' or text()='three') and @active='false']", xml, "two"},
+            {"/values/val[(text()='one' or text()='four') and @active='true']", xml, "one"},
+            {"/values/val[(@active='false') and (text()='four' or text()='five')]", xml, "five"},
+            {"/values/val[@active='false' and (text()='two' or text()='three')]", xml, "two"},
+            {"/values/val[(@active='true') and (text()='one' or text()='four')]", xml, "one"},
         };
     }
 
