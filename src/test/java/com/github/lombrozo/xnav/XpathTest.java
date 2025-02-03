@@ -276,7 +276,8 @@ final class XpathTest {
         "inversion",
         "stringLength",
         "normalizeSpace",
-        "parentheses"
+        "parentheses",
+        "predicatesOverResults"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
@@ -498,6 +499,26 @@ final class XpathTest {
             {"/values/val[(@active='false') and (text()='four' or text()='five')]", xml, "five"},
             {"/values/val[@active='false' and (text()='two' or text()='three')]", xml, "two"},
             {"/values/val[(@active='true') and (text()='one' or text()='four')]", xml, "one"},
+        };
+    }
+
+
+    private static Object[][] predicatesOverResults() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<locations>",
+                "  <o name='one' atom='true' loc='here'>one</o>",
+                "  <o name='two' atom='true' base='yes' loc='there'>two</o>",
+                "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
+                "  <o name='four' atom='true' loc='nowhere'>four</o>",
+                "</locations>"
+            )
+        );
+        return new Object[][]{
+            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
+            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[2]", xml, "four"},
+            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[3]", xml, ""},
         };
     }
 

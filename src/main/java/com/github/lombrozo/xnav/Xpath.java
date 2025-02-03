@@ -110,11 +110,42 @@ final class Xpath {
          */
         XpathNode relativePath() {
             final List<XpathNode> steps = new ArrayList<>(0);
-            while (!this.eof() && this.tokens.get(this.pos).type == Type.SLASH) {
-                this.consume();
-                steps.add(this.step());
+            while (!this.eof()) {
+                final Token current = peek();
+                if (current.type == Type.SLASH) {
+                    this.consume();
+                    steps.add(this.step());
+                } else if (current.type == Type.LPAREN) {
+                    steps.add(this.parseParenthesizedPath());
+                } else {
+                    break;
+                }
             }
             return new RelativePath(steps);
+        }
+
+        private XpathNode parseParenthesizedPath() {
+            this.consume(); // Consume '('
+            XpathNode expr = this.relativePath();
+            this.consume(); // Consume ')'
+            if (this.peek().type == Type.LBRACKET) {
+//              TODO: Code duplication with the parsePredicatedStep method
+                this.consume();
+                if (this.peek().type == Type.NUMBER) {
+                    final String lexeme = this.consume().lexeme();
+                    expr = new RelativePath(
+                        expr,
+                        new NumberExpression(Integer.parseInt(lexeme))
+                    );
+                } else {
+                    expr = new RelativePath(
+                        expr,
+                        new Predicated(this.parseExpression())
+                    );
+                }
+                this.consume();
+            }
+            return expr;
         }
 
         /**
