@@ -72,7 +72,7 @@ final class Xpath {
      */
     Stream<Xml> nodes() {
         return new XPathParser(new XPathLexer(this.path).tokens())
-            .relativePath()
+            .rootPath()
             .nodes(Stream.of(this.root));
     }
 
@@ -108,7 +108,7 @@ final class Xpath {
          *
          * @return Relative path.
          */
-        XpathNode relativePath() {
+        XpathNode rootPath() {
             final List<XpathNode> steps = new ArrayList<>(0);
             while (!this.eof()) {
                 final Token current = peek();
@@ -121,24 +121,24 @@ final class Xpath {
                     break;
                 }
             }
-            return new RelativePath(steps);
+            return new SequentialPath(steps);
         }
 
         private XpathNode parseParenthesizedPath() {
             this.consume(); // Consume '('
-            XpathNode expr = this.relativePath();
+            XpathNode expr = this.rootPath();
             this.consume(); // Consume ')'
             if (this.peek().type == Type.LBRACKET) {
 //              TODO: Code duplication with the parsePredicatedStep method
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    expr = new RelativePath(
+                    expr = new SequentialPath(
                         expr,
                         new NumberExpression(Integer.parseInt(lexeme))
                     );
                 } else {
-                    expr = new RelativePath(
+                    expr = new SequentialPath(
                         expr,
                         new Predicated(this.parseExpression())
                     );
@@ -176,12 +176,12 @@ final class Xpath {
                 this.consume();
                 if (this.peek().type == Type.NUMBER) {
                     final String lexeme = this.consume().lexeme();
-                    step = new RelativePath(
+                    step = new SequentialPath(
                         step,
                         new NumberExpression(Integer.parseInt(lexeme))
                     );
                 } else {
-                    step = new RelativePath(
+                    step = new SequentialPath(
                         step,
                         new Predicated(this.parseExpression())
                     );
@@ -390,14 +390,14 @@ final class Xpath {
      */
     @ToString
     @EqualsAndHashCode
-    private static final class RelativePath implements XpathNode {
+    private static final class SequentialPath implements XpathNode {
 
         /**
          * Steps.
          */
         private final List<XpathNode> steps;
 
-        private RelativePath(final XpathNode... nodes) {
+        private SequentialPath(final XpathNode... nodes) {
             this(Arrays.asList(nodes));
         }
 
@@ -406,7 +406,7 @@ final class Xpath {
          *
          * @param steps Steps.
          */
-        private RelativePath(final List<XpathNode> steps) {
+        private SequentialPath(final List<XpathNode> steps) {
             this.steps = steps;
         }
 
