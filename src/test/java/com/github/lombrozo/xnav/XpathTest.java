@@ -268,6 +268,18 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void retrievesRecursiveElement() {
+        MatcherAssert.assertThat(
+            "We expect to retrieve the element recursively",
+            new Xpath(new DomXml("<root><level1><level2><target/></level2></level1></root>"), "//target")
+                .nodes()
+                .findFirst()
+                .orElseThrow(),
+            Matchers.equalTo(new DomXml("<target/>").child("target"))
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({
         "xpaths",
@@ -277,7 +289,8 @@ final class XpathTest {
         "stringLength",
         "normalizeSpace",
         "parentheses",
-        "predicatesOverResults"
+        "predicatesOverResults",
+        "recursivePaths"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
@@ -519,6 +532,45 @@ final class XpathTest {
             {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
             {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[2]", xml, "four"},
             {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[3]", xml, ""},
+        };
+    }
+
+    /**
+     * Arguments for the test with recursive paths.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] recursivePaths() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<languages>",
+                "  <language name='Java' type='OOP'>",
+                "    <feature>Cross-platform</feature>",
+                "    <feature>Robust</feature>",
+                "  </language>",
+                "  <language name='Python' type='Scripting'>",
+                "    <feature>Easy to learn</feature>",
+                "    <feature>Versatile</feature>",
+                "  </language>",
+                "  <language name='C++' type='OOP'>",
+                "    <feature>Performance</feature>",
+                "    <feature>Complex</feature>",
+                "  </language>",
+                "</languages>"
+            )
+        );
+        return new Object[][]{
+            {"//feature[text()='Cross-platform']", xml, "Cross-platform"},
+            {"//language[@name='Python']//feature[2]", xml, "Versatile"},
+            {"//language[@type='OOP']//feature[text()='Performance']", xml, "Performance"},
+            {"//language[@type='Scripting']//feature[1]", xml, "Easy to learn"},
+            {"//language[@name='Java']//feature[1]", xml, "Cross-platform"},
+            {"//language[@name='C++']//feature[2]", xml, "Complex"},
+            {"//language[@name='Python']//feature[text()='Versatile']", xml, "Versatile"},
+            {"//language[@name='Java' and @type='OOP']//feature[2]", xml, "Robust"},
+            {"//language[@name='C++' and @type='OOP']//feature[1]", xml, "Performance"},
+            {"//language[@name='Python' and not(@type='OOP')]//feature[1]", xml, "Easy to learn"},
         };
     }
 
