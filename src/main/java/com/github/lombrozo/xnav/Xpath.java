@@ -458,8 +458,8 @@ final class Xpath {
 
         private Stream<Xml> flat(final Xml xml) {
             return Stream.concat(
-                Stream.of(xml),
-                xml.children().flatMap(this::flat)
+                xml.children().flatMap(this::flat),
+                Stream.of(xml)
             );
         }
     }
