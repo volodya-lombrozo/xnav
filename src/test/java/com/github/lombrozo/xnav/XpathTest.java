@@ -24,6 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
@@ -282,12 +283,47 @@ final class XpathTest {
     }
 
     @Test
-    void findsCorrectTextFromNestedXpath() {
+    void ____() {
+//        final String xml = "<o><o><o><o color='red'>red</o></o></o>  <o><o color='blue'>blue</o></o></o>";
+//        System.out.println(
+//            new Xnav(new DomXml(xml)).path("//o/o[@color]").collect(Collectors.toList()))
+//        ;
+        final String xml = "<o>" +
+            "  <o><o color='red'>red</o></o>" +
+            "  <o color='blue'>blue</o>" +
+            "</o>";
+        System.out.println(
+            new Xnav(new DomXml(xml)).path("//o/o[@color]").collect(Collectors.toList()))
+        ;
+    }
+
+    @Test
+    void selectsTopFirst() {
+        final String xml = "<o base=\"bytes\">\n" +
+            "  <o base=\"bytes\">2-bytes-</o>\n" +
+            "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>\n" +
+            "</o>";
+        final List<Xnav> all = new Xnav(new DomXml(xml)).path("//o[@base='bytes']")
+            .collect(Collectors.toList());
+        MatcherAssert.assertThat(
+            "We expect to find the correct number of elements",
+            all,
+            Matchers.hasSize(4)
+        );
+        MatcherAssert.assertThat(
+            "We expect to find the correct first text",
+            all.get(0).text().get(),
+            Matchers.equalTo("\n  2-bytes-\n  content\n")
+        );
+    }
+
+    @Test
+    void findsCorrectTextFromNestedPredicate() {
         final String xml = String.join(
             "\n",
             "<o>",
-            "  <o><o><o color='red'>red</o></o></o>",
-            "  <o><o color='blue'>blue</o></o>\n",
+            "  <o><o color='red'>red</o></o>",
+            "  <o color='blue'>blue</o>\n",
             "</o>"
         );
         MatcherAssert.assertThat(
@@ -297,9 +333,30 @@ final class XpathTest {
                 .map(Xml::text)
                 .orElseThrow()
                 .orElseThrow(),
+            Matchers.equalTo("\n  red\n  blue\n\n")
+        );
+    }
+
+    @Test
+    void findsCorrectTextFromSteppedXpath() {
+        final String xml = String.join(
+            "\n",
+            "<o>",
+            "  <o><o color='red'>red</o></o>",
+            "  <o color='blue'>blue</o>\n",
+            "</o>"
+        );
+        MatcherAssert.assertThat(
+            "We expect to find the correct first text from nested XML",
+            new Xpath(new DomXml(xml), "//o/o[@color]").nodes()
+                .findFirst()
+                .map(Xml::text)
+                .orElseThrow()
+                .orElseThrow(),
             Matchers.equalTo("red")
         );
     }
+
 
     @ParameterizedTest
     @MethodSource({
