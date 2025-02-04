@@ -530,10 +530,10 @@ final class Xpath {
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             //@checkstyle MethodBodyCommentsCheck (30 lines)
-            //@todo #39:90min Travers Recursive Path in a More Efficient Way.
-            // Currently we get all the possible nodes that match the path and then
-            // we sort them by the order they appear in the document. This is not
-            // efficient and we should find a better way to traverse the document.
+            // @todo #39:90min Travers Recursive Path in a More Efficient Way.
+            //  Currently we get all the possible nodes that match the path and then
+            //  we sort them by the order they appear in the document. This is not
+            //  efficient and we should find a better way to traverse the document.
             final AtomicInteger integer = new AtomicInteger(0);
             final Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
                 .collect(Collectors.toMap(x -> x, x -> integer.incrementAndGet()));
