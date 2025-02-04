@@ -346,9 +346,11 @@ final class XpathTest {
             "  <o color='blue'>blue</o>\n",
             "</o>"
         );
+        final List<Xml> collect = new Xpath(new DomXml(xml), "//o/o[@color]").nodes()
+            .collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to find the correct first text from nested XML",
-            new Xpath(new DomXml(xml), "//o/o[@color]").nodes()
+            collect.stream()
                 .findFirst()
                 .map(Xml::text)
                 .orElseThrow()
@@ -702,7 +704,6 @@ final class XpathTest {
             {"(//x[@a and @b])[1]", xml, "x2"},
             {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "2-bytes-content"},
             {"(//o[@base='Q.org.eolang.number' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "1-hex-content"},
-//            {"(//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "first-content"},
             {"//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]]", xml, "first-content"},
         };
     }

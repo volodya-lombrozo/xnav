@@ -27,8 +27,10 @@ package com.github.lombrozo.xnav;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -112,26 +114,46 @@ final class Xpath {
          *
          * @return Relative path.
          */
+//        XpathNode rootPath() {
+//            final List<XpathNode> steps = new ArrayList<>(0);
+//            while (!this.eof()) {
+//                final Token current = peek();
+//                if (current.type == Type.SLASH) {
+//                    this.consume();
+//                    steps.add(this.step());
+//                } else if (current.type == Type.NAME) {
+//                    steps.add(this.step());
+//                } else if (current.type == Type.DSLASH) {
+//                    this.consume();
+//                    steps.add(new Logged(new RecursivePath(this.rootPath())));
+//                } else if (current.type == Type.LPAREN) {
+//                    steps.add(this.parseParenthesizedPath());
+//                } else {
+//                    break;
+//                }
+//            }
+//            return new Logged(new SequentialPath(steps));
+//        }
+
         XpathNode rootPath() {
-            final List<XpathNode> steps = new ArrayList<>(0);
+            XpathNode step = x -> x;
             while (!this.eof()) {
                 final Token current = peek();
                 if (current.type == Type.SLASH) {
                     this.consume();
-                    steps.add(this.step());
+                    step = new SeqPath(step, this.step());
                 } else if (current.type == Type.NAME) {
-                    steps.add(this.step());
+                    step = new SeqPath(step, this.step());
                 } else if (current.type == Type.DSLASH) {
                     this.consume();
-//                    return new Logged(new RecursivePath(this.rootPath()));
-                    steps.add(new Logged(new RecursivePath(this.rootPath())));
+                    step = new SeqPath(step, new RecursivePath(this.rootPath()));
                 } else if (current.type == Type.LPAREN) {
-                    steps.add(this.parseParenthesizedPath());
+                    step = new SeqPath(step, this.parseParenthesizedPath());
                 } else {
                     break;
                 }
             }
-            return new Logged(new SequentialPath(steps));
+            return new Logged(step);
         }
 
         private XpathNode parseParenthesizedPath() {
@@ -399,6 +421,23 @@ final class Xpath {
         }
     }
 
+    private static final class SeqPath implements XpathNode {
+
+        private final XpathNode first;
+        private final XpathNode next;
+
+        public SeqPath(final XpathNode first, final XpathNode next) {
+            this.first = first;
+            this.next = next;
+        }
+
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            return this.next.nodes(this.first.nodes(xml));
+        }
+    }
+
     /**
      * Relative path.
      * This is a sequence of steps.
@@ -429,87 +468,8 @@ final class Xpath {
                 (acc, step) -> step.nodes(acc),
                 Stream::concat
             );
-//
-//            final List<Xml> all = xml.collect(Collectors.toList());
-//            for (int i = 0; i < all.size(); i++) {
-//                final List<Xml> res = new ArrayList<>();
-//                for (int k = 0; k < this.steps.size(); k++) {
-//                    res.addAll(this.steps.get(k)
-//                        .nodes(Stream.of(all.get(i)))
-//                        .collect(Collectors.toList()));
-//
-//                }
-//                all.clear();
-//                all.addAll(res);
-//            }
-//            return all.stream();
-
-//            return xml.flatMap(
-//                x -> this.steps.stream().reduce(
-//                    Stream.of(x),
-//                    (acc, step) -> step.nodes(acc),
-//                    Stream::concat
-//                )
-//            );
-
-
-//            return xml.flatMap(x -> dfs(x, 0));
-
-//            List<Xml> all = xml.collect(Collectors.toList());
-//            for (int i = 0; i < this.steps.size(); i++) {
-//                final List<Xml> res = new ArrayList<>();
-//                for (int j = 0; j < all.size(); j++) {
-//                    res.addAll(this.steps.get(i)
-//                        .nodes(Stream.of(all.get(j)))
-//                        .collect(Collectors.toList()));
-//                }
-//                all = res;
-//            }
-
-
-//            for (int i = 0; i < all.size(); i++) {
-//                for (int j = 0; j < this.steps.size(); j++) {
-//                    this.steps.get(j).nodes(Stream.of(all.get(i))).forEach(res::add);
-//                }
-//            }
-//            return all.stream();
-
-//            return this.steps.stream().reduce(
-//                xml,
-//                (acc, step) -> step.nodes(acc),
-//                Stream::concat
-//            );
-//            this.steps.forEach(step -> step.nodes(xml).flatMap(step::nodes));
         }
 
-        Stream<Xml> dfs(final Xml xml, final int deep) {
-            if (deep >= this.steps.size()) {
-                return Stream.of(xml);
-            }
-            return steps.get(deep).nodes(Stream.of(xml)).flatMap(x -> this.dfs(x, deep + 1));
-
-//            return this.steps.get(deep).nodes().flatMap(x -> this.dfs(x, deep + 1));
-        }
-
-
-//        Stream<Xml> dfs(final Xml xml, final int deep) {
-//            if (deep >= this.steps.size()) {
-//                return Stream.of(xml);
-//            }
-//            return this.steps.get(deep).nodes(Stream.of(xml)).flatMap(x -> this.dfs(x, deep + 1));
-//        }
-
-//        @Override
-//        public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            return xml.flatMap(x -> dfs(x, 0));
-//        }
-//
-//        Stream<Xml> dfs(final Xml xml, final int deep) {
-//            if (deep >= this.steps.size()) {
-//                return Stream.of(xml);
-//            }
-//            return this.steps.get(deep).nodes(Stream.of(xml)).flatMap(x -> this.dfs(x, deep + 1));
-//        }
 
         @Override
         public String toString() {
@@ -528,29 +488,40 @@ final class Xpath {
         }
 
         @Override
-        public Stream<Xml> nodes(final Stream<Xml> xmls) {
-            return xmls.flatMap(this::recursive);
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            //todo: dirty hack
+            AtomicInteger integer = new AtomicInteger(0);
+            Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
+                .collect(Collectors.toMap(x -> x, x -> integer.incrementAndGet()));
+            final List<Xml> found = ordered.keySet().stream()
+                .flatMap(x -> this.step.nodes(Stream.of(x)))
+                .collect(Collectors.toList());
+            found.sort(Comparator.comparingInt(ordered::get));
+            return found.stream();
         }
 
         private Stream<Xml> recursive(final Xml x) {
-            final Stream<Xml> nodes = this.step.nodes(Stream.of(x));
-            final List<Xml> collect = nodes.collect(Collectors.toList());
             return Stream.concat(
-                collect.stream(),
+                Stream.of(x),
                 x.children().flatMap(this::recursive)
             );
         }
 
-//        private Stream<Xml> recursive(final Xml x) {
-//            final List<Xml> current = this.step.nodes(Stream.of(x)).collect(Collectors.toList());
-
-//            final Stream<Xml> nodes = this.step.nodes(Stream.of(x));
-//            final List<Xml> collect = nodes.collect(Collectors.toList());
-//            return Stream.concat(
-//                collect.stream(),
-//                collect.stream().flatMap(child -> child.children().flatMap(this::recursive))
-//            );
+//        @Override
+//        public Stream<Xml> nodes(final Stream<Xml> xmls) {
+//            return xmls.flatMap(this::recursive);
 //        }
+//
+//        private Stream<Xml> recursive(final Xml x) {
+//            return Stream.concat(
+//                this.step.nodes(Stream.of(x)),
+//                x.children().flatMap(this::recursive)
+
+//            );
+
+
+//        }
+
 
         @Override
         public String toString() {
@@ -981,23 +952,22 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-//            System.out.println("\n");
-            this.print("{ '%s'", path());
-            final List<Xml> collect = xml.collect(Collectors.toList());
-            collect.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
-            inc();
-            final List<Xml> after = origin.nodes(collect.stream()).collect(Collectors.toList());
-            dec();
-            if (!after.isEmpty()) {
-                print("______");
-            }
-            after.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
-            this.print("'%s' }", path());
-            return after.stream();
+            return this.origin.nodes(xml);
+//            this.print("{ '%s'", path());
+//            final List<Xml> collect = xml.collect(Collectors.toList());
+//            collect.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
+//            inc();
+//            final List<Xml> after = origin.nodes(collect.stream()).collect(Collectors.toList());
+//            dec();
+//            if (!after.isEmpty()) {
+//                print("______");
+//            }
+//            after.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
+//            this.print("'%s' }", path());
+//            return after.stream();
         }
 
         private String path() {
-//            return stack.stream().collect(Collectors.joining(" -> ")) + " -> " + this.origin;
             return this.origin.toString();
         }
 
@@ -1017,7 +987,9 @@ final class Xpath {
         }
 
         private void print(final String message, Object... args) {
-            System.out.println(" ".repeat(tabs.get()) + String.format(message, args));
+            if (false) {
+                System.out.println(" ".repeat(tabs.get()) + String.format(message, args));
+            }
         }
 
         @Override
