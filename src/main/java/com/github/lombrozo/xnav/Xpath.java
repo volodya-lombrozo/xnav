@@ -31,7 +31,6 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -78,7 +77,7 @@ final class Xpath {
      */
     Stream<Xml> nodes() {
         return new XPathParser(new XPathLexer(this.path).tokens())
-            .rootPath()
+            .parsePath()
             .nodes(Stream.of(this.root));
     }
 
@@ -110,43 +109,22 @@ final class Xpath {
         }
 
         /**
-         * Parse relative path.
+         * Parse path.
          *
          * @return Relative path.
          */
-//        XpathNode rootPath() {
-//            final List<XpathNode> steps = new ArrayList<>(0);
-//            while (!this.eof()) {
-//                final Token current = peek();
-//                if (current.type == Type.SLASH) {
-//                    this.consume();
-//                    steps.add(this.step());
-//                } else if (current.type == Type.NAME) {
-//                    steps.add(this.step());
-//                } else if (current.type == Type.DSLASH) {
-//                    this.consume();
-//                    steps.add(new Logged(new RecursivePath(this.rootPath())));
-//                } else if (current.type == Type.LPAREN) {
-//                    steps.add(this.parseParenthesizedPath());
-//                } else {
-//                    break;
-//                }
-//            }
-//            return new Logged(new SequentialPath(steps));
-//        }
-
-        XpathNode rootPath() {
+        XpathNode parsePath() {
             XpathNode step = x -> x;
             while (!this.eof()) {
-                final Token current = peek();
+                final Token current = this.peek();
                 if (current.type == Type.SLASH) {
-                    this.consume();
-                    step = new SeqPath(step, this.step());
+                    this.consume(Type.SLASH);
+                    step = new SeqPath(step, this.parseStep());
                 } else if (current.type == Type.NAME) {
-                    step = new SeqPath(step, this.step());
+                    step = new SeqPath(step, this.parseStep());
                 } else if (current.type == Type.DSLASH) {
-                    this.consume();
-                    step = new SeqPath(step, new RecursivePath(this.rootPath()));
+                    this.consume(Type.DSLASH);
+                    step = new SeqPath(step, new RecursivePath(this.parsePath()));
                 } else if (current.type == Type.LPAREN) {
                     step = new SeqPath(step, this.parseParenthesizedPath());
                 } else {
@@ -156,22 +134,51 @@ final class Xpath {
             return new Logged(step);
         }
 
+        /**
+         * Parse the path in parentheses.
+         *
+         * @return Path in parentheses.
+         */
         private XpathNode parseParenthesizedPath() {
-            this.consume(); // Consume '('
-            XpathNode expr = this.rootPath();
-            this.consume(); // Consume ')'
+            this.consume(Type.LPAREN);
+            XpathNode step = this.parsePath();
+            this.consume(Type.RPAREN);
             if (this.peek().type == Type.LBRACKET) {
 //              TODO: Code duplication with the parsePredicatedStep method
-                this.consume();
+                this.consume(Type.LBRACKET);
                 if (this.peek().type == Type.NUMBER) {
-                    final String lexeme = this.consume().lexeme();
-                    expr = new Logged(new NumberExpression(Integer.parseInt(lexeme), expr));
+                    step = new Logged(
+                        new NumberExpression(
+                            Integer.parseInt(this.consume(Type.NUMBER).lexeme()),
+                            step
+                        )
+                    );
                 } else {
-                    expr = new Logged(new Predicated(expr, this.parseExpression()));
+                    step = new Logged(new Predicated(step, this.parseExpression()));
                 }
-                this.consume();
+                this.consume(Type.RBRACKET);
             }
-            return expr;
+            return step;
+        }
+
+        private XpathNode parsePredicatedStep() {
+            final Token token = this.consume();
+            XpathNode step = new Logged(new Step(token.lexeme()));
+            while (!this.eof() && this.peek().type == Type.LBRACKET) {
+                this.consume(Type.LBRACKET);
+                if (this.peek().type == Type.NUMBER) {
+                    step = new Logged(
+                        new NumberExpression(
+                            Integer.parseInt(this.consume(Type.NUMBER).lexeme()),
+                            step
+                        )
+                    );
+                } else {
+                    step = new Logged(new Predicated(step, this.parseExpression()));
+                }
+                this.consume(Type.RBRACKET);
+            }
+            return step;
         }
 
         /**
@@ -179,7 +186,7 @@ final class Xpath {
          *
          * @return Next step.
          */
-        XpathNode step() {
+        XpathNode parseStep() {
             final XpathNode result;
             final Token current = this.peek();
             if (current.type == Type.NAME) {
@@ -193,23 +200,6 @@ final class Xpath {
                 );
             }
             return result;
-        }
-
-        private XpathNode parsePredicatedStep() {
-            final Token token = this.consume();
-            XpathNode step = new Logged(new Step(token.lexeme()));
-//            XpathNode step = new Predicated(x -> x.name().equals(token.lexeme()));
-            while (!this.eof() && this.peek().type == Type.LBRACKET) {
-                this.consume();
-                if (this.peek().type == Type.NUMBER) {
-                    final String lexeme = this.consume().lexeme();
-                    step = new Logged(new NumberExpression(Integer.parseInt(lexeme), step));
-                } else {
-                    step = new Logged(new Predicated(step, this.parseExpression()));
-                }
-                this.consume();
-            }
-            return step;
         }
 
         private XpathFunction parseExpression() {
@@ -268,7 +258,7 @@ final class Xpath {
         }
 
         private XpathFunction parseSubExpression() {
-            return new SubpathExpression(this.rootPath());
+            return new SubpathExpression(this.parsePath());
         }
 
         private XpathFunction parseFunction() {
@@ -389,6 +379,22 @@ final class Xpath {
                 consumed.text,
                 value.text.substring(1, value.text.length() - 1)
             );
+        }
+
+        /**
+         * Consume the next token with expected type.
+         *
+         * @param type Type of the token.
+         * @return Consumed token.
+         */
+        private Token consume(Type type) {
+            final Token consumed = this.consume();
+            if (consumed.type != type) {
+                throw new IllegalStateException(
+                    String.format("Expected %s, but got %s", type, consumed)
+                );
+            }
+            return consumed;
         }
 
         /**

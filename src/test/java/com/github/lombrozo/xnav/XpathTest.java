@@ -283,21 +283,6 @@ final class XpathTest {
     }
 
     @Test
-    void ____() {
-//        final String xml = "<o><o><o><o color='red'>red</o></o></o>  <o><o color='blue'>blue</o></o></o>";
-//        System.out.println(
-//            new Xnav(new DomXml(xml)).path("//o/o[@color]").collect(Collectors.toList()))
-//        ;
-        final String xml = "<o>" +
-            "  <o><o color='red'>red</o></o>" +
-            "  <o color='blue'>blue</o>" +
-            "</o>";
-        System.out.println(
-            new Xnav(new DomXml(xml)).path("//o/o[@color]").collect(Collectors.toList()))
-        ;
-    }
-
-    @Test
     void selectsTopFirst() {
         final String xml = "<o base=\"bytes\">\n" +
             "  <o base=\"bytes\">2-bytes-</o>\n" +
