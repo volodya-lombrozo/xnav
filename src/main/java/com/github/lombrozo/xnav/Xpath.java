@@ -47,7 +47,14 @@ import lombok.ToString;
  * This class is thread-safe.
  *
  * @since 0.1
+ * @todo #39:60min Refactor the Xpath class.
+ *  The Xpath class is too big and has too many responsibilities.
+ *  We should refactor it to have a better design.
+ *  Don't forget to remove the PMD suppression statements.
+ *  Also there are some suppression statements in pom.xml
+ * @checkstyle FileLengthCheck (2000 lines)
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
 final class Xpath {
 
     /**
@@ -88,7 +95,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private final class XPathParser {
+    private static final class XPathParser {
 
         /**
          * Tokens.
@@ -184,7 +191,7 @@ final class Xpath {
          *
          * @return Next step.
          */
-        XpathNode parseStep() {
+        private XpathNode parseStep() {
             final XpathNode result;
             final Token current = this.peek();
             if (current.type == Type.NAME) {
@@ -208,7 +215,7 @@ final class Xpath {
         private XpathFunction parseExpression() {
             XpathFunction left = this.parseSingleExpression();
             while (!this.eof()) {
-                final Type current = peek().type;
+                final Type current = this.peek().type;
                 if (current == Type.AND || current == Type.OR) {
                     final Token token = this.consume();
                     if (token.type == Type.AND) {
@@ -259,17 +266,19 @@ final class Xpath {
          * @return Parsed clause.
          */
         private XpathFunction parseClause() {
+            final XpathFunction result;
             if (this.peek().type == Type.NAME) {
                 if (this.tokens.get(this.pos + 1).type == Type.LPAREN) {
-                    return this.parseFunction();
+                    result = this.parseFunction();
                 } else {
-                    return new SubpathExpression(this.parsePath());
+                    result = new SubpathExpression(this.parsePath());
                 }
             } else {
                 throw new IllegalStateException(
                     String.format("Expected name, but got %s", this.peek())
                 );
             }
+            return result;
         }
 
         /**
@@ -325,13 +334,13 @@ final class Xpath {
          * @return Less than expression
          */
         private XpathFunction parseLtExpression(final XpathFunction result) {
-            XpathFunction res;
-            final Token lt = this.consume(Type.LT);
-            if (lt.type == Type.LT) {
+            final XpathFunction res;
+            final Token less = this.consume(Type.LT);
+            if (less.type == Type.LT) {
                 res = new LtExpression(result, Integer.parseInt(this.consume(Type.NUMBER).text));
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected '<', but got %s", lt)
+                    String.format("Expected '<', but got %s", less)
                 );
             }
             return res;
@@ -344,15 +353,15 @@ final class Xpath {
          * @return Greater than expression.
          */
         private XpathFunction parseGtExpression(final XpathFunction result) {
-            final Token gt = this.consume(Type.GT);
-            if (gt.type == Type.GT) {
+            final Token great = this.consume(Type.GT);
+            if (great.type == Type.GT) {
                 return new GtExpression(
                     result,
                     Integer.parseInt(this.consume(Type.NUMBER).text)
                 );
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected '>', but got %s", gt)
+                    String.format("Expected '>', but got %s", great)
                 );
             }
         }
@@ -406,7 +415,7 @@ final class Xpath {
          * @param type Type of the token.
          * @return Consumed token.
          */
-        private Token consume(Type type) {
+        private Token consume(final Type type) {
             final Token consumed = this.consume();
             if (consumed.type != type) {
                 throw new IllegalStateException(
@@ -491,7 +500,6 @@ final class Xpath {
             this.next = next;
         }
 
-
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
             return this.next.nodes(this.first.nodes(xml));
@@ -527,13 +535,16 @@ final class Xpath {
             // we sort them by the order they appear in the document. This is not
             // efficient and we should find a better way to traverse the document.
             final AtomicInteger integer = new AtomicInteger(0);
-            Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
+            final Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
                 .collect(Collectors.toMap(x -> x, x -> integer.incrementAndGet()));
-            final List<Xml> found = ordered.keySet().stream()
+            return ordered.keySet().stream()
                 .flatMap(x -> this.subpath.nodes(Stream.of(x)))
-                .collect(Collectors.toList());
-            found.sort(Comparator.comparingInt(ordered::get));
-            return found.stream();
+                .sorted(Comparator.comparingInt(ordered::get));
+        }
+
+        @Override
+        public String toString() {
+            return String.format("rec://%s", this.subpath);
         }
 
         /**
@@ -548,11 +559,6 @@ final class Xpath {
                 current.children().flatMap(this::recursive)
             );
         }
-
-        @Override
-        public String toString() {
-            return String.format("rec://%s", this.subpath);
-        }
     }
 
     /**
@@ -560,7 +566,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private static class Predicated implements XpathNode {
+    private static final class Predicated implements XpathNode {
 
         /**
          * Original node.
@@ -593,7 +599,6 @@ final class Xpath {
             return String.format("%s[%s]", this.original, this.predicate);
         }
     }
-
 
     /**
      * Step node.
@@ -707,7 +712,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private class AttributeExpession implements XpathFunction {
+    private static final class AttributeExpession implements XpathFunction {
 
         /**
          * Attribute name.
@@ -742,6 +747,7 @@ final class Xpath {
      * @since 0.1
      */
     private static final class Traced implements XpathNode {
+
         /**
          * Tabs.
          * Number of tabs to pretty print indentation.
@@ -770,19 +776,24 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            this.print("{ '%s'", this.origin.toString());
+            Traced.print("{ '%s'", this.origin.toString());
             final List<Xml> collect = xml.collect(Collectors.toList());
-            collect.stream().map(Objects::toString).map(Traced::clean).forEach(this::print);
+            collect.stream().map(Objects::toString).map(Traced::clean).forEach(Traced::print);
             this.inc();
             final List<Xml> after = this.origin.nodes(collect.stream())
                 .collect(Collectors.toList());
             Traced.dec();
             if (!after.isEmpty()) {
-                this.print("______");
+                Traced.print("______");
             }
-            after.stream().map(Objects::toString).map(Traced::clean).forEach(this::print);
-            this.print("'%s' }", this.origin.toString());
+            after.stream().map(Objects::toString).map(Traced::clean).forEach(Traced::print);
+            Traced.print("'%s' }", this.origin.toString());
             return after.stream();
+        }
+
+        @Override
+        public String toString() {
+            return this.origin.toString();
         }
 
         /**
@@ -803,14 +814,13 @@ final class Xpath {
             Traced.STACK.pop();
         }
 
-
         /**
          * Print the message.
          *
          * @param str String to clean.
          * @return Cleaned string.
          */
-        private static String clean(String str) {
+        private static String clean(final String str) {
             return str.replaceAll("\n", "")
                 .replaceAll("\r", "")
                 .trim();
@@ -822,15 +832,10 @@ final class Xpath {
          * @param message Message to print.
          * @param args Arguments.
          */
-        private void print(final String message, Object... args) {
+        private static void print(final String message, final Object... args) {
             Logger.getLogger(Traced.class.getSimpleName()).info(
                 String.format("%s%s", " ".repeat(Traced.TABS.get()), String.format(message, args))
             );
-        }
-
-        @Override
-        public String toString() {
-            return this.origin.toString();
         }
     }
 
@@ -944,7 +949,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private class NormalizeSpace implements XpathFunction {
+    private static final class NormalizeSpace implements XpathFunction {
 
         /**
          * Original function.
@@ -986,7 +991,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private class EqualityExpression implements XpathFunction {
+    private static final class EqualityExpression implements XpathFunction {
 
         /**
          * Function to compare.
@@ -1020,7 +1025,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private final static class GtExpression implements XpathFunction {
+    private static final class GtExpression implements XpathFunction {
 
         /**
          * Left function.
@@ -1122,6 +1127,11 @@ final class Xpath {
         }
     }
 
+    /**
+     * And expression.
+     *
+     * @since 0.1
+     */
     private static final class AndExpression implements XpathFunction {
 
         /**

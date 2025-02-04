@@ -149,6 +149,7 @@ SOFTWARE.
                 <exclude>pmd:/src/it/.*</exclude>
                 <exclude>pmd:/src/test/java/XnavUsage.java</exclude>
                 <exclude>checkstyle:/src/test/resources/.*</exclude>
+                <exclude>checkstyle:/src/main/java/com/github/lombrozo/xnav/Xpath.java</exclude>
                 <exclude>checkstyle:/src/it/.*</exclude>
                 <exclude>checkstyle:/src/test/java/XnavUsage.java</exclude>
                 <exclude>duplicatefinder:.*</exclude>

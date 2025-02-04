@@ -23,7 +23,6 @@
  */
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -106,12 +105,21 @@ final class DomXmlTest {
 
     @Test
     void retrievesObjects() {
-        final String xml = "<o>" +
-            "  <o color='red'>red</o>" +
-            "  <o color='blue'>blue</o>" +
-            "</o>";
-        final List<Xml> collect = new DomXml(xml).child("o").children().filter(Filter.withName("o"))
-.collect(Collectors.toList());
-        System.out.println(collect);
+        MatcherAssert.assertThat(
+            "Objects are not retrieved",
+            new DomXml(
+                String.join(
+                    "\n",
+                    "<o>",
+                    "  <o color='red'>red</o>",
+                    "  <o color='blue'>blue</o>",
+                    "</o>"
+                )
+            ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
+            Matchers.hasItems(
+                new DomXml("<o color='red'>red</o>").child("o"),
+                new DomXml("<o color='blue'>blue</o>").child("o")
+            )
+        );
     }
 }

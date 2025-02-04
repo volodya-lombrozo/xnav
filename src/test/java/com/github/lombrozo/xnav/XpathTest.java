@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * @since 0.1
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class XpathTest {
 
     @Test
@@ -271,10 +272,10 @@ final class XpathTest {
 
     @Test
     void retrievesRecursiveElement() {
+        final DomXml xml = new DomXml("<root><level1><level2><target/></level2></level1></root>");
         MatcherAssert.assertThat(
             "We expect to retrieve the element recursively",
-            new Xpath(
-                new DomXml("<root><level1><level2><target/></level2></level1></root>"), "//target")
+            new Xpath(xml, "//target")
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
@@ -284,10 +285,13 @@ final class XpathTest {
 
     @Test
     void selectsTopFirst() {
-        final String xml = "<o base=\"bytes\">\n" +
-            "  <o base=\"bytes\">2-bytes-</o>\n" +
-            "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>\n" +
-            "</o>";
+        final String xml = String.join(
+            "\n",
+            "<o base=\"bytes\">",
+            "  <o base=\"bytes\">2-bytes-</o>",
+            "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>",
+            "</o>"
+        );
         final List<Xnav> all = new Xnav(new DomXml(xml)).path("//o[@base='bytes']")
             .collect(Collectors.toList());
         MatcherAssert.assertThat(
@@ -344,7 +348,6 @@ final class XpathTest {
         );
     }
 
-
     @ParameterizedTest
     @MethodSource({
         "xpaths",
@@ -380,12 +383,13 @@ final class XpathTest {
         final Xml xml = new DomXml(
             "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'>eagle</bird></animal></zoo>"
         );
+        final String eagle = "eagle";
         return new Object[][]{
             {"/zoo/animal/cat/@legs", xml, "4"},
             {"/zoo/animal/dog", xml, "4"},
             {"/zoo/animal/bird/@legs", xml, "2"},
-            {"/zoo/animal[3]/bird", xml, "eagle"},
-            {"/zoo/animal/bird", xml, "eagle"},
+            {"/zoo/animal[3]/bird", xml, eagle},
+            {"/zoo/animal/bird", xml, eagle},
             {"/zoo/animal[2]/dog", xml, "4"},
             {"/zoo/animal[1]/cat/@legs", xml, "4"},
             {"/zoo/animal[1]/cat", xml, ""},
@@ -414,19 +418,20 @@ final class XpathTest {
                 "</zoo>"
             )
         );
+        final String eagle = "eagle";
         return new Object[][]{
             {"/zoo/animal[@legs][1]", xml, "big"},
-            {"/zoo/animal[@legs][2]", xml, "eagle"},
+            {"/zoo/animal[@legs][2]", xml, eagle},
             {"/zoo/animal[@legs][3]", xml, ""},
             {"/zoo/animal[@legs='4']/elephant", xml, "big"},
-            {"/zoo/animal[@legs='2']/bird", xml, "eagle"},
+            {"/zoo/animal[@legs='2']/bird", xml, eagle},
             {"/zoo/animal[@legs='3']/bird", xml, ""},
             {"/zoo/animal[@legs='4']/bird", xml, ""},
             {"/zoo/animal[@legs='0']/bird", xml, ""},
             {"/zoo/animal[@legs='2']/elephant", xml, ""},
             {"/zoo/animal[@legs='3']/elephant", xml, ""},
             {"/zoo/animal[@legs='4']", xml, "big"},
-            {"/zoo/animal[@legs='2']", xml, "eagle"},
+            {"/zoo/animal[@legs='2']", xml, eagle},
             {"/zoo/animal[@legs='3']", xml, ""},
         };
     }
@@ -500,7 +505,7 @@ final class XpathTest {
             {"/school/class[not(@ill)]", xml, "A"},
             {"/school/class[not(@people)]", xml, ""},
             {"/school/class[not(@ill='1')]", xml, "A"},
-            {"/school/class[not(text()='A' or text()='B')]", xml, "C"}
+            {"/school/class[not(text()='A' or text()='B')]", xml, "C"},
         };
     }
 
@@ -538,7 +543,6 @@ final class XpathTest {
                 "  <message>   trimmed   </message>",
                 "</messages>"
             )
-
         );
         return new Object[][]{
             {"/messages/message[normalize-space(text()) = 'hello']", xml, " hello "},
@@ -547,7 +551,6 @@ final class XpathTest {
             {"/messages/message[string-length(normalize-space(text())) > 0]", xml, " hello "},
         };
     }
-
 
     /**
      * Arguments for parentheses () precedence tests.
@@ -567,28 +570,33 @@ final class XpathTest {
                 "</values>"
             )
         );
+        final String one = "one";
         return new Object[][]{
             {"/values/val[(string-length(text()) > 3) and @active='false']", xml, "three"},
-            {"/values/val[(@active='true') and (@type='A')]", xml, "one"},
-            {"/values/val[(text()='one' or text()='three') and @type='A']", xml, "one"},
+            {"/values/val[(@active='true') and (@type='A')]", xml, one},
+            {"/values/val[(text()='one' or text()='three') and @type='A']", xml, one},
             {"/values/val[(text()='one' or text()='three') and @type='B']", xml, ""},
             {"/values/val[(text()='four' or text()='five') and @type='C']", xml, "four"},
             {"/values/val[(text()='four' or text()='five') and @active='false']", xml, "five"},
             {"/values/val[(text()='two' or text()='three') and @active='false']", xml, "two"},
-            {"/values/val[(text()='one' or text()='four') and @active='true']", xml, "one"},
+            {"/values/val[(text()='one' or text()='four') and @active='true']", xml, one},
             {"/values/val[(@active='false') and (text()='four' or text()='five')]", xml, "five"},
             {"/values/val[@active='false' and (text()='two' or text()='three')]", xml, "two"},
-            {"/values/val[(@active='true') and (text()='one' or text()='four')]", xml, "one"},
+            {"/values/val[(@active='true') and (text()='one' or text()='four')]", xml, one},
         };
     }
 
-
+    /**
+     * Arguments for predicates [].
+     *
+     * @return Arguments for the test.
+     */
     private static Object[][] predicatesOverResults() {
         final Xml xml = new DomXml(
             String.join(
                 "\n",
                 "<locations>",
-                "  <o name='one' atom='true' loc='here'>one</o>",
+                "  <o name='one' atom='true' loc='here'>first</o>",
                 "  <o name='two' atom='true' base='yes' loc='there'>two</o>",
                 "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
                 "  <o name='four' atom='true' loc='nowhere'>four</o>",
@@ -596,9 +604,21 @@ final class XpathTest {
             )
         );
         return new Object[][]{
-            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
-            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[2]", xml, "four"},
-            {"(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[3]", xml, ""},
+            {
+                "(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]",
+                xml,
+                "first",
+            },
+            {
+                "(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[2]",
+                xml,
+                "four",
+            },
+            {
+                "(/locations/o[@name and @atom and not(@base) and @loc and not(@lambda)])[3]",
+                xml,
+                "",
+            },
         };
     }
 
@@ -641,14 +661,22 @@ final class XpathTest {
         };
     }
 
+    /**
+     * Arguments for subpath tests.
+     *
+     * @return Arguments for the test.
+     */
     private static Object[][] subpathExpressions() {
         final Xml xml = new DomXml(
-            "<root>" +
-                "  <o><o base='true'><o>basetrue</o></o></o>" +
-                "  <o base='false'><o>other</o></o>" +
-                "  <o><o base='true'>nested</o></o>" +
-                "  <o><o base='false'><o>other</o></o></o>" +
+            String.join(
+                "\n",
+                "<root>",
+                "  <o><o base='true'><o>basetrue</o></o></o>",
+                "  <o base='false'><o>other</o></o>",
+                "  <o><o base='true'>nested</o></o>",
+                "  <o><o base='false'><o>other</o></o></o>",
                 "</root>"
+            )
         );
         final String content = "basetrue";
         final String other = "other";
@@ -662,6 +690,11 @@ final class XpathTest {
         };
     }
 
+    /**
+     * Complex Xpath expressions.
+     *
+     * @return Arguments for the test.
+     */
     private static Object[][] complexXpaths() {
         final Xml xml = new DomXml(
             String.join(
@@ -683,13 +716,29 @@ final class XpathTest {
         );
         return new Object[][]{
             {"(//o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
-            {"(//o[(@base='org.eolang.two' or @base='org.eolang.org.eolang.two') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "two"},
+            {
+                "(//o[(@base='org.eolang.two' or @base='org.eolang.org.eolang.two') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]",
+                xml,
+                "two",
+            },
             {"(//x[@a and not(@b)])[1]", xml, "x1"},
             {"(//x[@a and not(@b)])[2]", xml, ""},
             {"(//x[@a and @b])[1]", xml, "x2"},
-            {"(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]", xml, "2-bytes-content"},
-            {"(//o[@base='Q.org.eolang.number' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]", xml, "1-hex-content"},
-            {"//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]]", xml, "first-content"},
+            {
+                "(//o[(@base='org.eolang.bytes' or @base='org.eolang.org.eolang.bytes') and(not(@skip)) and o[not(o) and string-length(normalize-space(text()))>0 and (@base='bytes' or @base='org.eolang.bytes')]])[1]",
+                xml,
+                "2-bytes-content",
+            },
+            {
+                "(//o[@base='Q.org.eolang.number' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]])[1]",
+                xml,
+                "1-hex-content",
+            },
+            {
+                "//o[@base='Q.org.eolang.string' and(not(@skip)) and o[1][@base='Q.org.eolang.bytes' and not(o) and string-length(normalize-space(text()))>0]]",
+                xml,
+                "first-content",
+            },
         };
     }
 
