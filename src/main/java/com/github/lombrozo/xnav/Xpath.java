@@ -119,19 +119,19 @@ final class Xpath {
                 final Token current = this.peek();
                 if (current.type == Type.SLASH) {
                     this.consume(Type.SLASH);
-                    step = new SeqentialPath(step, this.parseStep());
+                    step = new Sequence(step, this.parseStep());
                 } else if (current.type == Type.NAME) {
-                    step = new SeqentialPath(step, this.parseStep());
+                    step = new Sequence(step, this.parseStep());
                 } else if (current.type == Type.DSLASH) {
                     this.consume(Type.DSLASH);
-                    step = new SeqentialPath(step, new RecursivePath(this.parsePath()));
+                    step = new Sequence(step, new RecursivePath(this.parsePath()));
                 } else if (current.type == Type.LPAREN) {
-                    step = new SeqentialPath(step, this.parseParenthesizedPath());
+                    step = new Sequence(step, this.parseParenthesizedPath());
                 } else {
                     break;
                 }
             }
-            return new Logged(step);
+            return step;
         }
 
         /**
@@ -166,14 +166,12 @@ final class Xpath {
             while (!this.eof() && this.peek().type == Type.LBRACKET) {
                 this.consume(Type.LBRACKET);
                 if (this.peek().type == Type.NUMBER) {
-                    res = new Logged(
-                        new NumberExpression(
-                            Integer.parseInt(this.consume(Type.NUMBER).lexeme()),
-                            res
-                        )
+                    res = new NumberExpression(
+                        Integer.parseInt(this.consume(Type.NUMBER).lexeme()),
+                        res
                     );
                 } else {
-                    res = new Logged(new Predicated(res, this.parseExpression()));
+                    res = new Predicated(res, this.parseExpression());
                 }
                 this.consume(Type.RBRACKET);
             }
@@ -192,7 +190,7 @@ final class Xpath {
                 result = this.parsePredicatedStep();
             } else if (current.type == Type.AT) {
                 this.consume(Type.AT);
-                result = new Logged(new Attribute(this.consume().text));
+                result = new Attribute(this.consume().text);
             } else {
                 throw new IllegalStateException(
                     String.format("Expected one more step, but got %s", current)
@@ -308,7 +306,7 @@ final class Xpath {
             }
             final XpathFunction res;
             if (this.peek().type == Type.EQUALS) {
-                res = this.parseEqualityExpression(function);
+                res = this.parseEqExpression(function);
             } else if (this.peek().type == Type.GT) {
                 res = this.parseGtExpression(function);
             } else if (this.peek().type == Type.LT) {
@@ -358,43 +356,47 @@ final class Xpath {
             }
         }
 
-        private XpathFunction parseEqualityExpression(XpathFunction original) {
+        /**
+         * Parse equality expression.
+         *
+         * @param original Function to compare.
+         * @return Equality expression.
+         */
+        private XpathFunction parseEqExpression(final XpathFunction original) {
             this.consume(Type.EQUALS);
             final Token value = this.consume();
+            final Object comparable;
             if (value.type == Type.VALUE) {
-                final String substring = value.text.substring(1, value.text.length() - 1);
-                return new EqualityExpression(
-                    original,
-                    substring
-                );
+                comparable = value.text.substring(1, value.text.length() - 1);
             } else if (value.type == Type.NUMBER) {
-                return new EqualityExpression(
-                    original,
-                    Integer.parseInt(value.text)
-                );
+                comparable = Integer.parseInt(value.text);
             } else {
                 throw new IllegalStateException(
                     String.format("Expected a value or a number, but got %s", value)
                 );
             }
+            return new EqualityExpression(original, comparable);
         }
 
+        /**
+         * Parse the attribute expression.
+         *
+         * @return Parsed attribute expression.
+         */
         private XpathFunction parseAttributeExpression() {
-            final Token consumed = this.consume();
+            final Token name = this.consume(Type.NAME);
+            final XpathFunction result;
             if (this.eof() || this.tokens.get(this.pos).type != Type.EQUALS) {
-                return new AttributeExpession(consumed.text);
-            }
-            this.consume();
-            final Token value = this.consume();
-            if (value.type != Type.VALUE) {
-                throw new IllegalStateException(
-                    String.format("Expected value, but got %s", value)
+                result = new AttributeExpession(name.text);
+            } else {
+                this.consume(Type.EQUALS);
+                final Token value = this.consume(Type.VALUE);
+                result = new AttributeEqualityExperssion(
+                    name.text,
+                    value.text.substring(1, value.text.length() - 1)
                 );
             }
-            return new AttributeEqualityExperssion(
-                consumed.text,
-                value.text.substring(1, value.text.length() - 1)
-            );
+            return result;
         }
 
         /**
@@ -443,12 +445,31 @@ final class Xpath {
         }
     }
 
-    private static final class SeqentialPath implements XpathNode {
+    /**
+     * Sequence of nodes.
+     * This is a sequence of nodes in the XPath.
+     *
+     * @since 0.1
+     */
+    private static final class Sequence implements XpathNode {
 
+        /**
+         * First step.
+         */
         private final XpathNode first;
+
+        /**
+         * Next step.
+         */
         private final XpathNode next;
 
-        private SeqentialPath(final XpathNode first, final XpathNode next) {
+        /**
+         * Constructor.
+         *
+         * @param first First step.
+         * @param next Next step.
+         */
+        private Sequence(final XpathNode first, final XpathNode next) {
             this.first = first;
             this.next = next;
         }
