@@ -31,8 +31,10 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -167,8 +169,7 @@ final class Xpath {
                 this.consume(Type.LBRACKET);
                 if (this.peek().type == Type.NUMBER) {
                     res = new NumberExpression(
-                        Integer.parseInt(this.consume(Type.NUMBER).lexeme()),
-                        res
+                        res, Integer.parseInt(this.consume(Type.NUMBER).lexeme())
                     );
                 } else {
                     res = new Predicated(res, this.parseExpression());
@@ -345,7 +346,7 @@ final class Xpath {
         private XpathFunction parseGtExpression(final XpathFunction result) {
             final Token gt = this.consume(Type.GT);
             if (gt.type == Type.GT) {
-                return new GreaterThanExpression(
+                return new GtExpression(
                     result,
                     Integer.parseInt(this.consume(Type.NUMBER).text)
                 );
@@ -446,6 +447,22 @@ final class Xpath {
     }
 
     /**
+     * Interface for a node in the XPath.
+     *
+     * @since 0.1
+     */
+    private interface XpathNode {
+
+        /**
+         * Find nodes that match the XPath.
+         *
+         * @param xml The XML document.
+         * @return XML nodes that match the XPath.
+         */
+        Stream<Xml> nodes(Stream<Xml> xml);
+    }
+
+    /**
      * Sequence of nodes.
      * This is a sequence of nodes in the XPath.
      *
@@ -481,22 +498,39 @@ final class Xpath {
         }
     }
 
+    /**
+     * Recursive path //.
+     *
+     * @since 0.1
+     */
     private static final class RecursivePath implements XpathNode {
 
-        private final XpathNode step;
+        /**
+         * Path to search.
+         */
+        private final XpathNode subpath;
 
-        private RecursivePath(final XpathNode step) {
-            this.step = step;
+        /**
+         * Constructor.
+         *
+         * @param path Path to search.
+         */
+        private RecursivePath(final XpathNode path) {
+            this.subpath = path;
         }
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            //todo: dirty hack
-            AtomicInteger integer = new AtomicInteger(0);
+            //@checkstyle MethodBodyCommentsCheck (30 lines)
+            //@todo #39:90min Travers Recursive Path in a More Efficient Way.
+            // Currently we get all the possible nodes that match the path and then
+            // we sort them by the order they appear in the document. This is not
+            // efficient and we should find a better way to traverse the document.
+            final AtomicInteger integer = new AtomicInteger(0);
             Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
                 .collect(Collectors.toMap(x -> x, x -> integer.incrementAndGet()));
             final List<Xml> found = ordered.keySet().stream()
-                .flatMap(x -> this.step.nodes(Stream.of(x)))
+                .flatMap(x -> this.subpath.nodes(Stream.of(x)))
                 .collect(Collectors.toList());
             found.sort(Comparator.comparingInt(ordered::get));
             return found.stream();
@@ -517,16 +551,34 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return "rec://" + this.step;
+            return String.format("rec://%s", this.subpath);
         }
     }
 
+    /**
+     * Predicated node.
+     *
+     * @since 0.1
+     */
     private static class Predicated implements XpathNode {
 
+        /**
+         * Original node.
+         */
         private final XpathNode original;
+
+        /**
+         * Predicate to apply.
+         */
         private final XpathFunction predicate;
 
-        public Predicated(final XpathNode original, final XpathFunction predicate) {
+        /**
+         * Constructor.
+         *
+         * @param original Xpath node
+         * @param predicate Predicate to apply
+         */
+        private Predicated(final XpathNode original, final XpathFunction predicate) {
             this.original = original;
             this.predicate = predicate;
         }
@@ -538,7 +590,7 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return original + "[" + this.predicate + "]";
+            return String.format("%s[%s]", this.original, this.predicate);
         }
     }
 
@@ -575,7 +627,7 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return "step:" + this.name;
+            return String.format("step:%s", this.name);
         }
     }
 
@@ -588,19 +640,22 @@ final class Xpath {
     private static final class NumberExpression implements XpathNode {
 
         /**
+         * Original node.
+         */
+        private final XpathNode original;
+
+        /**
          * Index starting from 1.
          */
         private final int index;
 
-        private final XpathNode original;
-
         /**
          * Constructor.
          *
-         * @param index Index starting from 1.
          * @param original Original node that will be limited.
+         * @param index Index starting from 1.
          */
-        public NumberExpression(final int index, final XpathNode original) {
+        private NumberExpression(final XpathNode original, final int index) {
             this.index = index;
             this.original = original;
         }
@@ -612,7 +667,7 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return original + "[" + this.index + "]";
+            return String.format("%s[%d]", this.original, this.index);
         }
     }
 
@@ -647,28 +702,24 @@ final class Xpath {
         }
     }
 
-
     /**
-     * Interface for a node in the XPath.
+     * Attribute expression.
      *
      * @since 0.1
      */
-    private interface XpathNode {
-
-        /**
-         * Find nodes that match the XPath.
-         *
-         * @param xml The XML document.
-         * @return XML nodes that match the XPath.
-         */
-        Stream<Xml> nodes(Stream<Xml> xml);
-    }
-
     private class AttributeExpession implements XpathFunction {
 
+        /**
+         * Attribute name.
+         */
         private final String name;
 
-        public AttributeExpession(final String name) {
+        /**
+         * Constructor.
+         *
+         * @param name Attribute name.
+         */
+        private AttributeExpession(final String name) {
             this.name = name;
         }
 
@@ -679,21 +730,147 @@ final class Xpath {
 
         @Override
         public String toString() {
-            return "@" + this.name;
+            return String.format("@%s", this.name);
         }
     }
 
+    /**
+     * The traced step.
+     * This class is used for debugging purposes.
+     * It prints the steps that are being processed with initial and final results.
+     *
+     * @since 0.1
+     */
+    private static final class Traced implements XpathNode {
+        /**
+         * Tabs.
+         * Number of tabs to pretty print indentation.
+         */
+        private static final AtomicInteger TABS = new AtomicInteger(0);
+
+        /**
+         * Stack.
+         * Stack of the nodes is being processed.
+         */
+        private static final Deque<String> STACK = new ArrayDeque<>(0);
+
+        /**
+         * Original node.
+         */
+        private final XpathNode origin;
+
+        /**
+         * Constructor.
+         *
+         * @param origin Original node.
+         */
+        private Traced(final XpathNode origin) {
+            this.origin = origin;
+        }
+
+        @Override
+        public Stream<Xml> nodes(final Stream<Xml> xml) {
+            this.print("{ '%s'", this.origin.toString());
+            final List<Xml> collect = xml.collect(Collectors.toList());
+            collect.stream().map(Objects::toString).map(Traced::clean).forEach(this::print);
+            this.inc();
+            final List<Xml> after = this.origin.nodes(collect.stream())
+                .collect(Collectors.toList());
+            Traced.dec();
+            if (!after.isEmpty()) {
+                this.print("______");
+            }
+            after.stream().map(Objects::toString).map(Traced::clean).forEach(this::print);
+            this.print("'%s' }", this.origin.toString());
+            return after.stream();
+        }
+
+        /**
+         * Increment the tabs.
+         * This is used for pretty print.
+         */
+        private void inc() {
+            Traced.TABS.incrementAndGet();
+            Traced.STACK.push(this.origin.toString());
+        }
+
+        /**
+         * Decrement the tabs.
+         * This is used for pretty print.
+         */
+        private static void dec() {
+            Traced.TABS.decrementAndGet();
+            Traced.STACK.pop();
+        }
+
+
+        /**
+         * Print the message.
+         *
+         * @param str String to clean.
+         * @return Cleaned string.
+         */
+        private static String clean(String str) {
+            return str.replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .trim();
+        }
+
+        /**
+         * Print the message.
+         *
+         * @param message Message to print.
+         * @param args Arguments.
+         */
+        private void print(final String message, Object... args) {
+            Logger.getLogger(Traced.class.getSimpleName()).info(
+                String.format("%s%s", " ".repeat(Traced.TABS.get()), String.format(message, args))
+            );
+        }
+
+        @Override
+        public String toString() {
+            return this.origin.toString();
+        }
+    }
+
+    /**
+     * Xpath function.
+     * This is a function that can be applied to the XML node.
+     *
+     * @since 0.1
+     */
     private interface XpathFunction {
 
+        /**
+         * Execute the function.
+         *
+         * @param xml XML node.
+         * @return Result of the function.
+         */
         Object execute(Xml xml);
 
     }
 
-    private class SubpathExpression implements XpathFunction {
+    /**
+     * Subpath expression.
+     * This is a subpath in the XPath.
+     *
+     * @since 0.1
+     */
+    private static final class SubpathExpression implements XpathFunction {
 
+        /**
+         * Subpath.
+         */
         private final XpathNode subpath;
 
-        public SubpathExpression(final XpathNode subpath) {
+        /**
+         * Constructor.
+         *
+         * @param subpath Subpath.
+         */
+        private SubpathExpression(final XpathNode subpath) {
             this.subpath = subpath;
         }
 
@@ -708,11 +885,24 @@ final class Xpath {
         }
     }
 
-    private class Not implements XpathFunction {
+    /**
+     * Not function.
+     *
+     * @since 0.1
+     */
+    private static final class Not implements XpathFunction {
 
+        /**
+         * Original function.
+         */
         private final XpathFunction original;
 
-        public Not(final XpathFunction original) {
+        /**
+         * Constructor.
+         *
+         * @param original Original function.
+         */
+        private Not(final XpathFunction original) {
             this.original = original;
         }
 
@@ -722,11 +912,24 @@ final class Xpath {
         }
     }
 
-    private class StringLength implements XpathFunction {
+    /**
+     * String length function.
+     *
+     * @since 0.1
+     */
+    private static final class StringLength implements XpathFunction {
 
+        /**
+         * Original function.
+         */
         private final XpathFunction original;
 
-        public StringLength(final XpathFunction original) {
+        /**
+         * Constructor.
+         *
+         * @param original Original function.
+         */
+        private StringLength(final XpathFunction original) {
             this.original = original;
         }
 
@@ -736,11 +939,24 @@ final class Xpath {
         }
     }
 
+    /**
+     * Normalize space function.
+     *
+     * @since 0.1
+     */
     private class NormalizeSpace implements XpathFunction {
 
+        /**
+         * Original function.
+         */
         private final XpathFunction original;
 
-        public NormalizeSpace(final XpathFunction original) {
+        /**
+         * Constructor.
+         *
+         * @param original Original function.
+         */
+        private NormalizeSpace(final XpathFunction original) {
             this.original = original;
         }
 
@@ -750,7 +966,12 @@ final class Xpath {
         }
     }
 
-    private class Text implements XpathFunction {
+    /**
+     * Text function.
+     *
+     * @since 0.1
+     */
+    private static final class Text implements XpathFunction {
 
         @Override
         public String execute(final Xml xml) {
@@ -760,29 +981,64 @@ final class Xpath {
         }
     }
 
+    /**
+     * Equality expression.
+     *
+     * @since 0.1
+     */
     private class EqualityExpression implements XpathFunction {
 
+        /**
+         * Function to compare.
+         */
         private final XpathFunction function;
+
+        /**
+         * Value to compare.
+         */
         private final Object value;
 
-        public EqualityExpression(final XpathFunction function, final Object value) {
+        /**
+         * Constructor.
+         *
+         * @param function Function to compare
+         * @param value Value to compare
+         */
+        private EqualityExpression(final XpathFunction function, final Object value) {
             this.function = function;
             this.value = value;
         }
 
         @Override
         public Object execute(final Xml xml) {
-            final Object execute = this.function.execute(xml);
-            return execute.equals(this.value);
+            return this.function.execute(xml).equals(this.value);
         }
     }
 
-    private class GreaterThanExpression implements XpathFunction {
+    /**
+     * Greater than expression.
+     *
+     * @since 0.1
+     */
+    private final static class GtExpression implements XpathFunction {
 
+        /**
+         * Left function.
+         */
         private final XpathFunction left;
+
+        /**
+         * Right value.
+         */
         private final int right;
 
-        public GreaterThanExpression(final XpathFunction left, final int right) {
+        /**
+         * Constructor.
+         *
+         * @param left Left function
+         * @param right Right value
+         */
+        private GtExpression(final XpathFunction left, final int right) {
             this.left = left;
             this.right = right;
         }
@@ -793,28 +1049,64 @@ final class Xpath {
         }
     }
 
-    private class LtExpression implements XpathFunction {
+    /**
+     * Less than expression.
+     *
+     * @since 0.1
+     */
+    private static final class LtExpression implements XpathFunction {
 
+        /**
+         * Left function.
+         */
         private final XpathFunction left;
+
+        /**
+         * Right value.
+         */
         private final int right;
 
-        public LtExpression(final XpathFunction left, final int right) {
+        /**
+         * Constructor.
+         *
+         * @param left Left
+         * @param right Right
+         */
+        private LtExpression(final XpathFunction left, final int right) {
             this.left = left;
             this.right = right;
         }
 
         @Override
         public Object execute(final Xml xml) {
-            return (int) this.left.execute(xml) < right;
+            return (int) this.left.execute(xml) < this.right;
         }
     }
 
-    private class AttributeEqualityExperssion implements XpathFunction {
+    /**
+     * Attribute equality expression.
+     *
+     * @since 0.1
+     */
+    private static final class AttributeEqualityExperssion implements XpathFunction {
 
+        /**
+         * Attribute name.
+         */
         private final String attribute;
+
+        /**
+         * Value to compare.
+         */
         private final String value;
 
-        public AttributeEqualityExperssion(final String attribute, final String value) {
+        /**
+         * Constructor.
+         *
+         * @param attribute Attribute name
+         * @param value Value to compare
+         */
+        private AttributeEqualityExperssion(final String attribute, final String value) {
             this.attribute = attribute;
             this.value = value;
         }
@@ -830,12 +1122,25 @@ final class Xpath {
         }
     }
 
-    private static class AndExpression implements XpathFunction {
+    private static final class AndExpression implements XpathFunction {
 
+        /**
+         * Left function.
+         */
         private final XpathFunction left;
+
+        /**
+         * Right function.
+         */
         private final XpathFunction right;
 
-        public AndExpression(final XpathFunction left, final XpathFunction right) {
+        /**
+         * Constructor.
+         *
+         * @param left Left
+         * @param right Right
+         */
+        private AndExpression(final XpathFunction left, final XpathFunction right) {
             this.left = left;
             this.right = right;
         }
@@ -846,12 +1151,30 @@ final class Xpath {
         }
     }
 
-    private static class OrExpression implements XpathFunction {
+    /**
+     * Or expression.
+     *
+     * @since 0.1
+     */
+    private static final class OrExpression implements XpathFunction {
 
+        /**
+         * Left function.
+         */
         private final XpathFunction left;
+
+        /**
+         * Right function.
+         */
         private final XpathFunction right;
 
-        public OrExpression(final XpathFunction left, final XpathFunction right) {
+        /**
+         * Constructor.
+         *
+         * @param left Left
+         * @param right Right
+         */
+        private OrExpression(final XpathFunction left, final XpathFunction right) {
             this.left = left;
             this.right = right;
         }
@@ -909,7 +1232,9 @@ final class Xpath {
                 tokens.add(new Token(type, value, matcher.start()));
             }
             if (this.trace) {
-                tokens.forEach(System.out::println);
+                final Logger logger = Logger.getLogger(XPathLexer.class.getSimpleName());
+                logger.info("Tokens:");
+                tokens.stream().map(Token::toString).forEach(logger::info);
             }
             return tokens.stream();
         }
@@ -931,64 +1256,6 @@ final class Xpath {
             );
         }
 
-    }
-
-    private static class Logged implements XpathNode {
-
-        private final XpathNode origin;
-        private static final AtomicInteger tabs = new AtomicInteger(0);
-        private static final Deque<String> stack = new ArrayDeque<>(0);
-
-        public Logged(final XpathNode origin) {
-            this.origin = origin;
-        }
-
-        @Override
-        public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return this.origin.nodes(xml);
-//            this.print("{ '%s'", path());
-//            final List<Xml> collect = xml.collect(Collectors.toList());
-//            collect.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
-//            inc();
-//            final List<Xml> after = origin.nodes(collect.stream()).collect(Collectors.toList());
-//            dec();
-//            if (!after.isEmpty()) {
-//                print("______");
-//            }
-//            after.stream().map(Objects::toString).map(Logged::clean).forEach(this::print);
-//            this.print("'%s' }", path());
-//            return after.stream();
-        }
-
-        private String path() {
-            return this.origin.toString();
-        }
-
-        private void inc() {
-            Logged.tabs.incrementAndGet();
-            stack.push(this.origin.toString());
-        }
-
-        private void dec() {
-            Logged.tabs.decrementAndGet();
-            stack.pop();
-        }
-
-
-        private static String clean(String str) {
-            return str.replaceAll("\n", "").replaceAll("\r", "").trim();
-        }
-
-        private void print(final String message, Object... args) {
-            if (false) {
-                System.out.println(" ".repeat(tabs.get()) + String.format(message, args));
-            }
-        }
-
-        @Override
-        public String toString() {
-            return this.origin.toString();
-        }
     }
 
     /**
