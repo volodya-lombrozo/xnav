@@ -388,6 +388,7 @@ final class XpathTest {
         "predicatesOverResults",
         "recursivePaths",
         "subpathExpressions",
+        "textEquality",
         "complexXpaths"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
@@ -715,6 +716,48 @@ final class XpathTest {
             {"//o[o[@base='true'] and text()='nested']", xml, "nested"},
             {"//o[o[@base='true'] and not(text()='nested')]", xml, content},
             {"//o[o[@base='false'] and text()='other']", xml, other},
+        };
+    }
+
+    /**
+     * Arguments for subpath tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] textEquality() {
+        final Xml xml = new DomXml(
+            String.join(
+                "\n",
+                "<library>",
+                "  <book genre='fiction'>",
+                "    <title>The Great Gatsby</title>",
+                "    <author>F. Scott Fitzgerald</author>",
+                "  </book>",
+                "  <book genre='non-fiction'>",
+                "    <title>Sapiens</title>",
+                "    <author>Yuval Noah Harari</author>",
+                "  </book>",
+                "  <book genre='fiction'>",
+                "    <title>1984</title>",
+                "    <author>George Orwell</author>",
+                "  </book>",
+                "  <book genre='fiction'>",
+                "    <title>To Kill a Mockingbird</title>",
+                "    <author>Harper Lee</author>",
+                "  </book>",
+                "</library>"
+            )
+        );
+        return new Object[][]{
+            {"/library/book[title='1984']/author", xml, "George Orwell"},
+            {"/library/book[author='Harper Lee']/title", xml, "To Kill a Mockingbird"},
+            {"/library/book[@genre='fiction'][title='The Great Gatsby']/author", xml, "F. Scott Fitzgerald"},
+            {"/library/book[@genre='non-fiction'][author='Yuval Noah Harari']/title", xml, "Sapiens"},
+            {"/library/book[title='Unknown']/author", xml, ""},
+            {"/library/book[@genre='fiction'][title='1984']/author", xml, "George Orwell"},
+            {"/library/book[@genre='fiction'][author='Harper Lee']/title", xml, "To Kill a Mockingbird"},
+            {"/library/book[@genre='non-fiction'][title='Sapiens']/author", xml, "Yuval Noah Harari"},
+            {"/library/book[author='Unknown']/title", xml, ""},
         };
     }
 

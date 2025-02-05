@@ -278,14 +278,8 @@ final class Xpath {
                 if (next == Type.LPAREN) {
                     result = this.parseFunction();
                 } else if (next == Type.EQUALS) {
-//                    result = new EqualityExpression(
-//                        ,
-//
-//                    );
                     final SubpathTextExpression path = new SubpathTextExpression(this.parsePath());
                     result = this.parseEqExpression(path);
-//                    this.parseExpression();
-//                    result = this.parseAttributeExpression();
                 } else {
                     result = new SubpathExpression(this.parsePath());
                 }
