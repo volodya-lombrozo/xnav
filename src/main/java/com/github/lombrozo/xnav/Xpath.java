@@ -419,7 +419,12 @@ final class Xpath {
             final Token consumed = this.consume();
             if (consumed.type != type) {
                 throw new IllegalStateException(
-                    String.format("Expected %s, but got %s", type, consumed)
+                    String.format(
+                        "Expected '%s', but got '%s' in position: %d",
+                        type.subpattern.replaceAll("\\\\", ""),
+                        consumed.text,
+                        consumed.position
+                    )
                 );
             }
             return consumed;

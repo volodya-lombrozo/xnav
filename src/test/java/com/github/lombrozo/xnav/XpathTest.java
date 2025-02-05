@@ -348,6 +348,34 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void findsByElementTextEquality() {
+        MatcherAssert.assertThat(
+            "We expect to find the element by text equality in child element",
+            new Xpath(
+                new DomXml(
+                    "<program><metas><meta><head>alias</head><tail>1.2.3</tail></meta></metas></program>"
+                ),
+                "/program/metas/meta[head='alias']"
+            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            Matchers.equalTo("alias\n1.2.3")
+        );
+    }
+
+    @Test
+    void doesNotFindByElementTextEquality() {
+        MatcherAssert.assertThat(
+            "We expect to not find the element by text equality in child element",
+            new Xpath(
+                new DomXml(
+                    "<program><metas><meta><head>version</head><tail>1.2.3</tail></meta></metas></program>"
+                ),
+                "/program/metas/meta[tail='3.2.1']"
+            ).nodes().findFirst().isPresent(),
+            Matchers.is(false)
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({
         "xpaths",
