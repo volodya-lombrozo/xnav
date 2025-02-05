@@ -358,7 +358,7 @@ final class XpathTest {
                 ),
                 "/program/metas/meta[head='alias']"
             ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
-            Matchers.equalTo("alias\n1.2.3")
+            Matchers.equalTo("alias1.2.3")
         );
     }
 

@@ -216,15 +216,14 @@ final class Xpath {
             XpathFunction left = this.parseSingleExpression();
             while (!this.eof()) {
                 final Type current = this.peek().type;
-                if (current == Type.AND || current == Type.OR
-//                    || current == Type.EQUALS
-                ) {
+                if (current == Type.AND || current == Type.OR || current == Type.EQUALS) {
                     final Token token = this.consume();
                     if (token.type == Type.AND) {
                         left = new AndExpression(left, this.parseExpression());
                     } else if (token.type == Type.OR) {
                         left = new OrExpression(left, this.parseExpression());
-//                    } else if (token.type == Type.EQUALS) {
+                    } else if (token.type == Type.EQUALS) {
+                        left = new EqualityExpression(left, this.parseExpression());
                     } else {
                         throw new IllegalStateException(
                             String.format("Expected AND or OR, but got %s", token)
@@ -249,15 +248,19 @@ final class Xpath {
                 this.consume(Type.AT);
                 result = this.parseAttributeExpression();
             } else if (current.type == Type.NAME) {
-                result = this.parseClause();
+                result = this.parseNamedClause();
             } else if (current.type == Type.LPAREN) {
                 this.consume(Type.LPAREN);
                 final XpathFunction expr = this.parseExpression();
                 this.consume(Type.RPAREN);
                 result = expr;
+            } else if (current.type == Type.VALUE) {
+                result = new LiteralString(this.consume().text);
+            } else if (current.type == Type.NUMBER) {
+                result = new LiteralNumber(this.consume().text);
             } else {
                 throw new IllegalStateException(
-                    String.format("Expected number, but got %s", current)
+                    String.format("Unexpected token in the expression '%s'", current)
                 );
             }
             return result;
@@ -268,11 +271,21 @@ final class Xpath {
          *
          * @return Parsed clause.
          */
-        private XpathFunction parseClause() {
+        private XpathFunction parseNamedClause() {
             final XpathFunction result;
             if (this.peek().type == Type.NAME) {
-                if (this.tokens.get(this.pos + 1).type == Type.LPAREN) {
+                final Type next = this.tokens.get(this.pos + 1).type;
+                if (next == Type.LPAREN) {
                     result = this.parseFunction();
+                } else if (next == Type.EQUALS) {
+//                    result = new EqualityExpression(
+//                        ,
+//
+//                    );
+                    final SubpathTextExpression path = new SubpathTextExpression(this.parsePath());
+                    result = this.parseEqExpression(path);
+//                    this.parseExpression();
+//                    result = this.parseAttributeExpression();
                 } else {
                     result = new SubpathExpression(this.parsePath());
                 }
@@ -863,6 +876,24 @@ final class Xpath {
          */
         Object execute(Xml xml);
 
+    }
+
+    private static final class SubpathTextExpression implements XpathFunction {
+
+        private final XpathNode subpath;
+
+        public SubpathTextExpression(final XpathNode subpath) {
+            this.subpath = subpath;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return this.subpath.nodes(Stream.of(xml))
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining());
+        }
     }
 
     /**
