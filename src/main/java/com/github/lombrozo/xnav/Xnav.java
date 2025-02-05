@@ -72,8 +72,8 @@ public final class Xnav {
      *
      * @param join XML document as a string.
      */
-    public Xnav(final String join) {
-        this(new DomXml(join));
+    public Xnav(final String... join) {
+        this(new DomXml(String.join("\n", join)));
     }
 
     /**
@@ -121,13 +121,7 @@ public final class Xnav {
      * @return Navigator for the attribute.
      */
     public Xnav attribute(final String name) {
-        return new Xnav(
-            this.xml.attribute(name).orElseThrow(
-                () -> new IllegalStateException(
-                    String.format("Attribute '%s' not found in '%s'", name, this)
-                )
-            )
-        );
+        return new Xnav(this.xml.attribute(name).orElseGet(Empty::new));
     }
 
     /**

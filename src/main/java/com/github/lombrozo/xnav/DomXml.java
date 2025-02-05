@@ -76,20 +76,20 @@ final class DomXml implements Xml {
     }
 
     @Override
-    public DomXml child(final String element) {
+    public Xml child(final String element) {
         synchronized (this.inner) {
             final NodeList nodes = this.inner.getChildNodes();
             final int length = nodes.getLength();
+            Xml res = new Empty();
             for (int idx = 0; idx < length; ++idx) {
                 final Node child = nodes.item(idx);
                 if (child.getNodeType() == Node.ELEMENT_NODE
                     && child.getNodeName().equals(element)) {
-                    return new DomXml(child);
+                    res = new DomXml(child);
+                    break;
                 }
             }
-            throw new IllegalStateException(
-                String.format("Element '%s' not found in '%s'", element, this)
-            );
+            return res;
         }
     }
 

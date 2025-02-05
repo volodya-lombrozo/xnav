@@ -191,6 +191,36 @@ final class XnavTest {
         );
     }
 
+    @Test
+    void retrivesUnexistedAttribute() {
+        MatcherAssert.assertThat(
+            "We expect the navigator to retrieve unexisted empty attribute",
+            new Xnav("<foo></foo>")
+                .element("foo")
+                .element("bar")
+                .element("xyz")
+                .attribute("f")
+                .text()
+                .isPresent(),
+            Matchers.is(false)
+        );
+    }
+
+    @Test
+    void retrievesUnexistedElement() {
+        MatcherAssert.assertThat(
+            "We expect the navigator to retrieve unexisted empty element",
+            new Xnav("<foo></foo>")
+                .element("foo")
+                .element("bar")
+                .element("xyz")
+                .text()
+                .isPresent(),
+            Matchers.is(false)
+        );
+    }
+
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
