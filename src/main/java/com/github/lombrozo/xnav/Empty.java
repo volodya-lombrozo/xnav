@@ -34,7 +34,7 @@ import org.w3c.dom.Node;
  *
  * @since 0.1
  */
-public final class Empty implements Xml {
+final class Empty implements Xml {
     @Override
     public Xml child(final String element) {
         return this;

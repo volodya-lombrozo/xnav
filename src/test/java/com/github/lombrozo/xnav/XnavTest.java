@@ -220,7 +220,6 @@ final class XnavTest {
         );
     }
 
-
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
