@@ -748,15 +748,20 @@ final class XpathTest {
                 "</library>"
             )
         );
+        final String orwell = "George Orwell";
+        final String fitzgerald = "F. Scott Fitzgerald";
+        final String mockingbid = "To Kill a Mockingbird";
+        final String sapiens = "Sapiens";
+        final String harari = "Yuval Noah Harari";
         return new Object[][]{
-            {"/library/book[title='1984']/author", xml, "George Orwell"},
-            {"/library/book[author='Harper Lee']/title", xml, "To Kill a Mockingbird"},
-            {"/library/book[@genre='fiction'][title='The Great Gatsby']/author", xml, "F. Scott Fitzgerald"},
-            {"/library/book[@genre='non-fiction'][author='Yuval Noah Harari']/title", xml, "Sapiens"},
+            {"/library/book[title='1984']/author", xml, orwell},
+            {"/library/book[author='Harper Lee']/title", xml, mockingbid},
+            {"/library/book[@genre='fiction'][title='The Great Gatsby']/author", xml, fitzgerald},
+            {"/library/book[@genre='non-fiction'][author='Yuval Noah Harari']/title", xml, sapiens},
             {"/library/book[title='Unknown']/author", xml, ""},
-            {"/library/book[@genre='fiction'][title='1984']/author", xml, "George Orwell"},
-            {"/library/book[@genre='fiction'][author='Harper Lee']/title", xml, "To Kill a Mockingbird"},
-            {"/library/book[@genre='non-fiction'][title='Sapiens']/author", xml, "Yuval Noah Harari"},
+            {"/library/book[@genre='fiction'][title='1984']/author", xml, orwell},
+            {"/library/book[@genre='fiction'][author='Harper Lee']/title", xml, mockingbid},
+            {"/library/book[@genre='non-fiction'][title='Sapiens']/author", xml, harari},
             {"/library/book[author='Unknown']/title", xml, ""},
         };
     }
