@@ -216,12 +216,15 @@ final class Xpath {
             XpathFunction left = this.parseSingleExpression();
             while (!this.eof()) {
                 final Type current = this.peek().type;
-                if (current == Type.AND || current == Type.OR) {
+                if (current == Type.AND || current == Type.OR
+//                    || current == Type.EQUALS
+                ) {
                     final Token token = this.consume();
                     if (token.type == Type.AND) {
                         left = new AndExpression(left, this.parseExpression());
                     } else if (token.type == Type.OR) {
                         left = new OrExpression(left, this.parseExpression());
+//                    } else if (token.type == Type.EQUALS) {
                     } else {
                         throw new IllegalStateException(
                             String.format("Expected AND or OR, but got %s", token)
@@ -375,11 +378,11 @@ final class Xpath {
         private XpathFunction parseEqExpression(final XpathFunction original) {
             this.consume(Type.EQUALS);
             final Token value = this.consume();
-            final Object comparable;
+            final XpathFunction comparable;
             if (value.type == Type.VALUE) {
-                comparable = value.text.substring(1, value.text.length() - 1);
+                comparable = new LiteralString(value.text);
             } else if (value.type == Type.NUMBER) {
-                comparable = Integer.parseInt(value.text);
+                comparable = new LiteralNumber(value.text);
             } else {
                 throw new IllegalStateException(
                     String.format("Expected a value or a number, but got %s", value)
@@ -991,6 +994,34 @@ final class Xpath {
         }
     }
 
+    private static final class LiteralString implements XpathFunction {
+
+        private final String quoted;
+
+        public LiteralString(final String quoted) {
+            this.quoted = quoted;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return this.quoted.substring(1, this.quoted.length() - 1);
+        }
+    }
+
+    private static final class LiteralNumber implements XpathFunction {
+
+        private final String number;
+
+        private LiteralNumber(final String number) {
+            this.number = number;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return Integer.parseInt(this.number);
+        }
+    }
+
     /**
      * Equality expression.
      *
@@ -1001,27 +1032,27 @@ final class Xpath {
         /**
          * Function to compare.
          */
-        private final XpathFunction function;
+        private final XpathFunction left;
 
         /**
          * Value to compare.
          */
-        private final Object value;
+        private final XpathFunction right;
 
         /**
          * Constructor.
          *
-         * @param function Function to compare
-         * @param value Value to compare
+         * @param left Function to compare
+         * @param right Value to compare
          */
-        private EqualityExpression(final XpathFunction function, final Object value) {
-            this.function = function;
-            this.value = value;
+        private EqualityExpression(final XpathFunction left, final XpathFunction right) {
+            this.left = left;
+            this.right = right;
         }
 
         @Override
         public Object execute(final Xml xml) {
-            return this.function.execute(xml).equals(this.value);
+            return this.left.execute(xml).equals(this.right.execute(xml));
         }
     }
 
