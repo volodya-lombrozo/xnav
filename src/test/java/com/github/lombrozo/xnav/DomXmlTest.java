@@ -135,7 +135,7 @@ final class DomXmlTest {
             )
         );
         final int threads = 10;
-        final Together<List<Xml>> ob = new Together<>(
+        final Together<List<Xml>> all = new Together<>(
             threads,
             indx -> xml.child("ob").children()
                 .flatMap(Xml::children)
@@ -143,7 +143,7 @@ final class DomXmlTest {
         );
         MatcherAssert.assertThat(
             "Children are not retrieved concurrently",
-            ob.asList().stream().flatMap(List::stream).collect(Collectors.toList()),
+            all.asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
     }

@@ -45,6 +45,7 @@ import org.w3c.dom.NodeList;
  *
  * @since 0.1
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class DomXml implements Xml {
 
     /**
@@ -125,22 +126,13 @@ final class DomXml implements Xml {
     @Override
     public Stream<Xml> children() {
         synchronized (this.sync()) {
-            try {
-                final NodeList nodes = this.inner.getChildNodes();
-                final int length = nodes.getLength();
-                return Stream.iterate(0, idx -> idx + 1)
-                    .limit(length)
-                    .map(nodes::item)
-                    .filter(Objects::nonNull)
-                    .map(DomXml::new);
-            } catch (final NullPointerException npe) {
-                throw new IllegalStateException(
-                    String.format(
-                        "Failed to get children of the node: %s", this.inner.getNodeName()
-                    ),
-                    npe
-                );
-            }
+            final NodeList nodes = this.inner.getChildNodes();
+            final int length = nodes.getLength();
+            return Stream.iterate(0, idx -> idx + 1)
+                .limit(length)
+                .map(nodes::item)
+                .filter(Objects::nonNull)
+                .map(DomXml::new);
         }
     }
 

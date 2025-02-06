@@ -75,8 +75,8 @@ final class Xpath {
      * @param path The reduced version of the XPath.
      */
     Xpath(final Xml root, final String path) {
-        this.path = path;
         this.root = root;
+        this.path = path;
     }
 
     /**
@@ -85,8 +85,24 @@ final class Xpath {
      * @return The nodes that match the XPath.
      */
     Stream<Xml> nodes() {
-        return new XPathParser(new XPathLexer(this.path).tokens())
-            .parsePath().nodes(Stream.of(this.root));
+        final XpathNode xpath = new XPathParser(new XPathLexer(this.path).tokens())
+            .parsePath();
+        synchronized (this.sync()) {
+            return xpath.nodes(Stream.of(this.root));
+        }
+    }
+
+    /**
+     * Synchronize on the root.
+     * @return Root object.
+     * @todo #54:90min Remove the synchronization from the Xpath class.
+     *  Currently we synchronize on the root object to make the class thread-safe.
+     *  This is too broad and we should find a better way to make the class thread-safe.
+     *  This issue makes lot's of methods in the class synchronized and it's not efficient.
+     *  We have already added many unit tests to cover this issue.
+     */
+    private Object sync() {
+        return this.root;
     }
 
     /**
