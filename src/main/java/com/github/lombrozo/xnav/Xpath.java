@@ -86,8 +86,7 @@ final class Xpath {
      */
     Stream<Xml> nodes() {
         return new XPathParser(new XPathLexer(this.path).tokens())
-            .parsePath()
-            .nodes(Stream.of(this.root));
+            .parsePath().nodes(Stream.of(this.root));
     }
 
     /**
@@ -550,8 +549,9 @@ final class Xpath {
             //  we sort them by the order they appear in the document. This is not
             //  efficient and we should find a better way to traverse the document.
             final AtomicInteger integer = new AtomicInteger(0);
-            final Map<Xml, Integer> ordered = xml.flatMap(this::recursive)
-                .collect(Collectors.toMap(x -> x, x -> integer.incrementAndGet()));
+            final Map<Xml, Integer> ordered = xml.flatMap(this::recursive).collect(
+                Collectors.toMap(x -> x, x -> integer.incrementAndGet(), (a, ignore) -> a)
+            );
             return ordered.keySet().stream()
                 .flatMap(x -> this.subpath.nodes(Stream.of(x)))
                 .sorted(Comparator.comparingInt(ordered::get));

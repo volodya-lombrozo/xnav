@@ -125,13 +125,22 @@ final class DomXml implements Xml {
     @Override
     public Stream<Xml> children() {
         synchronized (this.sync()) {
-            final NodeList nodes = this.inner.getChildNodes();
-            final int length = nodes.getLength();
-            return Stream.iterate(0, idx -> idx + 1)
-                .limit(length)
-                .map(nodes::item)
-                .filter(Objects::nonNull)
-                .map(DomXml::new);
+            try {
+                final NodeList nodes = this.inner.getChildNodes();
+                final int length = nodes.getLength();
+                return Stream.iterate(0, idx -> idx + 1)
+                    .limit(length)
+                    .map(nodes::item)
+                    .filter(Objects::nonNull)
+                    .map(DomXml::new);
+            } catch (final NullPointerException npe) {
+                throw new IllegalStateException(
+                    String.format(
+                        "Failed to get children of the node: %s", this.inner.getNodeName()
+                    ),
+                    npe
+                );
+            }
         }
     }
 
@@ -154,48 +163,54 @@ final class DomXml implements Xml {
 
     @Override
     public String toString() {
-        try {
-            final Transformer transformer = DomXml.TFACTORY.newTransformer();
-            transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            if (!(this.inner instanceof Document)) {
-                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        synchronized (this.sync()) {
+            try {
+                final Transformer transformer = DomXml.TFACTORY.newTransformer();
+                transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+                transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                if (!(this.inner instanceof Document)) {
+                    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+                }
+                final StringWriter writer = new StringWriter();
+                transformer.transform(new DOMSource(this.inner), new StreamResult(writer));
+                return writer.toString();
+            } catch (final TransformerConfigurationException econf) {
+                throw new IllegalStateException(
+                    String.format(
+                        "Failed to configure Transformer for printing XML to a string: %s", this
+                    ),
+                    econf
+                );
+            } catch (final TransformerException exception) {
+                throw new IllegalStateException(
+                    String.format("Failed to transform XML: %s to a human-readable string", this),
+                    exception
+                );
             }
-            final StringWriter writer = new StringWriter();
-            transformer.transform(new DOMSource(this.inner), new StreamResult(writer));
-            return writer.toString();
-        } catch (final TransformerConfigurationException econf) {
-            throw new IllegalStateException(
-                String.format(
-                    "Failed to configure Transformer for printing XML to a string: %s", this
-                ),
-                econf
-            );
-        } catch (final TransformerException exception) {
-            throw new IllegalStateException(
-                String.format("Failed to transform XML: %s to a human-readable string", this),
-                exception
-            );
         }
     }
 
     @Override
     public boolean equals(final Object obj) {
-        final boolean result;
-        if (this == obj) {
-            result = true;
-        } else if (obj == null || getClass() != obj.getClass()) {
-            result = false;
-        } else {
-            final DomXml other = (DomXml) obj;
-            result = this.inner.isEqualNode(other.inner);
+        synchronized (this.sync()) {
+            final boolean result;
+            if (this == obj) {
+                result = true;
+            } else if (obj == null || getClass() != obj.getClass()) {
+                result = false;
+            } else {
+                final DomXml other = (DomXml) obj;
+                result = this.inner.isEqualNode(other.inner);
+            }
+            return result;
         }
-        return result;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.inner);
+        synchronized (this.sync()) {
+            return Objects.hashCode(this.inner);
+        }
     }
 
     /**
@@ -205,4 +220,5 @@ final class DomXml implements Xml {
     private Object sync() {
         return this.inner;
     }
+
 }
