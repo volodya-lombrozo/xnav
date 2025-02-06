@@ -77,7 +77,7 @@ final class DomXml implements Xml {
 
     @Override
     public Xml child(final String element) {
-        synchronized (this.inner) {
+        synchronized (this.sync()) {
             final NodeList nodes = this.inner.getChildNodes();
             final int length = nodes.getLength();
             Xml res = new Empty();
@@ -95,7 +95,7 @@ final class DomXml implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        synchronized (this.inner) {
+        synchronized (this.sync()) {
             final Node item = this.inner.getAttributes().getNamedItem(name);
             final Optional<Xml> result;
             if (Objects.nonNull(item)) {
@@ -109,7 +109,7 @@ final class DomXml implements Xml {
 
     @Override
     public Optional<String> text() {
-        synchronized (this.inner) {
+        synchronized (this.sync()) {
             final Optional<String> result;
             if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
                 result = Optional.of("");
@@ -124,7 +124,7 @@ final class DomXml implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        synchronized (this.inner) {
+        synchronized (this.sync()) {
             final NodeList nodes = this.inner.getChildNodes();
             final int length = nodes.getLength();
             return Stream.iterate(0, idx -> idx + 1)
@@ -137,7 +137,9 @@ final class DomXml implements Xml {
 
     @Override
     public String name() {
-        return this.inner.getNodeName();
+        synchronized (this.sync()) {
+            return this.inner.getNodeName();
+        }
     }
 
     @Override
@@ -194,5 +196,13 @@ final class DomXml implements Xml {
     @Override
     public int hashCode() {
         return Objects.hash(this.inner);
+    }
+
+    /**
+     * Synchronize target.
+     * @return Target to synchronize.
+     */
+    private Object sync() {
+        return this.inner;
     }
 }

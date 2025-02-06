@@ -23,6 +23,8 @@
  */
 package com.github.lombrozo.xnav;
 
+import com.yegor256.Together;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -120,6 +122,29 @@ final class DomXmlTest {
                 new DomXml("<o color='red'>red</o>").child("o"),
                 new DomXml("<o color='blue'>blue</o>").child("o")
             )
+        );
+    }
+
+    @Test
+    void retrievesChildrenConcurrently() {
+        final DomXml xml = new DomXml(
+            String.join(
+                "",
+                "<ob><o color='yellow'>yellow</o>",
+                "<o color='green'>green</o></ob>"
+            )
+        );
+        final int threads = 10;
+        final Together<List<Xml>> ob = new Together<>(
+            threads,
+            indx -> xml.child("ob").children().collect(Collectors.toList())
+        );
+        final List<Xml> res = ob.asList().stream().flatMap(List::stream)
+            .collect(Collectors.toList());
+        MatcherAssert.assertThat(
+            "Children are not retrieved concurrently",
+            res,
+            Matchers.hasSize(threads * 2)
         );
     }
 }

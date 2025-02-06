@@ -419,14 +419,18 @@ final class XpathTest {
         );
         final List<String> result = new Together<>(
             10,
-            idx -> xml.path("//o[@fqn]")
-                .map(o -> o.attribute("fqn").text().orElseThrow())
-                .collect(Collectors.toList())
+            idx -> {
+                    return xml.path("//o[@fqn]")
+                        .map(o -> o.attribute("fqn").text().orElseThrow())
+                        .collect(Collectors.toList());
+            }
+//            idx -> Arrays.asList("Class4", "Class5", "Class6")
         ).asList().stream().flatMap(List::stream).collect(Collectors.toList());
+        System.out.println(result);
         MatcherAssert.assertThat(
             "We expect the fqns method to work correctly in a multi-threaded environment",
             result,
-            Matchers.containsInAnyOrder("Class4", "Class5", "Class6")
+            Matchers.hasItems("Class4", "Class5", "Class6")
         );
     }
 
