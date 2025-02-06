@@ -24,6 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
+import com.yegor256.Together;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -373,6 +374,59 @@ final class XpathTest {
                 "/program/metas/meta[tail='3.2.1']"
             ).nodes().findFirst().isPresent(),
             Matchers.is(false)
+        );
+    }
+
+    @Test
+    void findsFqn() {
+        final Xnav xml = new Xnav(
+            String.join(
+                "\n",
+                "<something>",
+                "  <o fqn='Class1'/>",
+                "  <o fqn='Class2'/>",
+                "  <o fqn='Class3'/>",
+                "</something>"
+            )
+        );
+        MatcherAssert.assertThat(
+            "We expect to retrieve the fqn correctly",
+            xml.path("//o[@fqn]")
+                .map(o -> o.attribute("fqn").text().orElseThrow())
+                .collect(Collectors.toList()),
+            Matchers.containsInAnyOrder("Class1", "Class2", "Class3")
+        );
+    }
+
+
+    @Test
+    void findsFqnsConcurrently() {
+        final Xnav xml = new Xnav(
+            String.join(
+                "\n",
+                "<program>",
+                "  <metas>",
+                "    <meta>",
+                "      <head>package</head>",
+                "      <tail>com.example</tail>",
+                "    </meta>",
+                "  </metas>",
+                "  <o fqn='Class4'/>",
+                "  <o fqn='Class5'/>",
+                "  <o fqn='Class6'/>",
+                "</program>"
+            )
+        );
+        final List<String> result = new Together<>(
+            10,
+            idx -> xml.path("//o[@fqn]")
+                .map(o -> o.attribute("fqn").text().orElseThrow())
+                .collect(Collectors.toList())
+        ).asList().stream().flatMap(List::stream).collect(Collectors.toList());
+        MatcherAssert.assertThat(
+            "We expect the fqns method to work correctly in a multi-threaded environment",
+            result,
+            Matchers.containsInAnyOrder("Class4", "Class5", "Class6")
         );
     }
 

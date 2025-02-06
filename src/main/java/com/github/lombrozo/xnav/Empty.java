@@ -26,6 +26,8 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
 /**
@@ -34,6 +36,8 @@ import org.w3c.dom.Node;
  *
  * @since 0.1
  */
+@ToString
+//@EqualsAndHashCode
 final class Empty implements Xml {
     @Override
     public Xml child(final String element) {
