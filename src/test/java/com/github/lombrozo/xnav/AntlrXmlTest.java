@@ -95,6 +95,21 @@ class AntlrXmlTest {
     }
 
     @Test
+    void retrievesAttribute() {
+        MatcherAssert.assertThat(
+            "Attribute is not retrieved",
+            new AntlrXmlDocument("<doc><node attribute='value'>text</node></doc>")
+                .child("doc")
+                .child("node")
+                .attribute("attribute")
+                .orElseThrow()
+                .text()
+                .get(),
+            Matchers.equalTo("value")
+        );
+    }
+
+    @Test
     void copiesNode() {
         final Xml xml = new AntlrXmlDocument("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(

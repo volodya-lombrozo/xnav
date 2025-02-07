@@ -59,7 +59,17 @@ public final class AntlrXmlElement implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        return this.context.attribute()
+            .stream()
+            .map(attr -> (Xml) new AntlrAttribute(attr))
+            .filter(attr -> attr.name().equals(name))
+            .findFirst();
+//        if (this.context.attribute() == null) {
+//            return Optional.empty();
+//        } else {
+//            return Optional.empty();
+//        }
+//        return new AntlrXmlAttributes(this.context.attribute());
     }
 
     @Override

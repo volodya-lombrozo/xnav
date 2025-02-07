@@ -25,84 +25,59 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-final class AntlrXmlDocument implements Xml {
+public final class AntlrAttribute implements Xml {
 
     @EqualsAndHashCode.Exclude
-    private ThreadLocal<XMLParser> parser;
+    private final XMLParser.AttributeContext context;
 
-    private final String xml;
-
-    public AntlrXmlDocument(final String xml) {
-        this(AntlrXmlDocument.parser(xml), xml);
-    }
-
-
-    public AntlrXmlDocument(final ThreadLocal<XMLParser> parser, final String xml) {
-        this.parser = parser;
-        this.xml = xml;
+    public AntlrAttribute(final XMLParser.AttributeContext context) {
+        this.context = context;
     }
 
     @Override
     public Xml child(final String element) {
-        AntlrElementVisitor visitor = new AntlrElementVisitor();
-        return visitor.visitElement(this.parser.get().document().element());
+        return null;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("Not implemented");
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.children().map(Xml::text)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.joining()));
+        final String text = this.context.STRING().getText();
+        return Optional.of(text.substring(1, text.length() - 1));
     }
 
     @Override
     public Stream<Xml> children() {
-        AntlrElementVisitor visitor = new AntlrElementVisitor();
-        return Stream.of(visitor.visitElement(this.parser.get().document().element()));
+        return null;
     }
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Not implemented");
+        return this.context.Name().getText();
     }
 
     @Override
     public Xml copy() {
-        return new AntlrXmlDocument(this.parser, this.xml);
+        return null;
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        return null;
     }
 
+    @EqualsAndHashCode.Include
     @Override
     public String toString() {
-        return String.format(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s", this.xml
-        );
-    }
-
-    private static ThreadLocal<XMLParser> parser(final String xml) {
-        return ThreadLocal.withInitial(
-            () -> new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            )
-        );
-
+        return this.context.getText();
     }
 }

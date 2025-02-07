@@ -53,7 +53,7 @@ public final class AntlrChardata implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Not implemented");
+        return Stream.empty();
     }
 
     @Override

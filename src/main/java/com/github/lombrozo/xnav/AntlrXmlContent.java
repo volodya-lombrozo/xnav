@@ -25,6 +25,7 @@
 package com.github.lombrozo.xnav;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,19 +72,21 @@ public final class AntlrXmlContent implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        final XMLParser.ContentContext ctx = this.content;
-        return ctx.children.stream()
+        if (Objects.isNull(this.content)) {
+            return Stream.empty();
+        }
+        return this.content.children.stream()
             .map(
-            child -> {
-                if (child instanceof XMLParser.ElementContext) {
-                    return new AntlrXmlElement((XMLParser.ElementContext) child);
+                child -> {
+                    if (child instanceof XMLParser.ElementContext) {
+                        return new AntlrXmlElement((XMLParser.ElementContext) child);
+                    }
+                    if (child instanceof XMLParser.ChardataContext) {
+                        return new AntlrChardata((XMLParser.ChardataContext) child);
+                    }
+                    throw new UnsupportedOperationException("Not implemented");
                 }
-                if (child instanceof XMLParser.ChardataContext) {
-                    return new AntlrChardata((XMLParser.ChardataContext) child);
-                }
-                throw new UnsupportedOperationException("Not implemented");
-            }
-        );
+            );
 
     }
 

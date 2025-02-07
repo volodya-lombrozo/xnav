@@ -841,7 +841,7 @@ final class XpathTest {
      * @return XML.
      */
     private static Xml xml(final String... lines) {
-        return new DomXml(String.join("\n", lines));
+        return new AntlrXmlDocument(String.join("\n", lines));
     }
 
 }

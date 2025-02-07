@@ -36,16 +36,17 @@ final class AntlrElementVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitElement(final XMLParser.ElementContext ctx) {
-
-        final List<Xml> children = new ArrayList<>(0);
-        final XMLParser.ContentContext content = ctx.content();
-        if (content == null) {
-            throw new IllegalArgumentException("Can't parse XML element without content");
-        }
-        for (final XMLParser.ElementContext context : content.element()) {
-            children.add(this.visit(context));
-        }
         return new AntlrXmlElement(ctx);
+//        return new AntlrXmlContent(ctx.content());
+//        final List<Xml> children = new ArrayList<>(0);
+//        final XMLParser.ContentContext content = ctx.content();
+//        if (content == null) {
+//            return new Empty();
+//        }
+//        for (final XMLParser.ElementContext context : content.element()) {
+//            children.add(this.visit(context));
+//        }
+//        return new AntlrXmlElement(ctx);
     }
 
 
