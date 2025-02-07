@@ -63,6 +63,8 @@ public final class AntlrXmlContent implements Xml {
             child -> {
                 if (child instanceof XMLParser.ChardataContext) {
                     return new AntlrChardata((XMLParser.ChardataContext) child).text();
+                } else if (child instanceof XMLParser.ElementContext) {
+                    return new AntlrXmlElement((XMLParser.ElementContext) child).text();
                 }
                 return Optional.empty();
             }

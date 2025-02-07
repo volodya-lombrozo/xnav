@@ -40,6 +40,10 @@ final class AntlrXmlDocument implements Xml {
 
     private final String xml;
 
+    public AntlrXmlDocument(final String... xml) {
+        this(String.join("", xml));
+    }
+
     public AntlrXmlDocument(final String xml) {
         this(AntlrXmlDocument.parser(xml), xml);
     }

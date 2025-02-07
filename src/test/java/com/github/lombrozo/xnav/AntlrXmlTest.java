@@ -137,6 +137,20 @@ class AntlrXmlTest {
     }
 
     @Test
+    void retrievesTextFromSeveralNodes() {
+        MatcherAssert.assertThat(
+            "Text is not retrieved from several nodes",
+            new AntlrXmlDocument(
+                "<doc>",
+                "  <node>first </node>",
+                "  <node>second</node>",
+                "</doc>"
+            ).child("doc").text().orElseThrow(),
+            Matchers.equalTo("  first   second")
+        );
+    }
+
+    @Test
     void retrievesObjects() {
         MatcherAssert.assertThat(
             "Objects are not retrieved",
