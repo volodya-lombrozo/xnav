@@ -81,7 +81,7 @@ final class AntlrXmlDocument implements Xml {
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Not implemented");
+        return new AntlrElementVisitor().visitElement(this.parser.get().document().element()).name();
     }
 
     @Override

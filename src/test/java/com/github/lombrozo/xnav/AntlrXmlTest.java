@@ -150,6 +150,35 @@ class AntlrXmlTest {
         );
     }
 
+
+    @Test
+    void retrievesDocName() {
+        MatcherAssert.assertThat(
+            "We expect to find the correct document name",
+            new AntlrXmlDocument(
+                "<o base='bytes'>",
+                "  <o base='bytes'>2-bytes-</o>",
+                "  <o base='bytes'><o base='bytes'>content</o></o>",
+                "</o>"
+            ).name(),
+            Matchers.equalTo("o")
+        );
+    }
+
+    @Test
+    void retrievesChildNames() {
+        MatcherAssert.assertThat(
+            "We expect to find the correct child names",
+            new AntlrXmlDocument(
+                "<o base='child'>",
+                "  <o base='bytes'>3-bytes-</o>",
+                "  <o base='bytes'><o base='bytes'>4</o></o>",
+                "</o>"
+            ).child("o").children().map(Xml::name).collect(Collectors.toList()),
+            Matchers.hasItems("o", "o")
+        );
+    }
+
     @Test
     void retrievesObjects() {
         MatcherAssert.assertThat(
