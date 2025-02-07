@@ -46,11 +46,11 @@ final class XpathTest {
     void retrievesElement() {
         MatcherAssert.assertThat(
             "We expect to retrieve the child element correctly",
-            new Xpath(new DomXml("<animal><cat/></animal>"), "/animal/cat")
+            new Xpath(XpathTest.xml("<animal><cat/></animal>"), "/animal/cat")
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
-            Matchers.equalTo(new DomXml("<cat/>").child("cat"))
+            Matchers.equalTo(XpathTest.xml("<cat/>").child("cat"))
         );
     }
 
@@ -59,11 +59,11 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to retrieve the attribute correctly",
             new Xpath(
-                new DomXml("<building><room number='100'/></building>"),
+                XpathTest.xml("<building><room number='100'/></building>"),
                 "/building/room/@number"
             ).nodes().findFirst().orElseThrow(),
             Matchers.equalTo(
-                new DomXml("<room number='100'/>")
+                XpathTest.xml("<room number='100'/>")
                     .child("room")
                     .attribute("number")
                     .orElseThrow()
@@ -75,7 +75,7 @@ final class XpathTest {
     void doesNotFindElement() {
         MatcherAssert.assertThat(
             "We expect to not find the element",
-            new Xpath(new DomXml("<animal><dog/></animal>"), "/program/objects/o/@base")
+            new Xpath(XpathTest.xml("<animal><dog/></animal>"), "/program/objects/o/@base")
                 .nodes()
                 .findFirst()
                 .isEmpty(),
@@ -88,10 +88,10 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the second element",
             new Xpath(
-                new DomXml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
+                XpathTest.xml("<zoo><animal>cat</animal><animal>dog</animal></zoo>"),
                 "/zoo/animal[2]"
             ).nodes().findFirst().orElseThrow(),
-            Matchers.equalTo(new DomXml("<animal>dog</animal>").child("animal"))
+            Matchers.equalTo(XpathTest.xml("<animal>dog</animal>").child("animal"))
         );
     }
 
@@ -100,7 +100,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the second element",
             new Xpath(
-                new DomXml("<zoo><animal><cat/></animal><animal><pig/></animal></zoo>"),
+                XpathTest.xml("<zoo><animal><cat/></animal><animal><pig/></animal></zoo>"),
                 "/zoo/animal[1]/pig"
             ).nodes().findFirst().isPresent(),
             Matchers.is(false)
@@ -112,7 +112,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the third element",
             new Xpath(
-                new DomXml("<zoo><animal>rabbit</animal><animal>elephant</animal></zoo>"),
+                XpathTest.xml("<zoo><animal>rabbit</animal><animal>elephant</animal></zoo>"),
                 "/zoo/animal[3]"
             ).nodes().collect(Collectors.toList()),
             Matchers.empty()
@@ -124,7 +124,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to retrieve the single element with attribute",
             new Xpath(
-                new DomXml("<parking><car/><car number='1'/><car/></parking>"),
+                XpathTest.xml("<parking><car/><car number='1'/><car/></parking>"),
                 "/parking/car[@number]"
             ).nodes().count(),
             Matchers.equalTo(1L)
@@ -136,7 +136,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to retrieve the second element with attribute",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<parking><car>audi</car><car number='1'>bmw</car><car number='1'>kia</car></parking>"
                 ),
                 "/parking/car[@number][2]"
@@ -150,7 +150,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element by attribute equality expression",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<parking><car number='1'>audi</car><car number='2'>bmw</car></parking>"
                 ),
                 "/parking/car[@number='2']"
@@ -164,7 +164,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element by AND operator",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<parking><car number='1'>audi</car><car number='1' wheels='4'>bmw</car></parking>"
                 ),
                 "/parking/car[@number='1' and @wheels]"
@@ -178,7 +178,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element by text",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<films><film>matrix</film><film>inception</film><film>interstellar</film></films>"
                 ),
                 "/films/film[text()='inception']"
@@ -192,7 +192,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element by inversion",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<films><film>inception</film><film>interstellar</film></films>"
                 ),
                 "/films/film[not(text()='inception')]"
@@ -206,7 +206,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element where string-length is greater than 3",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<words><word>abc</word><word>hello</word><word>xy</word></words>"
                 ),
                 "/words/word[string-length(text()) > 3]"
@@ -220,7 +220,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element where string-length is exactly 5",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<words><word>hello</word><word>abc</word><word>12345</word></words>"
                 ),
                 "/words/word[string-length(text()) = 5]"
@@ -234,7 +234,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element after removing leading and trailing spaces",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<messages><message> hel   lo </message><message>world</message><message>   trimmed   </message></messages>"
                 ),
                 "/messages/message[normalize-space(text()) = 'hel lo']"
@@ -248,7 +248,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find elements with non-empty normalized text",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<messages><message> </message><message> nonempty </message><message>   </message></messages>"
                 ),
                 "/messages/message[string-length(normalize-space(text())) > 0]"
@@ -262,7 +262,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the correct element using parentheses with OR operator",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<values><val type='X'>apple</val><val type='Y'>banana</val><val type='X'>cherry</val></values>"
                 ),
                 "/values/val[(text()='apple' or text()='banana') and @type='X']"
@@ -273,28 +273,29 @@ final class XpathTest {
 
     @Test
     void retrievesRecursiveElement() {
-        final DomXml xml = new DomXml("<root><level1><level2><target/></level2></level1></root>");
+        final Xml xml = XpathTest.xml(
+            "<root><level1><level2><target/></level2></level1></root>"
+        );
         MatcherAssert.assertThat(
             "We expect to retrieve the element recursively",
             new Xpath(xml, "//target")
                 .nodes()
                 .findFirst()
                 .orElseThrow(),
-            Matchers.equalTo(new DomXml("<target/>").child("target"))
+            Matchers.equalTo(XpathTest.xml("<target/>").child("target"))
         );
     }
 
     @Test
     void selectsTopFirst() {
-        final String xml = String.join(
-            "\n",
-            "<o base=\"bytes\">",
-            "  <o base=\"bytes\">2-bytes-</o>",
-            "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>",
-            "</o>"
-        );
-        final List<Xnav> all = new Xnav(new DomXml(xml)).path("//o[@base='bytes']")
-            .collect(Collectors.toList());
+        final List<Xnav> all = new Xnav(
+            XpathTest.xml(
+                "<o base=\"bytes\">",
+                "  <o base=\"bytes\">2-bytes-</o>",
+                "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>",
+                "</o>"
+            )
+        ).path("//o[@base='bytes']").collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to find the correct number of elements",
             all,
@@ -318,7 +319,7 @@ final class XpathTest {
         );
         MatcherAssert.assertThat(
             "We expect to find the correct first text from nested XML",
-            new Xpath(new DomXml(xml), "//o[o[@color]]").nodes()
+            new Xpath(XpathTest.xml(xml), "//o[o[@color]]").nodes()
                 .findFirst()
                 .map(Xml::text)
                 .orElseThrow()
@@ -329,15 +330,15 @@ final class XpathTest {
 
     @Test
     void findsCorrectTextFromSteppedXpath() {
-        final String xml = String.join(
-            "\n",
-            "<o>",
-            "  <o><o color='red'>red</o></o>",
-            "  <o color='blue'>blue</o>\n",
-            "</o>"
-        );
-        final List<Xml> collect = new Xpath(new DomXml(xml), "//o/o[@color]").nodes()
-            .collect(Collectors.toList());
+        final List<Xml> collect = new Xpath(
+            XpathTest.xml(
+                "<o>",
+                "  <o><o color='red'>red</o></o>",
+                "  <o color='blue'>blue</o>\n",
+                "</o>"
+            ),
+            "//o/o[@color]"
+        ).nodes().collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to find the correct first text from nested XML",
             collect.stream()
@@ -354,7 +355,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to find the element by text equality in child element",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<program><metas><meta><head>alias</head><tail>1.2.3</tail></meta></metas></program>"
                 ),
                 "/program/metas/meta[head='alias']"
@@ -368,7 +369,7 @@ final class XpathTest {
         MatcherAssert.assertThat(
             "We expect to not find the element by text equality in child element",
             new Xpath(
-                new DomXml(
+                XpathTest.xml(
                     "<program><metas><meta><head>version</head><tail>1.2.3</tail></meta></metas></program>"
                 ),
                 "/program/metas/meta[tail='3.2.1']"
@@ -380,14 +381,11 @@ final class XpathTest {
     @Test
     void findsFqn() {
         final Xnav xml = new Xnav(
-            String.join(
-                "\n",
-                "<something>",
-                "  <o fqn='Class1'/>",
-                "  <o fqn='Class2'/>",
-                "  <o fqn='Class3'/>",
-                "</something>"
-            )
+            "<something>",
+            "  <o fqn='Class1'/>",
+            "  <o fqn='Class2'/>",
+            "  <o fqn='Class3'/>",
+            "</something>"
         );
         MatcherAssert.assertThat(
             "We expect to retrieve the fqn correctly",
@@ -401,20 +399,17 @@ final class XpathTest {
     @Test
     void findsFqnsConcurrently() {
         final Xnav xml = new Xnav(
-            String.join(
-                "\n",
-                "<program>",
-                "  <metas>",
-                "    <meta>",
-                "      <head>package</head>",
-                "      <tail>com.example</tail>",
-                "    </meta>",
-                "  </metas>",
-                "  <o fqn='Class4'/>",
-                "  <o fqn='Class5'/>",
-                "  <o fqn='Class6'/>",
-                "</program>"
-            )
+            "<program>",
+            "  <metas>",
+            "    <meta>",
+            "      <head>package</head>",
+            "      <tail>com.example</tail>",
+            "    </meta>",
+            "  </metas>",
+            "  <o fqn='Class4'/>",
+            "  <o fqn='Class5'/>",
+            "  <o fqn='Class6'/>",
+            "</program>"
         );
         MatcherAssert.assertThat(
             "We expect the fqns method to work correctly in a multi-threaded environment",
@@ -461,7 +456,7 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] xpaths() {
-        final Xml xml = new DomXml(
+        final Xml xml = XpathTest.xml(
             "<zoo><animal><cat legs='4'/></animal><animal><dog>4</dog></animal><animal><bird legs='2'>eagle</bird></animal></zoo>"
         );
         final String eagle = "eagle";
@@ -489,15 +484,12 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] attributeFilters() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<zoo>",
-                "  <animal legs='4'><elephant>big</elephant></animal>",
-                "  <animal>bacteria</animal>",
-                "  <animal legs='2'><bird>eagle</bird></animal>",
-                "</zoo>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<zoo>",
+            "  <animal legs='4'><elephant>big</elephant></animal>",
+            "  <animal>bacteria</animal>",
+            "  <animal legs='2'><bird>eagle</bird></animal>",
+            "</zoo>"
         );
         final String eagle = "eagle";
         return new Object[][]{
@@ -523,15 +515,12 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] binaryOperators() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<building>",
-                "  <room height='400' width='600'>canteen</room>",
-                "  <room height='300' width='700'>bedroom</room>",
-                "  <room height='200' width='800'>pantry</room>",
-                "</building>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<building>",
+            "  <room height='400' width='600'>canteen</room>",
+            "  <room height='300' width='700'>bedroom</room>",
+            "  <room height='200' width='800'>pantry</room>",
+            "</building>"
         );
         final String canteen = "canteen";
         final String bedroom = "bedroom";
@@ -572,15 +561,12 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] inversion() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<school>",
-                "  <class people='23'>A</class>",
-                "  <class people='30'>B</class>",
-                "  <class people='25' ill='1'>C</class>",
-                "</school>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<school>",
+            "  <class people='23'>A</class>",
+            "  <class people='30'>B</class>",
+            "  <class people='25' ill='1'>C</class>",
+            "</school>"
         );
         return new Object[][]{
             {"/school/class[not(@ill)]", xml, "A"},
@@ -596,7 +582,7 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] stringLength() {
-        final Xml xml = new DomXml(
+        final Xml xml = XpathTest.xml(
             "<words>  <word>hi</word>  <word>hello</word>  <word>bye</word>  <word>greetings</word></words>"
         );
         return new Object[][]{
@@ -614,16 +600,13 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] normalizeSpace() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<messages>",
-                "  <message> hello </message>",
-                "  <message>  world   </message>",
-                "  <message> </message>",
-                "  <message>   trimmed   </message>",
-                "</messages>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<messages>",
+            "  <message> hello </message>",
+            "  <message>  world   </message>",
+            "  <message> </message>",
+            "  <message>   trimmed   </message>",
+            "</messages>"
         );
         return new Object[][]{
             {"/messages/message[normalize-space(text()) = 'hello']", xml, " hello "},
@@ -639,17 +622,14 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] parentheses() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<values>",
-                "  <val type='A' active='true'>one</val>",
-                "  <val type='B' active='false'>two</val>",
-                "  <val type='A' active='false'>three</val>",
-                "  <val type='C' active='true'>four</val>",
-                "  <val type='C' active='false'>five</val>",
-                "</values>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<values>",
+            "  <val type='A' active='true'>one</val>",
+            "  <val type='B' active='false'>two</val>",
+            "  <val type='A' active='false'>three</val>",
+            "  <val type='C' active='true'>four</val>",
+            "  <val type='C' active='false'>five</val>",
+            "</values>"
         );
         final String one = "one";
         return new Object[][]{
@@ -673,16 +653,13 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] predicatesOverResults() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<locations>",
-                "  <o name='one' atom='true' loc='here'>first</o>",
-                "  <o name='two' atom='true' base='yes' loc='there'>two</o>",
-                "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
-                "  <o name='four' atom='true' loc='nowhere'>four</o>",
-                "</locations>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<locations>",
+            "  <o name='one' atom='true' loc='here'>first</o>",
+            "  <o name='two' atom='true' base='yes' loc='there'>two</o>",
+            "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
+            "  <o name='four' atom='true' loc='nowhere'>four</o>",
+            "</locations>"
         );
         return new Object[][]{
             {
@@ -709,24 +686,21 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] recursivePaths() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<languages>",
-                "  <language name='Java' type='OOP'>",
-                "    <feature>Cross-platform</feature>",
-                "    <feature>Robust</feature>",
-                "  </language>",
-                "  <language name='Python' type='Scripting'>",
-                "    <feature>Easy to learn</feature>",
-                "    <feature>Versatile</feature>",
-                "  </language>",
-                "  <language name='C++' type='OOP'>",
-                "    <feature>Performance</feature>",
-                "    <feature>Complex</feature>",
-                "  </language>",
-                "</languages>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<languages>",
+            "  <language name='Java' type='OOP'>",
+            "    <feature>Cross-platform</feature>",
+            "    <feature>Robust</feature>",
+            "  </language>",
+            "  <language name='Python' type='Scripting'>",
+            "    <feature>Easy to learn</feature>",
+            "    <feature>Versatile</feature>",
+            "  </language>",
+            "  <language name='C++' type='OOP'>",
+            "    <feature>Performance</feature>",
+            "    <feature>Complex</feature>",
+            "  </language>",
+            "</languages>"
         );
         return new Object[][]{
             {"//feature[text()='Cross-platform']", xml, "Cross-platform"},
@@ -748,16 +722,13 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] subpathExpressions() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<root>",
-                "  <o><o base='true'><o>basetrue</o></o></o>",
-                "  <o base='false'><o>other</o></o>",
-                "  <o><o base='true'>nested</o></o>",
-                "  <o><o base='false'><o>other</o></o></o>",
-                "</root>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<root>",
+            "  <o><o base='true'><o>basetrue</o></o></o>",
+            "  <o base='false'><o>other</o></o>",
+            "  <o><o base='true'>nested</o></o>",
+            "  <o><o base='false'><o>other</o></o></o>",
+            "</root>"
         );
         final String content = "basetrue";
         final String other = "other";
@@ -777,28 +748,25 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] textEquality() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<library>",
-                "  <book genre='fiction'>",
-                "    <title>The Great Gatsby</title>",
-                "    <author>F. Scott Fitzgerald</author>",
-                "  </book>",
-                "  <book genre='non-fiction'>",
-                "    <title>Sapiens</title>",
-                "    <author>Yuval Noah Harari</author>",
-                "  </book>",
-                "  <book genre='fiction'>",
-                "    <title>1984</title>",
-                "    <author>George Orwell</author>",
-                "  </book>",
-                "  <book genre='fiction'>",
-                "    <title>To Kill a Mockingbird</title>",
-                "    <author>Harper Lee</author>",
-                "  </book>",
-                "</library>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<library>",
+            "  <book genre='fiction'>",
+            "    <title>The Great Gatsby</title>",
+            "    <author>F. Scott Fitzgerald</author>",
+            "  </book>",
+            "  <book genre='non-fiction'>",
+            "    <title>Sapiens</title>",
+            "    <author>Yuval Noah Harari</author>",
+            "  </book>",
+            "  <book genre='fiction'>",
+            "    <title>1984</title>",
+            "    <author>George Orwell</author>",
+            "  </book>",
+            "  <book genre='fiction'>",
+            "    <title>To Kill a Mockingbird</title>",
+            "    <author>Harper Lee</author>",
+            "  </book>",
+            "</library>"
         );
         final String orwell = "George Orwell";
         final String fitzgerald = "F. Scott Fitzgerald";
@@ -824,23 +792,20 @@ final class XpathTest {
      * @return Arguments for the test.
      */
     private static Object[][] complexXpaths() {
-        final Xml xml = new DomXml(
-            String.join(
-                "\n",
-                "<root>",
-                "  <o name='one' atom='true' loc='here'>one</o>",
-                "  <o name='two' atom='true' base='org.eolang.two' loc='there'><o base='bytes'>two</o></o>",
-                "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
-                "  <o name='four' atom='true' loc='nowhere'>four</o>",
-                "  <x a='true'>x1</x>",
-                "  <x a='true' b='false'>x2</x>",
-                "  <o base='Q.org.eolang.number'><o base='Q.org.eolang.bytes'>1-hex-content</o></o>",
-                "  <o base='org.eolang.bytes'><o base='bytes'>2-bytes-</o><o base='org.eolang.bytes'><o base='bytes'>content</o></o></o>",
-                "  <o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>first-</o><o>content</o></o></o>",
-                "  <o><o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>second-</o><o>content</o></o></o></o>",
-                "  <o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>third-</o><o>content</o></o>",
-                "</root>"
-            )
+        final Xml xml = XpathTest.xml(
+            "<root>",
+            "  <o name='one' atom='true' loc='here'>one</o>",
+            "  <o name='two' atom='true' base='org.eolang.two' loc='there'><o base='bytes'>two</o></o>",
+            "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
+            "  <o name='four' atom='true' loc='nowhere'>four</o>",
+            "  <x a='true'>x1</x>",
+            "  <x a='true' b='false'>x2</x>",
+            "  <o base='Q.org.eolang.number'><o base='Q.org.eolang.bytes'>1-hex-content</o></o>",
+            "  <o base='org.eolang.bytes'><o base='bytes'>2-bytes-</o><o base='org.eolang.bytes'><o base='bytes'>content</o></o></o>",
+            "  <o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>first-</o><o>content</o></o></o>",
+            "  <o><o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>second-</o><o>content</o></o></o></o>",
+            "  <o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>third-</o><o>content</o></o>",
+            "</root>"
         );
         return new Object[][]{
             {"(//o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
@@ -868,6 +833,15 @@ final class XpathTest {
                 "first-content",
             },
         };
+    }
+
+    /**
+     * Creates an XML from the lines.
+     * @param lines Lines of XML.
+     * @return XML.
+     */
+    private static Xml xml(final String... lines) {
+        return new DomXml(String.join("\n", lines));
     }
 
 }
