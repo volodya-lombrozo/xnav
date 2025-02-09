@@ -74,6 +74,9 @@ public final class AntlrXmlElement implements Xml {
 
     @Override
     public Stream<Xml> children() {
+        if (this.context.content() == null) {
+            return Stream.empty();
+        }
         return new AntlrXmlContent(this.context.content()).children();
     }
 

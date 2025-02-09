@@ -290,9 +290,9 @@ final class XpathTest {
     void selectsTopFirst() {
         final List<Xnav> all = new Xnav(
             XpathTest.xml(
-                "<o base=\"bytes\">",
-                "  <o base=\"bytes\">2-bytes-</o>",
-                "  <o base=\"bytes\"><o base=\"bytes\">content</o></o>",
+                "<o base='bytes'>",
+                "  <o base='bytes'>2-bytes-</o>",
+                "  <o base='bytes'><o base='bytes'>content</o></o>",
                 "</o>"
             )
         ).path("//o[@base='bytes']").collect(Collectors.toList());

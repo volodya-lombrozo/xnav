@@ -22,31 +22,46 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav;
+package com.github.lombrozo.xnav.eager;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.github.lombrozo.xnav.Xml;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.w3c.dom.Node;
 
-final class AntlrElementVisitor extends XMLParserBaseVisitor<Xml> {
-
+public final class EagerChard implements Xml {
     @Override
-    public Xml visitElement(final XMLParser.ElementContext ctx) {
-        if (ctx == null) {
-            return new Empty();
-        } else {
-            return new AntlrXmlElement(ctx);
-        }
-//        return new AntlrXmlContent(ctx.content());
-//        final List<Xml> children = new ArrayList<>(0);
-//        final XMLParser.ContentContext content = ctx.content();
-//        if (content == null) {
-//            return new Empty();
-//        }
-//        for (final XMLParser.ElementContext context : content.element()) {
-//            children.add(this.visit(context));
-//        }
-//        return new AntlrXmlElement(ctx);
+    public Xml child(final String element) {
+        return null;
     }
 
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        return Optional.empty();
+    }
 
+    @Override
+    public Optional<String> text() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return null;
+    }
+
+    @Override
+    public String name() {
+        return null;
+    }
+
+    @Override
+    public Xml copy() {
+        return null;
+    }
+
+    @Override
+    public Node node() {
+        return null;
+    }
 }

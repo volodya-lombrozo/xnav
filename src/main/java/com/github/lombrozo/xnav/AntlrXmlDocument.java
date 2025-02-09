@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.w3c.dom.Node;
@@ -44,20 +45,22 @@ final class AntlrXmlDocument implements Xml {
         this(String.join("", xml));
     }
 
-    public AntlrXmlDocument(final String xml) {
+    AntlrXmlDocument(final String xml) {
         this(AntlrXmlDocument.parser(xml), xml);
     }
 
 
-    public AntlrXmlDocument(final ThreadLocal<XMLParser> parser, final String xml) {
+    private AntlrXmlDocument(final ThreadLocal<XMLParser> parser, final String xml) {
         this.parser = parser;
         this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        AntlrElementVisitor visitor = new AntlrElementVisitor();
-        return visitor.visitElement(this.parser.get().document().element());
+//        AntlrElementVisitor visitor = new AntlrElementVisitor();
+//        return visitor.visitElement(this.parser.get().document().element());
+
+        return new AntlrXmlElement(this.parser.get().document().element());
     }
 
     @Override
@@ -76,12 +79,20 @@ final class AntlrXmlDocument implements Xml {
     @Override
     public Stream<Xml> children() {
         AntlrElementVisitor visitor = new AntlrElementVisitor();
-        return Stream.of(visitor.visitElement(this.parser.get().document().element()));
+//        final XMLParser.DocumentContext document = this.parser.get().document();
+//        final Xml t = visitor.visitElement(document.element());
+        final XMLParser.DocumentContext document = this.parser.get().document();
+        System.out.println("DOC: " + document.getText());
+        final XMLParser.ElementContext context = document.element();
+        final Xml t = new AntlrXmlElement(context);
+
+        return Stream.of(t);
     }
 
     @Override
     public String name() {
-        return new AntlrElementVisitor().visitElement(this.parser.get().document().element()).name();
+        return new AntlrElementVisitor().visitElement(this.parser.get().document().element())
+            .name();
     }
 
     @Override
@@ -103,9 +114,13 @@ final class AntlrXmlDocument implements Xml {
 
     private static ThreadLocal<XMLParser> parser(final String xml) {
         return ThreadLocal.withInitial(
-            () -> new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            )
+            () -> {
+                final XMLParser p = new XMLParser(
+                    new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+                );
+//                p.setErrorHandler(new BailErrorStrategy());
+                return p;
+            }
         );
 
     }
