@@ -22,17 +22,30 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav.eager;
+package com.github.lombrozo.xnav;
 
 import com.github.lombrozo.xnav.Xml;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-public final class EagerElem implements Xml {
+@EqualsAndHashCode
+@ToString
+public final class EagerAttr implements Xml {
+
+    private final String name;
+    private final String value;
+
+    public EagerAttr(final String name, final String value) {
+        this.name = name;
+        this.value = value;
+    }
+
     @Override
     public Xml child(final String element) {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
@@ -42,26 +55,26 @@ public final class EagerElem implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return Optional.of(this.value);
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public String name() {
-        return null;
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        return null;
+        return new EagerAttr(this.name, this.value);
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 }

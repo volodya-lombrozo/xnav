@@ -22,46 +22,69 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav.eager;
+package com.github.lombrozo.xnav;
 
-import com.github.lombrozo.xnav.Xml;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-public final class EagerAttr implements Xml {
+@EqualsAndHashCode
+@ToString
+public final class EagerElem implements Xml {
+
+    private final String name;
+    private final List<Xml> attributes;
+
+    private final Xml content;
+
+    public EagerElem(final String name, final List<Xml> attrs, final Xml content) {
+        this.name = name;
+        this.attributes = attrs;
+        this.content = content;
+    }
+
     @Override
     public Xml child(final String element) {
-        return null;
+        return this.content.child(element);
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        return this.attributes.stream()
+            .filter(attr -> attr.name().equals(name))
+            .findFirst();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return this.content.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        return this.content.children();
     }
 
     @Override
     public String name() {
-        return null;
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        return null;
+        return new EagerElem(
+            this.name,
+            this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
+            this.content.copy()
+        );
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

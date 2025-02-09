@@ -22,46 +22,70 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav.eager;
+package com.github.lombrozo.xnav;
 
-import com.github.lombrozo.xnav.Xml;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.w3c.dom.Node;
 
-public final class EagerCont implements Xml {
+public final class EagerXml implements Xml {
+
+    private final Xml doc;
+
+    public EagerXml(final String... xml) {
+        this(String.join("", xml));
+    }
+
+    private EagerXml(final String xml) {
+        this(EagerXml.parse(xml));
+    }
+
+    private EagerXml(final Xml doc) {
+        this.doc = doc;
+    }
+
+    private static Xml parse(final String xml) {
+        final EagerVisitor visitor = new EagerVisitor();
+        final XMLParser p = new XMLParser(
+            new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+        );
+        return visitor.visitDocument(p.document());
+    }
+
     @Override
     public Xml child(final String element) {
-        return null;
+        return this.doc.child(element);
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        return this.doc.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return this.doc.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        return this.doc.children();
     }
 
     @Override
     public String name() {
-        return null;
+        return this.doc.name();
     }
 
     @Override
     public Xml copy() {
-        return null;
+        return this.doc.copy();
     }
 
     @Override
     public Node node() {
-        return null;
+        return this.doc.node();
     }
 }

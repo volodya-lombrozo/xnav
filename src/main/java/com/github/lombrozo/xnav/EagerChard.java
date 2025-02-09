@@ -22,13 +22,17 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav.eager;
+package com.github.lombrozo.xnav;
 
 import com.github.lombrozo.xnav.Xml;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
+@EqualsAndHashCode
+@ToString
 public final class EagerChard implements Xml {
     @Override
     public Xml child(final String element) {

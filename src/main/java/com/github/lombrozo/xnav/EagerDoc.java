@@ -22,56 +22,61 @@
  * SOFTWARE.
  */
 
-package com.github.lombrozo.xnav.eager;
+package com.github.lombrozo.xnav;
 
-import com.github.lombrozo.xnav.Xml;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-public final class EagerXml implements Xml {
+@EqualsAndHashCode
+@ToString
+public final class EagerDoc implements Xml {
 
-    private final EagerDoc doc;
+    private final Xml element;
 
-    public EagerXml(final String... xml) {
-        this(String.join("", xml));
-    }
-    public EagerXml(final EagerDoc doc) {
-        this.doc = doc;
+
+    public EagerDoc(final Xml element) {
+        this.element = element;
     }
 
     @Override
     public Xml child(final String element) {
-        return null;
+        if (this.element.name().equals(element)) {
+            return this.element;
+        } else {
+            return new Empty();
+        }
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        return this.element.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return this.element.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        return this.element.children();
     }
 
     @Override
     public String name() {
-        return null;
+        return this.element.name();
     }
 
     @Override
     public Xml copy() {
-        return null;
+        return new EagerDoc(this.element.copy());
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }
