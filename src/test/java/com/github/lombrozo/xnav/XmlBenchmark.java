@@ -26,11 +26,15 @@ package com.github.lombrozo.xnav;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.security.SecureRandom;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.trans.XPathException;
 import org.eolang.jeo.representation.BytecodeRepresentation;
 import org.eolang.jeo.representation.bytecode.Bytecode;
@@ -55,6 +59,8 @@ public class XmlBenchmark {
 
     private static final String HUGE_MANY = "hugeXmlManyQueries";
 
+    private static final Random random = new SecureRandom();
+
     public static void main(String[] args) throws RunnerException {
         final Options opt = new OptionsBuilder()
             .include(XmlBenchmark.class.getSimpleName())
@@ -71,7 +77,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithDomXml() {
         final DomXml xml = new DomXml(SIMPLE_XML);
-        new Xpath(xml, "/root/child")
+        assert new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("text");
@@ -83,7 +89,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithEagerXml() {
         final Xml xml = new EagerXml(XmlBenchmark.SIMPLE_XML);
-        new Xpath(xml, "/root/child")
+        assert new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("text");
@@ -95,7 +101,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithSaxonXpath() throws SaxonApiException, XPathException {
         final Processor processor = new Processor(false);
-        processor.newXPathCompiler().evaluate(
+        assert processor.newXPathCompiler().evaluate(
             "/root/child",
             processor.newDocumentBuilder()
                 .build(new StreamSource(new StringReader(XmlBenchmark.SIMPLE_XML)))
@@ -108,7 +114,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithDomXml() {
         final DomXml xml = new DomXml(XmlBenchmark.HUGE_XML);
-        new Xpath(xml, "/program/@name")
+        assert new Xpath(xml, "/program/@name")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("j$Collections");
@@ -120,7 +126,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithEagerXml() {
         final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
-        new Xpath(xml, "/program/@name")
+        assert new Xpath(xml, "/program/@name")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("j$Collections");
@@ -132,11 +138,81 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithSaxonXpath() throws SaxonApiException, XPathException {
         final Processor processor = new Processor(false);
-        processor.newXPathCompiler().evaluate(
+        assert processor.newXPathCompiler().evaluate(
             "/program/@name",
             processor.newDocumentBuilder()
                 .build(new StreamSource(new StringReader(XmlBenchmark.HUGE_XML)))
         ).getUnderlyingValue().getStringValue().equals("j$Collections");
+    }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_MANY)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyWithDomXml() {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final DomXml xml = new DomXml(XmlBenchmark.HUGE_XML);
+        for (int i = 0; i < 1000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            assert new Xpath(xml, query)
+                .nodes()
+                .findFirst()
+                .map(Xml::text).get().get().equals(expected);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_MANY)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyWithEagerXml() {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+        for (int i = 0; i < 1000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            assert new Xpath(xml, query)
+                .nodes()
+                .findFirst()
+                .map(Xml::text).get().get().equals(expected);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_MANY)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyWithSaxonXpath() throws SaxonApiException, XPathException {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Processor processor = new Processor(false);
+        final StreamSource source = new StreamSource(new StringReader(XmlBenchmark.HUGE_XML));
+        final XdmNode node = processor.newDocumentBuilder()
+            .build(source);
+        for (int i = 0; i < 1000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            assert processor.newXPathCompiler()
+                .evaluate(query, node)
+                .getUnderlyingValue()
+                .getStringValue().equals(expected);
+        }
     }
 
     private static String generateXml() {
