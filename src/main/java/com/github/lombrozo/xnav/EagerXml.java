@@ -26,10 +26,16 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
+@EqualsAndHashCode
+@ToString
 public final class EagerXml implements Xml {
 
     private final Xml doc;
@@ -47,12 +53,21 @@ public final class EagerXml implements Xml {
     }
 
     private static Xml parse(final String xml) {
-        final EagerVisitor visitor = new EagerVisitor();
-        final XMLParser p = new XMLParser(
-            new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-        );
-        return visitor.visitDocument(p.document());
+        try {
+            final EagerVisitor visitor = new EagerVisitor();
+            final XMLParser p = new XMLParser(
+                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+            );
+            p.setErrorHandler(new BailErrorStrategy());
+            return visitor.visitDocument(p.document());
+        } catch (final ParseCancellationException exception) {
+            throw new IllegalArgumentException(
+                String.format("Invalid XML: %s", xml.substring(0, Math.min(100, xml.length()))),
+                exception
+            );
+        }
     }
+
 
     @Override
     public Xml child(final String element) {

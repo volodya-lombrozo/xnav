@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.antlr.v4.runtime.misc.Interval;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
@@ -38,7 +39,6 @@ public final class EagerElem implements Xml {
 
     private final String name;
     private final List<Xml> attributes;
-
     private final Xml content;
 
     public EagerElem(final String name, final List<Xml> attrs, final Xml content) {

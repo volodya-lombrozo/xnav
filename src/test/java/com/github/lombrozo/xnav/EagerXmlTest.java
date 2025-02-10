@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import com.yegor256.Together;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class EagerXmlTest {
-
 
     @Test
     void convertsDocumentToString() {
@@ -212,9 +212,11 @@ class EagerXmlTest {
         final int threads = 10;
         final Together<List<Xml>> all = new Together<>(
             threads,
-            indx -> xml.child("ob").children()
-                .flatMap(Xml::children)
-                .collect(Collectors.toList())
+            indx -> {
+                return xml.child("ob").children()
+                    .flatMap(Xml::children)
+                    .collect(Collectors.toList());
+            }
         );
         MatcherAssert.assertThat(
             "Children are not retrieved concurrently",

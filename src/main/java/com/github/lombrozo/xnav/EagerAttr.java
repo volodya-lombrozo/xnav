@@ -55,7 +55,7 @@ public final class EagerAttr implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.value);
+        return Optional.of(this.value.substring(1, this.value.length() - 1));
     }
 
     @Override

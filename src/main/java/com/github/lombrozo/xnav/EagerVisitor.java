@@ -24,8 +24,10 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
@@ -55,11 +57,25 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitContent(final XMLParser.ContentContext ctx) {
-        final List<Xml> elements = ctx.element().stream().map(this::visitElement)
-            .collect(Collectors.toList());
-        final List<Xml> chardata = ctx.chardata().stream().map(this::visitChardata)
-            .collect(Collectors.toList());
+//        final List<Xml> elements = ctx.element().stream().map(this::visitElement)
+//            .collect(Collectors.toList());
+//        final List<Xml> chardata = ctx.chardata().stream().map(this::visitChardata)
+//            .collect(Collectors.toList());
 
-        return new EagerCont(elements, chardata);
+        final List<Xml> all = new ArrayList<>(0);
+        final List<ParseTree> children = ctx.children;
+        for (final ParseTree child : children) {
+            if (child instanceof XMLParser.ElementContext) {
+                all.add(this.visitElement((XMLParser.ElementContext) child));
+            } else if (child instanceof XMLParser.ChardataContext) {
+                all.add(this.visitChardata((XMLParser.ChardataContext) child));
+            }
+        }
+        return new EagerCont(all);
+    }
+
+    @Override
+    public Xml visitChardata(final XMLParser.ChardataContext ctx) {
+        return new EagerChard(ctx.getText());
     }
 }

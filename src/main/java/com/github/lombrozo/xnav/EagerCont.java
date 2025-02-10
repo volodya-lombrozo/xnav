@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import com.github.lombrozo.xnav.Xml;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -37,17 +38,19 @@ import org.w3c.dom.Node;
 public final class EagerCont implements Xml {
 
 
-    private final List<Xml> elements;
-    private final List<Xml> chardata;
+//    private final List<Xml> elements;
+//    private final List<Xml> chardata;
 
-    public EagerCont(final List<Xml> elements, final List<Xml> chardata) {
-        this.elements = elements;
-        this.chardata = chardata;
+    private final List<Xml> all;
+
+
+    public EagerCont(final List<Xml> all) {
+        this.all = all;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.elements.stream()
+        return this.elements()
             .filter(e -> e.name().equals(element))
             .findFirst()
             .orElse(new Empty());
@@ -60,12 +63,18 @@ public final class EagerCont implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return Optional.of(
+            this.all.stream()
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
+        );
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.empty();
+        return this.all.stream();
     }
 
     @Override
@@ -81,5 +90,10 @@ public final class EagerCont implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+
+    private Stream<Xml> elements() {
+        return this.all.stream().filter(EagerElem.class::isInstance);
     }
 }

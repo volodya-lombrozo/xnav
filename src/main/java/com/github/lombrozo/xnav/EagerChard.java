@@ -34,9 +34,16 @@ import org.w3c.dom.Node;
 @EqualsAndHashCode
 @ToString
 public final class EagerChard implements Xml {
+
+    private final String chardata;
+
+    public EagerChard(final String chardata) {
+        this.chardata = chardata;
+    }
+
     @Override
     public Xml child(final String element) {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
@@ -46,26 +53,26 @@ public final class EagerChard implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        return Optional.of(this.chardata);
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        return Stream.empty();
     }
 
     @Override
     public String name() {
-        return null;
+        return "";
     }
 
     @Override
     public Xml copy() {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not supported.");
     }
 }
