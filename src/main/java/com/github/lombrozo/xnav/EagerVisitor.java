@@ -58,11 +58,6 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitContent(final XMLParser.ContentContext ctx) {
-//        final List<Xml> elements = ctx.element().stream().map(this::visitElement)
-//            .collect(Collectors.toList());
-//        final List<Xml> chardata = ctx.chardata().stream().map(this::visitChardata)
-//            .collect(Collectors.toList());
-
         final List<Xml> all = new ArrayList<>(0);
         final List<ParseTree> children = Optional.ofNullable(ctx)
             .map(c -> c.children)

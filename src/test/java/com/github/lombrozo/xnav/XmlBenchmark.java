@@ -41,8 +41,12 @@ import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -52,6 +56,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 public class XmlBenchmark {
 
     private static final String HUGE_XML = XmlBenchmark.generateXml();
+
     private static final String SIMPLE_XML = "<root><child>text</child></root>";
 
     private static final String SIMPLE = "simpleXmlOneQuery";
@@ -215,7 +220,7 @@ public class XmlBenchmark {
         }
     }
 
-    private static String generateXml() {
+    public static String generateXml() {
         final String clazz = Collections.class.getName().replace('.', '/') + ".class";
         final BytecodeRepresentation bytecode;
         try {

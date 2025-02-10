@@ -25,7 +25,10 @@
 package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
@@ -33,6 +36,11 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
 
 class EagerXmlTest {
 
@@ -199,6 +207,27 @@ class EagerXmlTest {
             )
         );
     }
+
+    @Test
+    void hugeManyWithEagerXml() {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        Random random = new SecureRandom();
+        final Xml xml = new EagerXml(XmlBenchmark.generateXml());
+        for (int i = 0; i < 100_000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            new Xpath(xml, query)
+                .nodes()
+                .findFirst()
+                .map(Xml::text).get().get().equals(expected);
+        }
+    }
+
 
     @Test
     void retrievesChildrenConcurrently() {
