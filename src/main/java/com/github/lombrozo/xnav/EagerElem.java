@@ -53,6 +53,11 @@ public final class EagerElem implements Xml {
     }
 
     @Override
+    public Stream<Xml> children() {
+        return this.content.children();
+    }
+
+    @Override
     public Optional<Xml> attribute(final String name) {
         return this.attributes.stream()
             .filter(attr -> attr.name().equals(name))
@@ -62,11 +67,6 @@ public final class EagerElem implements Xml {
     @Override
     public Optional<String> text() {
         return this.content.text();
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.content.children();
     }
 
     @Override

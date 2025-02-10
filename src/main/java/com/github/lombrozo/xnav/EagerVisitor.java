@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -63,7 +64,9 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
 //            .collect(Collectors.toList());
 
         final List<Xml> all = new ArrayList<>(0);
-        final List<ParseTree> children = ctx.children;
+        final List<ParseTree> children = Optional.ofNullable(ctx)
+            .map(c -> c.children)
+            .orElse(new ArrayList<>(0));
         for (final ParseTree child : children) {
             if (child instanceof XMLParser.ElementContext) {
                 all.add(this.visitElement((XMLParser.ElementContext) child));

@@ -57,6 +57,11 @@ public final class EagerCont implements Xml {
     }
 
     @Override
+    public Stream<Xml> children() {
+        return this.all.stream();
+    }
+
+    @Override
     public Optional<Xml> attribute(final String name) {
         throw new UnsupportedOperationException("Not supported.");
     }
@@ -70,11 +75,6 @@ public final class EagerCont implements Xml {
                 .map(Optional::get)
                 .collect(Collectors.joining())
         );
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.all.stream();
     }
 
     @Override

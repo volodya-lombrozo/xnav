@@ -217,14 +217,15 @@ final class XpathTest {
 
     @Test
     void findsByExactStringLength() {
+        final Optional<Xml> first = new Xpath(
+            XpathTest.xml(
+                "<words><word>hello</word><word>abc</word><word>12345</word></words>"
+            ),
+            "/words/word[string-length(text()) = 5]"
+        ).nodes().findFirst();
         MatcherAssert.assertThat(
             "We expect to find the element where string-length is exactly 5",
-            new Xpath(
-                XpathTest.xml(
-                    "<words><word>hello</word><word>abc</word><word>12345</word></words>"
-                ),
-                "/words/word[string-length(text()) = 5]"
-            ).nodes().findFirst().map(Xml::text).orElseThrow().orElseThrow(),
+            first.map(Xml::text).orElseThrow().orElseThrow(),
             Matchers.equalTo("hello")
         );
     }
@@ -841,7 +842,7 @@ final class XpathTest {
      * @return XML.
      */
     private static Xml xml(final String... lines) {
-        return new AntlrXmlDocument(String.join("\n", lines));
+        return new EagerXml(String.join("\n", lines));
     }
 
 }

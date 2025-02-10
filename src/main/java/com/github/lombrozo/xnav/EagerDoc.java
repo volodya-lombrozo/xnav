@@ -62,7 +62,7 @@ public final class EagerDoc implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return this.element.children();
+        return Stream.of(this.element);
     }
 
     @Override
