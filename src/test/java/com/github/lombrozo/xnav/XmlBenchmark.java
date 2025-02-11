@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.security.SecureRandom;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import javax.xml.transform.stream.StreamSource;
@@ -44,12 +43,8 @@ import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
-import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -84,7 +79,19 @@ public class XmlBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithDomXml() {
-        final DomXml xml = new DomXml(SIMPLE_XML);
+        final DomXml xml = new DomXml(XmlBenchmark.SIMPLE_XML);
+        assert new Xpath(xml, "/root/child")
+            .nodes()
+            .findFirst()
+            .map(Xml::text).get().get().equals("text");
+    }
+
+    @Benchmark
+    @Group(XmlBenchmark.SIMPLE)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void simpleWithOptXml() {
+        final Xml xml = new OptXml(XmlBenchmark.SIMPLE_XML);
         assert new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
@@ -132,6 +139,18 @@ public class XmlBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeSingleWithOptXml() {
+        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
+        assert new Xpath(xml, "/program/@name")
+            .nodes()
+            .findFirst()
+            .map(Xml::text).get().get().equals("j$Collections");
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithEagerXml() {
         final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
         assert new Xpath(xml, "/program/@name")
@@ -165,7 +184,6 @@ public class XmlBenchmark {
         assert p.document() != null;
     }
 
-
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE_MANY)
@@ -177,6 +195,28 @@ public class XmlBenchmark {
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
         final DomXml xml = new DomXml(XmlBenchmark.HUGE_XML);
+        for (int i = 0; i < 1000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            assert new Xpath(xml, query)
+                .nodes()
+                .findFirst()
+                .map(Xml::text).get().get().equals(expected);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_MANY)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyWithOptXml() {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
         for (int i = 0; i < 1000; i++) {
             final int request = random.nextInt(queries.length);
             String query = queries[request][0].toString();
