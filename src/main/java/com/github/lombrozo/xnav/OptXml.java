@@ -29,28 +29,33 @@ import java.util.stream.Stream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
-public final class LazyXml implements Xml {
+public final class OptXml implements Xml {
 
     private final OptimizedXml doc;
 
-    public LazyXml(final String... xml) {
+    public OptXml(final String... xml) {
         this(String.join("", xml));
     }
 
-    private LazyXml(final String xml) {
-        this.doc = LazyXml.parse(xml);
+    private OptXml(final String xml) {
+        this.doc = OptXml.parse(xml);
     }
 
     private static OptimizedXml parse(final String xml) {
-        final OptimizedVisitor visitor = new OptimizedVisitor();
-        final XMLParser p = new XMLParser(
-            new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-        );
-        p.setErrorHandler(new BailErrorStrategy());
-        final OptimizedXml res = visitor.visitDocument(p.document());
-        return res;
+        try {
+            final OptimizedVisitor visitor = new OptimizedVisitor();
+            final XMLParser p = new XMLParser(
+                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+            );
+            p.setErrorHandler(new BailErrorStrategy());
+            final OptimizedXml res = visitor.visitDocument(p.document());
+            return res;
+        } catch (ParseCancellationException e) {
+            throw new IllegalArgumentException("Invalid XML", e);
+        }
     }
 
 
@@ -75,13 +80,13 @@ public final class LazyXml implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        final Stream<Xml> children = this.doc.children(0);
-        return children;
+        return this.doc.children(0);
     }
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        //wtf? Why no 0?
+        return this.doc.content(1);
     }
 
     @Override

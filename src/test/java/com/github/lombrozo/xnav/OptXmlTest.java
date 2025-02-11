@@ -24,9 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
-import ch.qos.logback.core.model.INamedModel;
 import com.yegor256.Together;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
@@ -35,14 +33,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-class LazyXmlTest {
+class OptXmlTest {
 
 
     @Test
     void convertsDocumentToString() {
         MatcherAssert.assertThat(
             "Document is not converted to string",
-            new LazyXml("<doc></doc>").toString(),
+            new OptXml("<doc></doc>").toString(),
             Matchers.equalTo(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
             )
@@ -53,7 +51,7 @@ class LazyXmlTest {
     void convertsNodeToString() {
         MatcherAssert.assertThat(
             "Node is not converted to string",
-            new LazyXml("<doc><node>text</node></doc>").child("doc").child("node")
+            new OptXml("<doc><node>text</node></doc>").child("doc").child("node")
                 .toString(),
             Matchers.equalTo("<node>text</node>")
         );
@@ -63,7 +61,7 @@ class LazyXmlTest {
     void failsToCreateCorruptedDocument() {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new LazyXml("<doc...").children(),
+            () -> new OptXml("<doc...").children(),
             "Corrupted document is not created, exception is expected"
         );
     }
@@ -72,14 +70,14 @@ class LazyXmlTest {
     void retrievesChildren() {
         MatcherAssert.assertThat(
             "Children are not retrieved",
-            new LazyXml(
+            new OptXml(
                 "<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                new LazyXml("<node>first</node>").child("node"),
-                new LazyXml("<node>second</node>").child("node")
+                new OptXml("<node>first</node>").child("node"),
+                new OptXml("<node>second</node>").child("node")
             )
         );
     }
@@ -88,7 +86,7 @@ class LazyXmlTest {
     void retrievesText() {
         MatcherAssert.assertThat(
             "Text is not retrieved",
-            new LazyXml("<doc><node>text</node></doc>")
+            new OptXml("<doc><node>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .text()
@@ -101,7 +99,7 @@ class LazyXmlTest {
     void retrievesAttribute() {
         MatcherAssert.assertThat(
             "Attribute is not retrieved",
-            new LazyXml("<doc><node attribute='value'>text</node></doc>")
+            new OptXml("<doc><node attribute='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .attribute("attribute")
@@ -114,7 +112,7 @@ class LazyXmlTest {
 
     @Test
     void copiesNode() {
-        final Xml xml = new LazyXml("<doc><node>text</node></doc>");
+        final Xml xml = new OptXml("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
             "Node is not copied",
             xml.copy().toString(),
@@ -128,7 +126,7 @@ class LazyXmlTest {
     void retrievesNode() {
         MatcherAssert.assertThat(
             "We expect the node to be retrieved",
-            new LazyXml("<doc><node attr='value'>text</node></doc>")
+            new OptXml("<doc><node attr='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .node()
@@ -143,7 +141,7 @@ class LazyXmlTest {
     void retrievesTextFromSeveralNodes() {
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
-            new LazyXml(
+            new OptXml(
                 "<doc>",
                 "  <node>first </node>",
                 "  <node>second</node>",
@@ -158,7 +156,7 @@ class LazyXmlTest {
     void retrievesDocName() {
         MatcherAssert.assertThat(
             "We expect to find the correct document name",
-            new LazyXml(
+            new OptXml(
                 "<o base='bytes'>",
                 "  <o base='bytes'>2-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>content</o></o>",
@@ -172,7 +170,7 @@ class LazyXmlTest {
     void retrievesChildNames() {
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
-            new LazyXml(
+            new OptXml(
                 "<o base='child'>",
                 "  <o base='bytes'>3-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>4</o></o>",
@@ -186,7 +184,7 @@ class LazyXmlTest {
     void retrievesObjects() {
         MatcherAssert.assertThat(
             "Objects are not retrieved",
-            new LazyXml(
+            new OptXml(
                 String.join(
                     "\n",
                     "<o>",
@@ -196,8 +194,8 @@ class LazyXmlTest {
                 )
             ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
             Matchers.hasItems(
-                new LazyXml("<o color='red'>red</o>").child("o"),
-                new LazyXml("<o color='blue'>blue</o>").child("o")
+                new OptXml("<o color='red'>red</o>").child("o"),
+                new OptXml("<o color='blue'>blue</o>").child("o")
             )
         );
     }
@@ -229,7 +227,7 @@ class LazyXmlTest {
 
     @Test
     void retrievesChildrenConcurrently() {
-        final Xml xml = new LazyXml(
+        final Xml xml = new OptXml(
             String.join(
                 "",
                 "<ob><o color='yellow'>yellow</o>",
