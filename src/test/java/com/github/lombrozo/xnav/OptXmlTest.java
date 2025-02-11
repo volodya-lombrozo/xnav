@@ -75,7 +75,7 @@ class OptXmlTest {
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
-            Matchers.hasItems(
+            Matchers.contains(
                 new OptXml("<node>first</node>").child("node"),
                 new OptXml("<node>second</node>").child("node")
             )

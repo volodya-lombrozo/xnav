@@ -24,6 +24,8 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,10 +66,13 @@ public final class OptElem implements Xml {
             .findFirst();
     }
 
+    @ToString.Include
+    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
         return Optional.of(
-            this.children().map(Xml::text)
+            this.children()
+                .map(Xml::text)
                 .flatMap(Optional::stream)
                 .collect(Collectors.joining())
         );

@@ -78,9 +78,6 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
             OptimizedXml.Type.ATTRIBUTE,
             ctx.getText()
         );
-        this.stack.push(this.index.get());
-        ctx.children.forEach(super::visit);
-        this.stack.pop();
         return this.xml;
     }
 

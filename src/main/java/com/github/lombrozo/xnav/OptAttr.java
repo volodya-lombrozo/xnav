@@ -26,11 +26,19 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
+@ToString
+@EqualsAndHashCode
 public final class OptAttr implements Xml {
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final int id;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final OptimizedXml xml;
 
     public OptAttr(final int id, final OptimizedXml xml) {
@@ -48,6 +56,15 @@ public final class OptAttr implements Xml {
         return Optional.empty();
     }
 
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
+    public String name() {
+        return this.full().split("=", 2)[0];
+    }
+
+    @ToString.Include
+    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
         final String s = this.full().split("=", 2)[1];
@@ -57,11 +74,6 @@ public final class OptAttr implements Xml {
     @Override
     public Stream<Xml> children() {
         return Stream.empty();
-    }
-
-    @Override
-    public String name() {
-        return this.full().split("=", 2)[0];
     }
 
     @Override
