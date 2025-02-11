@@ -88,7 +88,9 @@ public final class OptimizedXml {
         }
     }
 
-    public int addElement(final int parent, final int current, final Type type, final String text) {
+    public void addElement(
+        final int parent, final int current, final Type type, final String text
+    ) {
         this.parent.put(current, parent);
         this.tag.put(current, this.pool.id(text));
         this.type.add(type);
@@ -104,11 +106,10 @@ public final class OptimizedXml {
                 this.nextSibling.put(next, current);
             }
         }
-        return this.size.incrementAndGet();
     }
 
     //todo: duplicate code
-    public int addContent(final int parent, final int current, final Type type) {
+    public void addContent(final int parent, final int current, final Type type) {
         this.parent.put(current, parent);
         this.type.add(type);
         if (parent != -1) {
@@ -123,7 +124,6 @@ public final class OptimizedXml {
                 this.nextSibling.put(next, current);
             }
         }
-        return this.size.incrementAndGet();
     }
 
     public String content(final int id) {
