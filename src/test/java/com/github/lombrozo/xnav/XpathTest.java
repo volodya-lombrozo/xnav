@@ -842,7 +842,7 @@ final class XpathTest {
      * @return XML.
      */
     private static Xml xml(final String... lines) {
-        return new EagerXml(String.join("\n", lines));
+        return new OptXml(String.join("\n", lines));
     }
 
 }

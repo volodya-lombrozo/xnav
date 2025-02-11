@@ -39,7 +39,12 @@ public final class OptChard implements Xml {
 
     @Override
     public Xml child(final String element) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return Stream.empty();
     }
 
     @Override
@@ -53,22 +58,17 @@ public final class OptChard implements Xml {
     }
 
     @Override
-    public Stream<Xml> children() {
-        return null;
-    }
-
-    @Override
     public String name() {
         return "";
     }
 
     @Override
     public Xml copy() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

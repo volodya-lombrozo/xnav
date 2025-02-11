@@ -57,22 +57,21 @@ public final class OptCont implements Xml {
     }
 
     @Override
-    public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+    public Stream<Xml> children() {
+        return this.xml.children(this.id);
     }
 
     @Override
-    public Stream<Xml> children() {
-        return this.xml.children(this.id);
+    public Optional<Xml> attribute(final String name) {
+        return Optional.empty();
     }
 
     @ToString.Include
     @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
-        final Stream<Xml> children = this.xml.children(this.id);
         return Optional.of(
-            children
+            this.xml.children(this.id)
                 .map(Xml::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -82,16 +81,16 @@ public final class OptCont implements Xml {
 
     @Override
     public String name() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Xml copy() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

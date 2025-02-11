@@ -40,7 +40,7 @@ public final class OptAttr implements Xml {
 
     @Override
     public Xml child(final String element) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override

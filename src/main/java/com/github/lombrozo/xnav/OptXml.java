@@ -51,8 +51,7 @@ public final class OptXml implements Xml {
                 new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
             );
             p.setErrorHandler(new BailErrorStrategy());
-            final OptimizedXml res = visitor.visitDocument(p.document());
-            return res;
+            return visitor.visitDocument(p.document());
         } catch (ParseCancellationException e) {
             throw new IllegalArgumentException("Invalid XML", e);
         }
@@ -61,11 +60,10 @@ public final class OptXml implements Xml {
 
     @Override
     public Xml child(final String element) {
-        final Xml xml = this.children()
+        return this.children()
             .filter(e -> e.name().equals(element))
             .findFirst()
             .orElseThrow();
-        return xml;
     }
 
     @Override
