@@ -38,15 +38,15 @@ public final class OptimizedXml {
 
     private final Map<Integer, Integer> firstChild;
     private final Map<Integer, Integer> nextSibling;
-    private final Map<Integer, Integer> tag;
+    private final List<Integer> tag;
     private final List<Type> type;
     private final StringPool pool;
 
     public OptimizedXml() {
-        this.tag = new HashMap<>(0);
-        this.type = new ArrayList<>(0);
         this.firstChild = new HashMap<>(0);
         this.nextSibling = new HashMap<>(0);
+        this.tag = new ArrayList<>(0);
+        this.type = new ArrayList<>(0);
         this.pool = new StringPool();
     }
 
@@ -93,7 +93,9 @@ public final class OptimizedXml {
     ) {
         this.type.add(type);
         if (text != null) {
-            this.tag.put(current, this.pool.id(text));
+            this.tag.add(this.pool.id(text));
+        } else {
+            this.tag.add(-1);
         }
         if (parent != -1) {
             final int first = this.firstChild.getOrDefault(parent, -1);
@@ -134,6 +136,9 @@ public final class OptimizedXml {
         }
 
         String string(int id) {
+            if (id == -1) {
+                return "";
+            }
             return this.indexed.get(id);
         }
 
