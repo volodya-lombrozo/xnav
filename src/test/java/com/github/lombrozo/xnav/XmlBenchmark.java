@@ -68,7 +68,9 @@ public class XmlBenchmark {
         final Options opt = new OptionsBuilder()
             .include(XmlBenchmark.class.getSimpleName())
             .forks(1)
+            .warmupIterations(2)
             .warmupTime(TimeValue.seconds(3))
+            .measurementIterations(2)
             .measurementTime(TimeValue.seconds(6))
             .build();
         new Runner(opt).run();

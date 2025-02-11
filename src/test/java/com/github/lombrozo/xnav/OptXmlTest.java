@@ -25,7 +25,9 @@
 package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -201,28 +203,29 @@ class OptXmlTest {
     }
 
     //todo: remove me
-//    @Test
-//    void hugeManyWithLazyXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        Random random = new SecureRandom();
-//        for (int j = 0; j < 100; j++) {
-//            final Xml xml = new LazyXml(XmlBenchmark.generateXml());
-//            for (int i = 0; i < 100_000; i++) {
-//                final int request = random.nextInt(queries.length);
-//                String query = queries[request][0].toString();
-//                String expected = queries[request][1].toString();
-//                new Xpath(xml, query)
-//                    .nodes()
-//                    .findFirst()
-//                    .map(Xml::text).get().get().equals(expected);
-//            }
-//
-//        }
-//    }
+    @Test
+    void hugeManyWithLazyXml() {
+        Object[][] queries = {
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        Random random = new SecureRandom();
+        final String large = XmlBenchmark.generateXml();
+        for (int j = 0; j < 100; j++) {
+            final Xml xml = new OptXml(large);
+            for (int i = 0; i < 100_000; i++) {
+                final int request = random.nextInt(queries.length);
+                final String query = queries[request][0].toString();
+                final String expected = queries[request][1].toString();
+                new Xpath(xml, query)
+                    .nodes()
+                    .findFirst()
+                    .map(Xml::text).get().get().equals(expected);
+            }
+
+        }
+    }
 
 
     @Test

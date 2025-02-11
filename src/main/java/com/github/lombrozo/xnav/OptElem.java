@@ -24,8 +24,6 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +51,7 @@ public final class OptElem implements Xml {
     @Override
     public Xml child(final String element) {
         return this.children()
-            .filter(e -> e.name().equals(element))
+            .filter(e -> OptElem.equals(element, e))
             .findFirst()
             .orElse(new Empty());
     }
@@ -62,8 +60,12 @@ public final class OptElem implements Xml {
     public Optional<Xml> attribute(final String name) {
         return this.xml.children(this.id)
             .filter(OptAttr.class::isInstance)
-            .filter(e -> e.name().equals(name))
+            .filter(e -> OptElem.equals(name, e))
             .findFirst();
+    }
+
+    private static boolean equals(final String name, final Xml e) {
+        return e.name().equals(name);
     }
 
     @ToString.Include
