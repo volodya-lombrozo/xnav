@@ -26,55 +26,71 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.w3c.dom.Node;
 
-@EqualsAndHashCode
-@ToString
-public final class EagerDoc implements Xml {
+public final class LazyXml implements Xml {
 
-    private final Xml element;
-    public EagerDoc(final Xml element) {
-        this.element = element;
+    private final OptimizedXml doc;
+
+    public LazyXml(final String... xml) {
+        this(String.join("", xml));
     }
+
+    private LazyXml(final String xml) {
+        this.doc = LazyXml.parse(xml);
+    }
+
+    private static OptimizedXml parse(final String xml) {
+        final OptimizedVisitor visitor = new OptimizedVisitor();
+        final XMLParser p = new XMLParser(
+            new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+        );
+        p.setErrorHandler(new BailErrorStrategy());
+        final OptimizedXml res = visitor.visitDocument(p.document());
+        return res;
+    }
+
 
     @Override
     public Xml child(final String element) {
-        if (this.element.name().equals(element)) {
-            return this.element;
-        } else {
-            return new Empty();
-        }
+        final Xml xml = this.children()
+            .filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElseThrow();
+        return xml;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Optional<String> text() {
-        return this.element.text();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        final Stream<Xml> children = this.doc.children(0);
+        return children;
     }
 
     @Override
     public String name() {
-        return this.element.name();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Xml copy() {
-        return new EagerDoc(this.element.copy());
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

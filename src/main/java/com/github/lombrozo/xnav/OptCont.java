@@ -25,6 +25,7 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,49 +33,62 @@ import org.w3c.dom.Node;
 
 @EqualsAndHashCode
 @ToString
-public final class EagerDoc implements Xml {
+public final class OptCont implements Xml {
 
-    private final Xml element;
-    public EagerDoc(final Xml element) {
-        this.element = element;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final int id;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final OptimizedXml xml;
+
+    public OptCont(final int id, final OptimizedXml xml) {
+        this.id = id;
+        this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        if (this.element.name().equals(element)) {
-            return this.element;
-        } else {
-            return new Empty();
-        }
+        return null;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
-    }
-
-    @Override
-    public Optional<String> text() {
-        return this.element.text();
+        return Optional.empty();
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        return this.xml.children(this.id);
+    }
+
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
+    public Optional<String> text() {
+        final Stream<Xml> children = this.xml.children(this.id);
+        return Optional.of(
+            children
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
+        );
     }
 
     @Override
     public String name() {
-        return this.element.name();
+        return null;
     }
 
     @Override
     public Xml copy() {
-        return new EagerDoc(this.element.copy());
+        return null;
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        return null;
     }
 }

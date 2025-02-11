@@ -26,55 +26,45 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
-@EqualsAndHashCode
-@ToString
-public final class EagerDoc implements Xml {
+public final class LazyDoc implements Xml {
 
-    private final Xml element;
-    public EagerDoc(final Xml element) {
-        this.element = element;
-    }
 
     @Override
     public Xml child(final String element) {
-        if (this.element.name().equals(element)) {
-            return this.element;
-        } else {
-            return new Empty();
-        }
+        return this.children().filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElseThrow();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return this.element.text();
+        return Optional.empty();
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        return null;
     }
 
     @Override
     public String name() {
-        return this.element.name();
+        return null;
     }
 
     @Override
     public Xml copy() {
-        return new EagerDoc(this.element.copy());
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

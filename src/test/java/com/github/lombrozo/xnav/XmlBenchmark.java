@@ -36,6 +36,9 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.trans.XPathException;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.eolang.jeo.representation.BytecodeRepresentation;
 import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -70,8 +73,8 @@ public class XmlBenchmark {
         final Options opt = new OptionsBuilder()
             .include(XmlBenchmark.class.getSimpleName())
             .forks(1)
-            .warmupTime(TimeValue.seconds(1))
-            .measurementTime(TimeValue.seconds(2))
+            .warmupTime(TimeValue.seconds(3))
+            .measurementTime(TimeValue.seconds(6))
             .build();
         new Runner(opt).run();
     }
@@ -148,6 +151,18 @@ public class XmlBenchmark {
             processor.newDocumentBuilder()
                 .build(new StreamSource(new StringReader(XmlBenchmark.HUGE_XML)))
         ).getUnderlyingValue().getStringValue().equals("j$Collections");
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeSingleWithAntlr() {
+        final XMLParser p = new XMLParser(
+            new CommonTokenStream(new XMLLexer(CharStreams.fromString(XmlBenchmark.HUGE_XML)))
+        );
+        p.setErrorHandler(new BailErrorStrategy());
+        assert p.document() != null;
     }
 
 

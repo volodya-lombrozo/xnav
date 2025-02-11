@@ -35,7 +35,8 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitDocument(final XMLParser.DocumentContext ctx) {
-        return new EagerDoc(this.visitElement(ctx.element()));
+        final XMLParser.ElementContext context = ctx.element();
+        return new EagerDoc(this.visitElement(context));
     }
 
     @Override

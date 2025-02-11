@@ -24,31 +24,25 @@
 
 package com.github.lombrozo.xnav;
 
+import ch.qos.logback.core.model.INamedModel;
 import com.yegor256.Together;
-import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Group;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 
-class EagerXmlTest {
+class LazyXmlTest {
+
 
     @Test
     void convertsDocumentToString() {
         MatcherAssert.assertThat(
             "Document is not converted to string",
-            new EagerXml("<doc></doc>").toString(),
+            new LazyXml("<doc></doc>").toString(),
             Matchers.equalTo(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
             )
@@ -59,7 +53,7 @@ class EagerXmlTest {
     void convertsNodeToString() {
         MatcherAssert.assertThat(
             "Node is not converted to string",
-            new EagerXml("<doc><node>text</node></doc>").child("doc").child("node")
+            new LazyXml("<doc><node>text</node></doc>").child("doc").child("node")
                 .toString(),
             Matchers.equalTo("<node>text</node>")
         );
@@ -69,7 +63,7 @@ class EagerXmlTest {
     void failsToCreateCorruptedDocument() {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new EagerXml("<doc...").children(),
+            () -> new LazyXml("<doc...").children(),
             "Corrupted document is not created, exception is expected"
         );
     }
@@ -78,14 +72,14 @@ class EagerXmlTest {
     void retrievesChildren() {
         MatcherAssert.assertThat(
             "Children are not retrieved",
-            new EagerXml(
+            new LazyXml(
                 "<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                new EagerXml("<node>first</node>").child("node"),
-                new EagerXml("<node>second</node>").child("node")
+                new LazyXml("<node>first</node>").child("node"),
+                new LazyXml("<node>second</node>").child("node")
             )
         );
     }
@@ -94,7 +88,7 @@ class EagerXmlTest {
     void retrievesText() {
         MatcherAssert.assertThat(
             "Text is not retrieved",
-            new EagerXml("<doc><node>text</node></doc>")
+            new LazyXml("<doc><node>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .text()
@@ -107,7 +101,7 @@ class EagerXmlTest {
     void retrievesAttribute() {
         MatcherAssert.assertThat(
             "Attribute is not retrieved",
-            new EagerXml("<doc><node attribute='value'>text</node></doc>")
+            new LazyXml("<doc><node attribute='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .attribute("attribute")
@@ -120,7 +114,7 @@ class EagerXmlTest {
 
     @Test
     void copiesNode() {
-        final Xml xml = new EagerXml("<doc><node>text</node></doc>");
+        final Xml xml = new LazyXml("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
             "Node is not copied",
             xml.copy().toString(),
@@ -134,7 +128,7 @@ class EagerXmlTest {
     void retrievesNode() {
         MatcherAssert.assertThat(
             "We expect the node to be retrieved",
-            new EagerXml("<doc><node attr='value'>text</node></doc>")
+            new LazyXml("<doc><node attr='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .node()
@@ -149,7 +143,7 @@ class EagerXmlTest {
     void retrievesTextFromSeveralNodes() {
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
-            new EagerXml(
+            new LazyXml(
                 "<doc>",
                 "  <node>first </node>",
                 "  <node>second</node>",
@@ -164,7 +158,7 @@ class EagerXmlTest {
     void retrievesDocName() {
         MatcherAssert.assertThat(
             "We expect to find the correct document name",
-            new EagerXml(
+            new LazyXml(
                 "<o base='bytes'>",
                 "  <o base='bytes'>2-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>content</o></o>",
@@ -178,7 +172,7 @@ class EagerXmlTest {
     void retrievesChildNames() {
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
-            new EagerXml(
+            new LazyXml(
                 "<o base='child'>",
                 "  <o base='bytes'>3-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>4</o></o>",
@@ -192,7 +186,7 @@ class EagerXmlTest {
     void retrievesObjects() {
         MatcherAssert.assertThat(
             "Objects are not retrieved",
-            new EagerXml(
+            new LazyXml(
                 String.join(
                     "\n",
                     "<o>",
@@ -202,15 +196,15 @@ class EagerXmlTest {
                 )
             ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
             Matchers.hasItems(
-                new EagerXml("<o color='red'>red</o>").child("o"),
-                new EagerXml("<o color='blue'>blue</o>").child("o")
+                new LazyXml("<o color='red'>red</o>").child("o"),
+                new LazyXml("<o color='blue'>blue</o>").child("o")
             )
         );
     }
 
     //todo: remove me
 //    @Test
-//    void hugeManyWithEagerXml() {
+//    void hugeManyWithLazyXml() {
 //        Object[][] queries = new Object[][]{
 //            {"/program/@name", "j$Collections"},
 //            {"/program/objects/o/@base", "jeo.class"},
@@ -218,7 +212,7 @@ class EagerXmlTest {
 //        };
 //        Random random = new SecureRandom();
 //        for (int j = 0; j < 100; j++) {
-//            final Xml xml = new EagerXml(XmlBenchmark.generateXml());
+//            final Xml xml = new LazyXml(XmlBenchmark.generateXml());
 //            for (int i = 0; i < 100_000; i++) {
 //                final int request = random.nextInt(queries.length);
 //                String query = queries[request][0].toString();
@@ -235,7 +229,7 @@ class EagerXmlTest {
 
     @Test
     void retrievesChildrenConcurrently() {
-        final Xml xml = new EagerXml(
+        final Xml xml = new LazyXml(
             String.join(
                 "",
                 "<ob><o color='yellow'>yellow</o>",

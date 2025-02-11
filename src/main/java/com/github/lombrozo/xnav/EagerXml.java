@@ -30,6 +30,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
@@ -55,9 +56,11 @@ public final class EagerXml implements Xml {
     private static Xml parse(final String xml) {
         try {
             final EagerVisitor visitor = new EagerVisitor();
+
             final XMLParser p = new XMLParser(
                 new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
             );
+//            p.setBuildParseTree(false);
             p.setErrorHandler(new BailErrorStrategy());
             return visitor.visitDocument(p.document());
         } catch (final ParseCancellationException exception) {
