@@ -92,8 +92,10 @@ public final class OptimizedXml {
         final int parent, final int current, final Type type, final String text
     ) {
         this.parent.put(current, parent);
-        this.tag.put(current, this.pool.id(text));
         this.type.add(type);
+        if (text != null) {
+            this.tag.put(current, this.pool.id(text));
+        }
         if (parent != -1) {
             final int first = this.firstChild.getOrDefault(parent, -1);
             if (first == -1) {
@@ -106,24 +108,7 @@ public final class OptimizedXml {
                 this.nextSibling.put(next, current);
             }
         }
-    }
-
-    //todo: duplicate code
-    public void addContent(final int parent, final int current, final Type type) {
-        this.parent.put(current, parent);
-        this.type.add(type);
-        if (parent != -1) {
-            final int first = this.firstChild.getOrDefault(parent, -1);
-            if (first == -1) {
-                this.firstChild.put(parent, current);
-            } else {
-                int next = first;
-                while (this.nextSibling.containsKey(next)) {
-                    next = this.nextSibling.get(next);
-                }
-                this.nextSibling.put(next, current);
-            }
-        }
+        this.size.incrementAndGet();
     }
 
     public String content(final int id) {

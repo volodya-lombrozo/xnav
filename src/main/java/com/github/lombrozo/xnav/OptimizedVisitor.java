@@ -83,10 +83,11 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
 
     @Override
     public OptimizedXml visitContent(final XMLParser.ContentContext ctx) {
-        this.xml.addContent(
+        this.xml.addElement(
             this.stack.peek(),
             this.index.incrementAndGet(),
-            OptimizedXml.Type.CONTENT
+            OptimizedXml.Type.CONTENT,
+            null
         );
         this.stack.push(this.index.get());
         ctx.children.forEach(super::visit);
