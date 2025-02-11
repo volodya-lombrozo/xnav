@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -38,19 +36,15 @@ import lombok.ToString;
 @EqualsAndHashCode
 public final class OptimizedXml {
 
-    private final Map<Integer, Integer> parent;
-    private final Map<Integer, Integer> tag;
-    private final List<Type> type;
     private final Map<Integer, Integer> firstChild;
     private final Map<Integer, Integer> nextSibling;
-    private final AtomicInteger size;
+    private final Map<Integer, Integer> tag;
+    private final List<Type> type;
     private final StringPool pool;
 
     public OptimizedXml() {
-        this.parent = new HashMap<>(0);
         this.tag = new HashMap<>(0);
         this.type = new ArrayList<>(0);
-        this.size = new AtomicInteger(0);
         this.firstChild = new HashMap<>(0);
         this.nextSibling = new HashMap<>(0);
         this.pool = new StringPool();
@@ -87,10 +81,6 @@ public final class OptimizedXml {
                     child = this.nextSibling.get(child);
                 }
                 return result.stream();
-//                return Stream.iterate(first, this.nextSibling::get)
-//                    .limit(this.size.get())
-//                    .filter(Objects::nonNull)
-//                    .map(this::child);
             }
         }
     }
@@ -101,7 +91,6 @@ public final class OptimizedXml {
         final Type type,
         final String text
     ) {
-        this.parent.put(current, parent);
         this.type.add(type);
         if (text != null) {
             this.tag.put(current, this.pool.id(text));
@@ -118,7 +107,6 @@ public final class OptimizedXml {
                 this.nextSibling.put(next, current);
             }
         }
-        this.size.incrementAndGet();
     }
 
     public String content(final int id) {
@@ -142,14 +130,16 @@ public final class OptimizedXml {
         private final List<String> indexed = new ArrayList<>(0);
 
         int id(final String string) {
-            return this.map.computeIfAbsent(string, k -> {
-                this.indexed.add(k);
-                return this.indexed.size() - 1;
-            });
+            return this.map.computeIfAbsent(string, this::addStringContent);
         }
 
         String string(int id) {
             return this.indexed.get(id);
+        }
+
+        private int addStringContent(final String k) {
+            this.indexed.add(k);
+            return this.indexed.size() - 1;
         }
     }
 }
