@@ -50,7 +50,10 @@ public final class OptElem implements Xml {
 
     @Override
     public Xml child(final String element) {
-        return null;
+        return this.children()
+            .filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElse(new Empty());
     }
 
     @Override
