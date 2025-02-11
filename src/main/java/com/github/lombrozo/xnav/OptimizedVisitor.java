@@ -71,6 +71,20 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
     }
 
     @Override
+    public OptimizedXml visitAttribute(final XMLParser.AttributeContext ctx) {
+        this.xml.addElement(
+            this.stack.peek(),
+            this.index.incrementAndGet(),
+            OptimizedXml.Type.ATTRIBUTE,
+            ctx.getText()
+        );
+        this.stack.push(this.index.get());
+        ctx.children.forEach(super::visit);
+        this.stack.pop();
+        return this.xml;
+    }
+
+    @Override
     public OptimizedXml visitContent(final XMLParser.ContentContext ctx) {
         this.xml.addContent(
             this.stack.peek(),
@@ -93,9 +107,6 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
             OptimizedXml.Type.CHARDATA,
             text
         );
-//        this.stack.push(this.index.get());
-//        ctx.children.forEach(super::visit);
-//        this.stack.pop();
         return this.xml;
     }
 }

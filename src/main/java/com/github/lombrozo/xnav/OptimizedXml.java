@@ -65,6 +65,8 @@ public final class OptimizedXml {
                 return new OptCont(id, this);
             case CHARDATA:
                 return new OptChard(id, this);
+            case ATTRIBUTE:
+                return new OptAttr(id, this);
             default:
                 throw new IllegalStateException("Unknown type");
         }
@@ -76,8 +78,7 @@ public final class OptimizedXml {
             return Stream.empty();
         } else {
             if (!this.nextSibling.containsKey(first)) {
-                final Stream<Xml> child = Stream.of(this.child(first));
-                return child;
+                return Stream.of(this.child(first));
             } else {
                 return Stream.iterate(first, this.nextSibling::get)
                     .limit(this.size.get())
@@ -134,7 +135,7 @@ public final class OptimizedXml {
         DOCUMENT,
         ELEMENT,
         CONTENT,
-
+        ATTRIBUTE,
         CHARDATA
 
     }

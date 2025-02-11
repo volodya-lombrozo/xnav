@@ -25,75 +25,56 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
-@EqualsAndHashCode
-@ToString
-public final class OptElem implements Xml {
+public final class OptAttr implements Xml {
 
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
     private final int id;
-
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private final OptimizedXml xml;
 
-    public OptElem(final int id, final OptimizedXml xml) {
+    public OptAttr(final int id, final OptimizedXml xml) {
         this.id = id;
         this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.children()
-            .filter(e -> e.name().equals(element))
-            .findFirst()
-            .orElse(new Empty());
+        return null;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.xml.children(this.id)
-            .filter(OptAttr.class::isInstance)
-            .filter(e -> e.name().equals(name))
-            .findFirst();
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(
-            this.children().map(Xml::text)
-                .flatMap(Optional::stream)
-                .collect(Collectors.joining())
-        );
+        final String s = this.full().split("=", 2)[1];
+        return Optional.of(s.substring(1, s.length() - 1));
     }
 
     @Override
     public Stream<Xml> children() {
-        return this.xml.children(this.id)
-            .filter(e -> !(e instanceof OptAttr))
-            .flatMap(Xml::children);
+        return Stream.empty();
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public String name() {
-        return this.xml.content(this.id);
+        return this.full().split("=", 2)[0];
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    private String full() {
+        return this.xml.content(this.id);
     }
 }
