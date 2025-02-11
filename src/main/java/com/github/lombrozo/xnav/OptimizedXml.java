@@ -80,16 +80,26 @@ public final class OptimizedXml {
             if (!this.nextSibling.containsKey(first)) {
                 return Stream.of(this.child(first));
             } else {
-                return Stream.iterate(first, this.nextSibling::get)
-                    .limit(this.size.get())
-                    .filter(Objects::nonNull)
-                    .map(this::child);
+                List<Xml> result = new ArrayList<>(0);
+                Integer child = this.firstChild.get(id);
+                while (child != null && child != -1) {
+                    result.add(this.child(child));
+                    child = this.nextSibling.get(child);
+                }
+                return result.stream();
+//                return Stream.iterate(first, this.nextSibling::get)
+//                    .limit(this.size.get())
+//                    .filter(Objects::nonNull)
+//                    .map(this::child);
             }
         }
     }
 
     public void addElement(
-        final int parent, final int current, final Type type, final String text
+        final int parent,
+        final int current,
+        final Type type,
+        final String text
     ) {
         this.parent.put(current, parent);
         this.type.add(type);
