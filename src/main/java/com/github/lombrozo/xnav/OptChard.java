@@ -59,7 +59,7 @@ public final class OptChard implements Xml {
 
     @Override
     public String name() {
-        return null;
+        return "";
     }
 
     @Override
