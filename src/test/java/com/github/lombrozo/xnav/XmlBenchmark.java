@@ -182,7 +182,10 @@ public class XmlBenchmark {
         final XMLParser p = new XMLParser(
             new CommonTokenStream(new XMLLexer(CharStreams.fromString(XmlBenchmark.HUGE_XML)))
         );
+//        p.setBuildParseTree(false);
         p.setErrorHandler(new BailErrorStrategy());
+        final CounterVisitor visitor = new CounterVisitor();
+        visitor.visitDocument(p.document());
         assert p.document() != null;
     }
 
