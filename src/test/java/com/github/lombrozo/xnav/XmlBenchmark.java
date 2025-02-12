@@ -182,7 +182,6 @@ public class XmlBenchmark {
         final XMLParser p = new XMLParser(
             new CommonTokenStream(new XMLLexer(CharStreams.fromString(XmlBenchmark.HUGE_XML)))
         );
-//        p.setBuildParseTree(false);
         p.setErrorHandler(new BailErrorStrategy());
         final CounterVisitor visitor = new CounterVisitor();
         visitor.visitDocument(p.document());
@@ -296,7 +295,11 @@ public class XmlBenchmark {
         } catch (final IOException exception) {
             throw new RuntimeException(exception);
         }
-        final String string = bytecode.toEO().toString();
-        return string;
+        final Random rand = new Random();
+        return bytecode.toEO().toString()
+            .replace(
+                "74-69-6C-2F-43-6F-6C-6C",
+                String.format("%d-%d", rand.nextInt(), rand.nextInt())
+            );
     }
 }
