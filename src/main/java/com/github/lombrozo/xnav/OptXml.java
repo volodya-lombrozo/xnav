@@ -26,13 +26,18 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
 public final class OptXml implements Xml {
+
+    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
 
     private final OptimizedXml doc;
 
@@ -41,10 +46,14 @@ public final class OptXml implements Xml {
     }
 
     private OptXml(final String xml) {
-        this.doc = OptXml.parse(xml);
+        this(new StringNode(xml).toNode());
     }
 
-    private static OptimizedXml parse(final String xml) {
+    private OptXml(final Node node) {
+        this.doc = OptXml.parseDom(node);
+    }
+
+    private static OptimizedXml parseAntlr(final String xml) {
         try {
             final OptimizedVisitor visitor = new OptimizedVisitor();
             final XMLParser p = new XMLParser(
@@ -55,6 +64,10 @@ public final class OptXml implements Xml {
         } catch (ParseCancellationException e) {
             throw new IllegalArgumentException("Invalid XML", e);
         }
+    }
+
+    private static OptimizedXml parseDom(final Node node) {
+        return new OptimizedDom(node).parse();
     }
 
 

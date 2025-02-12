@@ -24,11 +24,22 @@
 
 package com.github.lombrozo.xnav;
 
+import com.ximpleware.AutoPilot;
+import com.ximpleware.NavException;
+import com.ximpleware.ParseException;
+import com.ximpleware.VTDGen;
+import com.ximpleware.VTDNav;
 import com.yegor256.Together;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.UnbufferedTokenStream;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -169,14 +180,16 @@ class OptXmlTest {
 
     @Test
     void retrievesChildNames() {
+        final OptXml xml = new OptXml(
+            "<o base='child'>",
+            "  <o base='bytes'>3-bytes-</o>",
+            "  <o base='bytes'><o base='bytes'>4</o></o>",
+            "</o>"
+        );
+        final List<String> collect = xml.child("o").children().map(Xml::name).collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
-            new OptXml(
-                "<o base='child'>",
-                "  <o base='bytes'>3-bytes-</o>",
-                "  <o base='bytes'><o base='bytes'>4</o></o>",
-                "</o>"
-            ).child("o").children().map(Xml::name).collect(Collectors.toList()),
+            collect,
             Matchers.hasItems("o", "o")
         );
     }
@@ -203,6 +216,7 @@ class OptXmlTest {
 
     //todo: remove me
     @Test
+    @Disabled
     void hugeManyWithLazyXml() {
         Object[][] queries = {
             {"/program/@name", "j$Collections"},
@@ -224,6 +238,59 @@ class OptXmlTest {
             }
 
         }
+    }
+
+    @Test
+    void removeMeANTLR() {
+        final String large = XmlBenchmark.generateXml();
+        final long start = System.currentTimeMillis();
+        final XMLParser p = new XMLParser(
+            new UnbufferedTokenStream<>(new XMLLexer(CharStreams.fromString(large)))
+        );
+//        p.setBuildParseTree(false);
+        p.setErrorHandler(new BailErrorStrategy());
+        final CounterVisitor visitor = new CounterVisitor();
+        final Integer res = visitor.visitDocument(p.document());
+        final long end = System.currentTimeMillis();
+        System.out.println("ANTLR: " + (end - start) + " ms " + res);
+    }
+
+    @Test
+    void removeMeDom() {
+        final String large = XmlBenchmark.generateXml();
+        final long start = System.currentTimeMillis();
+        final int res = new DomParser(new StringNode(large).toNode()).numberElements();
+        MatcherAssert.assertThat(
+            "Number of elements is not correct",
+            res,
+            Matchers.equalTo(69120)
+        );
+        final long end = System.currentTimeMillis();
+        System.out.println("DOM: " + (end - start) + " ms " + res);
+
+    }
+
+    @Test
+    void removeMeVTD() throws ParseException, NavException {
+        final String large = XmlBenchmark.generateXml();
+        final byte[] bytes = large.getBytes(StandardCharsets.UTF_8);
+        final long start = System.currentTimeMillis();
+        final VTDGen vg = new VTDGen();
+        vg.setDoc(bytes);
+        vg.parse(false);
+        VTDNav vn = vg.getNav();
+        int elementCount = 0;
+        int attributeCount = 0;
+        // Select all elements
+        AutoPilot ap = new AutoPilot(vn);
+        ap.selectElement("*");
+        while (ap.iterate()) {
+            elementCount++;  // Count elements
+            attributeCount += vn.getAttrCount();  // Count attributes
+        }
+        int res = elementCount + attributeCount;
+        final long end = System.currentTimeMillis();
+        System.out.println("VTG: " + (end - start) + " ms " + res);
     }
 
 
