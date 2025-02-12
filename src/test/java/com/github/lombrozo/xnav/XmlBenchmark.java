@@ -24,8 +24,12 @@
 
 package com.github.lombrozo.xnav;
 
+import com.ximpleware.AutoPilot;
+import com.ximpleware.VTDGen;
+import com.ximpleware.VTDNav;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
@@ -276,6 +280,47 @@ public class XmlBenchmark {
                 .evaluate(query, node)
                 .getUnderlyingValue()
                 .getStringValue().equals(expected);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_MANY)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyWithVtdXml() throws SaxonApiException, XPathException {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        try {
+            VTDGen vg = new VTDGen();
+            vg.setDoc(XmlBenchmark.HUGE_XML.getBytes(StandardCharsets.UTF_8));
+            vg.parse(true);
+
+            for (int i = 0; i < 1000; i++) {
+                final int request = random.nextInt(queries.length);
+                String query = queries[request][0].toString();
+                String expected = queries[request][1].toString();
+                VTDNav vn = vg.getNav();
+                AutoPilot ap = new AutoPilot(vn);
+                ap.selectXPath(query);
+                int index;
+                if ((index = ap.evalXPath()) != -1) {
+                    if (vn.toNormalizedString(index).equals(expected)) {
+                        // do nothing
+                    } else {
+                        throw new RuntimeException(
+                            String.format(
+                                "Received results are wrong: %s",
+                                vn.toNormalizedString(index)
+                            )
+                        );
+                    }
+                } else throw new RuntimeException("XPath not found");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

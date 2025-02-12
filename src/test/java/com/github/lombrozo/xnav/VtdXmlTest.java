@@ -85,11 +85,12 @@ class VtdXmlTest {
 
     @Test
     void retrievesText() {
+        final Xml child = new VtdXml("<doc><node>text</node></doc>")
+            .child("doc")
+            .child("node");
         MatcherAssert.assertThat(
             "Text is not retrieved",
-            new VtdXml("<doc><node>text</node></doc>")
-                .child("doc")
-                .child("node")
+            child
                 .text()
                 .orElseThrow(),
             Matchers.equalTo("text")
@@ -214,47 +215,20 @@ class VtdXmlTest {
         );
     }
 
-    //todo: remove me
-//    @Test
-//    void hugeManyWithVtdXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        Random random = new SecureRandom();
-//        for (int j = 0; j < 100; j++) {
-//            final Xml xml = new VtdXml(XmlBenchmark.generateXml());
-//            for (int i = 0; i < 100_000; i++) {
-//                final int request = random.nextInt(queries.length);
-//                String query = queries[request][0].toString();
-//                String expected = queries[request][1].toString();
-//                new Xpath(xml, query)
-//                    .nodes()
-//                    .findFirst()
-//                    .map(Xml::text).get().get().equals(expected);
-//            }
-//
-//        }
-//    }
-
-
     @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new VtdXml(
-            String.join(
-                "",
-                "<ob><o color='yellow'>yellow</o>",
-                "<o color='green'>green</o></ob>"
-            )
+            "<ob><o color='yellow'>yellow</o>",
+            "<o color='green'>green</o></ob>"
         );
         final int threads = 10;
         final Together<List<Xml>> all = new Together<>(
             threads,
             indx -> {
-                return xml.child("ob").children()
+                final List<Xml> collect = xml.child("ob").children()
                     .flatMap(Xml::children)
                     .collect(Collectors.toList());
+                return collect;
             }
         );
         MatcherAssert.assertThat(

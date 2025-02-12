@@ -25,7 +25,7 @@
 package com.github.lombrozo.xnav;
 
 
-import com.ximpleware.AutoPilot;
+import com.ximpleware.NavException;
 import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
 import java.util.List;
@@ -60,13 +60,12 @@ public final class VtdElem implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        Stream.Builder<Xml> builder = Stream.builder();
+        final Stream.Builder<Xml> builder = Stream.builder();
         try {
             final VTDNav current = this.vn.cloneNav();
             if (current.toElement(VTDNav.FIRST_CHILD)) {
                 do {
-                    final VtdElem t = new VtdElem(current.cloneNav());
-                    builder.add(t);
+                    builder.add(new VtdElem(current.cloneNav()));
                 } while (current.toElement(VTDNav.NEXT_SIBLING));
             }
         } catch (VTDException e) {
@@ -82,17 +81,90 @@ public final class VtdElem implements Xml {
             if (index != -1) {
                 return Optional.of(new VtdAttr(name, this.vn.cloneNav()));
             }
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting attribute", e);
+        } catch (final VTDException exception) {
+            throw new RuntimeException("Error getting attribute", exception);
         }
         return Optional.empty();
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
-        return Optional.empty();
+        try {
+//            return Optional.of(getElementTextPreservingSpaces(this.vn.cloneNav()));
+            final String spaces = getTextWithAllSpaces(this.vn.cloneNav());
+            return Optional.of(spaces);
+        } catch (final NavException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    public static String getElementTextPreservingSpaces(VTDNav vn) throws NavException {
+        final StringBuilder text = new StringBuilder();
+        int currentIndex = vn.getCurrentIndex();
+        int index = vn.getCurrentIndex() + 1; // Start looking at the next token
+        int tokenType;
+        final int all = vn.getTokenCount();
+        while (index < all) {
+            tokenType = vn.getTokenType(index);
+            final String string = vn.toString(index);
+            text.append(string);
+//            if (tokenType == VTDNav.TOKEN_CHARACTER_DATA || tokenType == VTDNav.TOKEN_CDATA_VAL) {
+//                final String string = vn.toRawString(index);
+//                vn.toString(index);
+//                text.append(string); // Preserve raw string to keep spaces
+//            } else if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
+//                // Move into the element and process recursively
+//                if (vn.toElement(VTDNav.FIRST_CHILD)) {
+//                    text.append(VtdElem.getElementTextPreservingSpaces(vn));
+//                    vn.toElement(VTDNav.PARENT); // Return to the parent after processing
+//                }
+//            } else if (tokenType == VTDNav.TOKEN_ENDING_TAG) {
+//                break; // Stop when reaching the end of the current element
+//            }
+            index++;
+        }
+        vn.recoverNode(currentIndex); // Restore position
+        return text.toString();
+    }
+
+    public static String getTextWithAllSpaces(VTDNav vn) throws NavException {
+        StringBuilder text = new StringBuilder();
+        int currentIndex = vn.getCurrentIndex(); // Save the current position
+        int tokenIndex = vn.getCurrentIndex() + 1; // Start scanning from next token
+        int tokenCount = vn.getTokenCount();
+
+        while (tokenIndex < tokenCount) {
+            int tokenType = vn.getTokenType(tokenIndex);
+
+            if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
+                text.append(vn.toRawString(tokenIndex)); // Append regular text or CDATA
+//            } else if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
+//                int offset = vn.getTokenOffset(tokenIndex);
+//                int prevTokenOffset = vn.getTokenOffset(tokenIndex - 1);
+//
+//                 Capture spaces between the previous token and the new start tag
+//                if (offset > prevTokenOffset + vn.getTokenLength(tokenIndex - 1)) {
+//                    final String string = vn.toRawString(
+//                        prevTokenOffset + vn.getTokenLength(tokenIndex - 1),
+//                        offset - (prevTokenOffset + vn.getTokenLength(tokenIndex - 1))
+//                    );
+//                    String interElementSpace = string;
+//                    text.append(interElementSpace);
+//                }
+
+//                if (vn.toElement(VTDNav.FIRST_CHILD)) {
+//                    text.append(getTextWithAllSpaces(vn));
+//                    vn.toElement(VTDNav.PARENT); // Move back up
+//                }
+            } else if (tokenType == VTDNav.TOKEN_ENDING_TAG) {
+                break; // Stop when reaching the end of the current element
+            }
+
+            tokenIndex++;
+        }
+
+        vn.recoverNode(currentIndex); // Restore original position
+        return text.toString();
     }
 
     @ToString.Include
@@ -100,15 +172,15 @@ public final class VtdElem implements Xml {
     @Override
     public String name() {
         try {
-            return this.vn.toString(this.vn.getCurrentIndex());
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting name", e);
+            return this.vn.cloneNav().toString(this.vn.getCurrentIndex());
+        } catch (final VTDException exception) {
+            throw new RuntimeException("Error getting name", exception);
         }
     }
 
     @Override
     public Xml copy() {
-        return new VtdElem(this.vn.cloneNav());
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
