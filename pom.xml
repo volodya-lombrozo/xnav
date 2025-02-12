@@ -365,7 +365,7 @@ SOFTWARE.
               <dependency>
                 <groupId>org.eolang</groupId>
                 <artifactId>jeo-maven-plugin</artifactId>
-                <version>0.7.4</version>
+                <version>0.7.5</version>
               </dependency>
               <dependency>
                 <groupId>net.sf.saxon</groupId>
