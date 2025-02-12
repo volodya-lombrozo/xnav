@@ -49,7 +49,7 @@ public final class VtdText implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Text nodes do not have children");
+        return Stream.empty();
     }
 
     @Override
@@ -72,7 +72,7 @@ public final class VtdText implements Xml {
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Text nodes do not have names");
+        return "";
     }
 
     @Override

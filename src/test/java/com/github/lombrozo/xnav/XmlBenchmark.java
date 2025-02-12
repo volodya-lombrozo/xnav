@@ -96,6 +96,18 @@ public class XmlBenchmark {
     @Group(XmlBenchmark.SIMPLE)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void simpleWithVtdXml() {
+        final Xml xml = new VtdXml(XmlBenchmark.SIMPLE_XML);
+        assertEq(new Xpath(xml, "/root/child")
+            .nodes()
+            .findFirst()
+            .map(Xml::text).get().get().equals("text"));
+    }
+
+    @Benchmark
+    @Group(XmlBenchmark.SIMPLE)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithOptXml() {
         final Xml xml = new OptXml(XmlBenchmark.SIMPLE_XML);
         assert new Xpath(xml, "/root/child")
@@ -139,6 +151,18 @@ public class XmlBenchmark {
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("j$Collections");
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeSingleWithVtdXml() {
+        final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
+        assertEq(new Xpath(xml, "/program/@name")
+            .nodes()
+            .findFirst()
+            .map(Xml::text).get().get().equals("j$Collections"));
     }
 
     @Benchmark
@@ -287,40 +311,23 @@ public class XmlBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE_MANY)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void hugeManyWithVtdXml() throws SaxonApiException, XPathException {
+    public void hugeManyWithVtdXml() {
         Object[][] queries = new Object[][]{
             {"/program/@name", "j$Collections"},
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
-        try {
-            VTDGen vg = new VTDGen();
-            vg.setDoc(XmlBenchmark.HUGE_XML.getBytes(StandardCharsets.UTF_8));
-            vg.parse(true);
-
-            for (int i = 0; i < 1000; i++) {
-                final int request = random.nextInt(queries.length);
-                String query = queries[request][0].toString();
-                String expected = queries[request][1].toString();
-                VTDNav vn = vg.getNav();
-                AutoPilot ap = new AutoPilot(vn);
-                ap.selectXPath(query);
-                int index;
-                if ((index = ap.evalXPath()) != -1) {
-                    if (vn.toNormalizedString(index).equals(expected)) {
-                        // do nothing
-                    } else {
-                        throw new RuntimeException(
-                            String.format(
-                                "Received results are wrong: %s",
-                                vn.toNormalizedString(index)
-                            )
-                        );
-                    }
-                } else throw new RuntimeException("XPath not found");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
+        for (int i = 0; i < 1000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            assertEq(
+                new Xpath(xml, query)
+                    .nodes()
+                    .findFirst()
+                    .map(Xml::text).get().get().equals(expected)
+            );
         }
     }
 
@@ -346,5 +353,12 @@ public class XmlBenchmark {
                 "74-69-6C-2F-43-6F-6C-6C",
                 String.format("%d-%d", rand.nextInt(), rand.nextInt())
             );
+    }
+
+    private boolean assertEq(final boolean assertion) {
+        if (!assertion) {
+            throw new AssertionError();
+        }
+        return true;
     }
 }

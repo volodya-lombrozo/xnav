@@ -37,6 +37,9 @@ import org.w3c.dom.Node;
 public final class VtdAttr implements Xml {
 
     private final String name;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private final VTDNav vn;
 
     public VtdAttr(final String name, final VTDNav vn) {
@@ -59,6 +62,8 @@ public final class VtdAttr implements Xml {
         throw new UnsupportedOperationException("Attributes do not have attributes");
     }
 
+    @ToString.Include
+    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
         try {
