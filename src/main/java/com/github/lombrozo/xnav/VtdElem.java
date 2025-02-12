@@ -60,18 +60,19 @@ public final class VtdElem implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        final Stream.Builder<Xml> builder = Stream.builder();
-        try {
-            final VTDNav current = this.vn.cloneNav();
-            if (current.toElement(VTDNav.FIRST_CHILD)) {
-                do {
-                    builder.add(new VtdElem(current.cloneNav()));
-                } while (current.toElement(VTDNav.NEXT_SIBLING));
-            }
-        } catch (VTDException e) {
-            throw new RuntimeException("Error iterating children", e);
-        }
-        return builder.build();
+        return VtdElem.childish(this.vn.cloneNav());
+//        final Stream.Builder<Xml> builder = Stream.builder();
+//        try {
+//            final VTDNav current = this.vn.cloneNav();
+//            if (current.toElement(VTDNav.FIRST_CHILD)) {
+//                do {
+//                    builder.add(new VtdElem(current.cloneNav()));
+//                } while (current.toElement(VTDNav.NEXT_SIBLING));
+//            }
+//        } catch (VTDException e) {
+//            throw new RuntimeException("Error iterating children", e);
+//        }
+//        return builder.build();
     }
 
     @Override
@@ -89,12 +90,56 @@ public final class VtdElem implements Xml {
 
     @Override
     public Optional<String> text() {
-        try {
+        return Optional.of(childish(this.vn.cloneNav())
+            .map(Xml::text)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.joining())
+        );
+//        try {
 //            return Optional.of(getElementTextPreservingSpaces(this.vn.cloneNav()));
-            final String spaces = getTextWithAllSpaces(this.vn.cloneNav());
-            return Optional.of(spaces);
-        } catch (final NavException exception) {
-            throw new RuntimeException(exception);
+//            final String spaces = getTextWithAllSpaces(this.vn.cloneNav());
+//            return Optional.of(spaces);
+//        } catch (final NavException exception) {
+//            throw new RuntimeException(exception);
+//        }
+    }
+
+
+    public static Stream<Xml> childish(VTDNav vn) {
+        try {
+            final Stream.Builder<Xml> builder = Stream.builder();
+            int currentIndex = vn.getCurrentIndex();
+            int index = vn.getCurrentIndex() + 1; //// Start looking at the next token
+            int tokenType = vn.getTokenType(index);
+            while (tokenType != VTDNav.TOKEN_STARTING_TAG
+                && tokenType != VTDNav.TOKEN_CHARACTER_DATA) {
+                index++;
+                tokenType = vn.getTokenType(index);
+            }
+            if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
+                builder.add(new VtdText(vn)); // Preserve raw string to keep spaces
+            } else {
+                final VTDNav current = vn.cloneNav();
+                current.recoverNode(currentIndex);
+                if (current.toElement(VTDNav.FIRST_CHILD)) {
+                    do {
+                        builder.add(new VtdElem(current.cloneNav()));
+                    } while (current.toElement(VTDNav.NEXT_SIBLING));
+                }
+            }
+            vn.recoverNode(currentIndex); // Restore position
+            return builder.build();
+        } catch (NavException e) {
+            throw new RuntimeException("Error iterating children", e);
+        }
+    }
+
+    private Xml element(int tokenType, VTDNav nav) {
+        if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
+            return new VtdText(nav); // Preserve raw string to keep spaces
+        } else {
+            return new VtdElem(nav);
         }
     }
 

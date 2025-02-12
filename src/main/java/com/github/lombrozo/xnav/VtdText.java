@@ -39,7 +39,7 @@ public final class VtdText implements Xml {
     private final VTDNav vn;
 
     public VtdText(final VTDNav vn) {
-        this.vn = vn;
+        this.vn = vn.cloneNav();
     }
 
     @Override

@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import com.yegor256.Together;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -216,6 +217,37 @@ class VtdXmlTest {
     }
 
     @Test
+    void retrivesText() {
+        final Xml child = new VtdXml("<o><o>yellow</o></o>").child("o")
+            .children()
+            .flatMap(Xml::children)
+            .findFirst().orElseThrow();
+        System.out.println(child.text().orElseThrow());
+
+    }
+
+    @Test
+    void retrievesChildrenRemoveMe() {
+        final Xml xml = new VtdXml(
+            "<ob><o color='yellow'>yellow</o>",
+            "<o color='green'>green</o></ob>"
+        );
+        final int threads = 10;
+        final Stream<Xml> children = xml.child("ob")
+            .children();
+        final List<Xml> collect1 = children.collect(Collectors.toList());
+        final List<Xml> collect = collect1.stream()
+            .flatMap(Xml::children)
+            .collect(Collectors.toList());
+        MatcherAssert.assertThat(
+            "Children are not retrieved concurrently",
+            collect,
+            Matchers.hasSize(2)
+        );
+    }
+
+
+    @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new VtdXml(
             "<ob><o color='yellow'>yellow</o>",
@@ -225,7 +257,10 @@ class VtdXmlTest {
         final Together<List<Xml>> all = new Together<>(
             threads,
             indx -> {
-                final List<Xml> collect = xml.child("ob").children()
+                final Stream<Xml> children = xml.child("ob")
+                    .children();
+                final List<Xml> collect1 = children.collect(Collectors.toList());
+                final List<Xml> collect = collect1.stream()
                     .flatMap(Xml::children)
                     .collect(Collectors.toList());
                 return collect;
