@@ -24,38 +24,64 @@
 
 package com.github.lombrozo.xnav;
 
+import com.ximpleware.ParseException;
+import com.ximpleware.VTDGen;
+import com.ximpleware.VTDNav;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-public final class LazyDoc implements Xml {
+@ToString
+@EqualsAndHashCode
+public final class VtdXml implements Xml {
 
+    private VtdDoc doc;
+
+    public VtdXml(final String... xml) {
+        this(String.join("", xml));
+    }
+
+    public VtdXml(final String s) {
+        try {
+            final VTDGen vg = new VTDGen();
+            vg.setDoc(s.getBytes(StandardCharsets.UTF_8));
+            vg.parse(false);
+            VTDNav vn = vg.getNav();
+            this.doc = new VtdDoc(vn);
+        } catch (final ParseException exception) {
+            throw new IllegalArgumentException(String.format("Invalid XML: %s", s), exception);
+        }
+    }
 
     @Override
     public Xml child(final String element) {
-        return this.children().filter(e -> e.name().equals(element))
+        return this.children()
+            .filter(e -> e.name().equals(element))
             .findFirst()
             .orElseThrow();
     }
 
     @Override
-    public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<String> text() {
-        return Optional.empty();
-    }
-
-    @Override
     public Stream<Xml> children() {
-        return null;
+        return this.doc.children();
     }
 
     @Override
     public String name() {
-        return null;
+        return this.doc.name();
+    }
+
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public Optional<String> text() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
