@@ -27,11 +27,9 @@ package com.github.lombrozo.xnav;
 import com.yegor256.Together;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -81,20 +79,6 @@ class VtdXmlTest {
                 new VtdXml("<node>first</node>").child("node"),
                 new VtdXml("<node>second</node>").child("node")
             )
-        );
-    }
-
-    @Test
-    void retrievesText() {
-        final Xml child = new VtdXml("<doc><node>text</node></doc>")
-            .child("doc")
-            .child("node");
-        MatcherAssert.assertThat(
-            "Text is not retrieved",
-            child
-                .text()
-                .orElseThrow(),
-            Matchers.equalTo("text")
         );
     }
 
@@ -217,58 +201,48 @@ class VtdXmlTest {
     }
 
     @Test
-    void retrivesText() {
-        final Xml child = new VtdXml("<o><o>yellow</o></o>").child("o")
-            .children()
-            .flatMap(Xml::children)
-            .findFirst().orElseThrow();
-        System.out.println(child.text().orElseThrow());
-
+    void retrievesText() {
+        MatcherAssert.assertThat(
+            "Retrieved text is not correct",
+            new VtdXml("<o><o>yellow</o></o>")
+                .child("o")
+                .children()
+                .flatMap(Xml::children)
+                .findFirst()
+                .orElseThrow().text().orElseThrow(),
+            Matchers.equalTo("yellow")
+        );
     }
 
     @Test
-    void retrievesChildrenRemoveMe() {
-        final Xml xml = new VtdXml(
-            "<ob><o color='yellow'>yellow</o>",
-            "<o color='green'>green</o></ob>"
-        );
-        final int threads = 10;
-        final Stream<Xml> children = xml.child("ob")
-            .children();
-        final List<Xml> collect1 = children.collect(Collectors.toList());
-        final List<Xml> collect = collect1.stream()
-            .flatMap(Xml::children)
-            .collect(Collectors.toList());
+    void retrievesSeveralChildren() {
         MatcherAssert.assertThat(
-            "Children are not retrieved concurrently",
-            collect,
+            "We expect to retrieve exactly two children",
+            new VtdXml("<all><o color='yellow'>yellow</o>", "<o color='green'>green</o></all>")
+                .child("all")
+                .children()
+                .flatMap(Xml::children)
+                .collect(Collectors.toList()),
             Matchers.hasSize(2)
         );
     }
 
-
     @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new VtdXml(
-            "<ob><o color='yellow'>yellow</o>",
-            "<o color='green'>green</o></ob>"
+            "<colors><o color='yellow'>yellow</o>",
+            "<o color='green'>green</o></colors>"
         );
         final int threads = 10;
-        final Together<List<Xml>> all = new Together<>(
-            threads,
-            indx -> {
-                final Stream<Xml> children = xml.child("ob")
-                    .children();
-                final List<Xml> collect1 = children.collect(Collectors.toList());
-                final List<Xml> collect = collect1.stream()
-                    .flatMap(Xml::children)
-                    .collect(Collectors.toList());
-                return collect;
-            }
-        );
         MatcherAssert.assertThat(
-            "Children are not retrieved concurrently",
-            all.asList().stream().flatMap(List::stream).collect(Collectors.toList()),
+            "We expect to retrieve all children concurrently",
+            new Together<>(
+                threads,
+                indx -> xml.child("colors")
+                    .children()
+                    .flatMap(Xml::children)
+                    .collect(Collectors.toList())
+            ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
     }
