@@ -26,33 +26,42 @@ package com.github.lombrozo.xnav;
 
 import com.ximpleware.ParseException;
 import com.ximpleware.VTDGen;
-import com.ximpleware.VTDNav;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
 public final class VtdXml implements Xml {
 
+    /**
+     * Root document.
+     */
     private VtdDoc doc;
 
-    public VtdXml(final String... xml) {
+    /**
+     * Constructor.
+     * @param xml XML document lines.
+     */
+    VtdXml(final String... xml) {
         this(String.join("", xml));
     }
 
-    public VtdXml(final String s) {
-        try {
-            final VTDGen vg = new VTDGen();
-            vg.setDoc(s.getBytes(StandardCharsets.UTF_8));
-            vg.parse(false);
-            VTDNav vn = vg.getNav();
-            this.doc = new VtdDoc(vn);
-        } catch (final ParseException exception) {
-            throw new IllegalArgumentException(String.format("Invalid XML: %s", s), exception);
-        }
+    /**
+     * Constructor.
+     * @param xml XML document string.
+     */
+    VtdXml(final String xml) {
+        this(VtdXml.parseDoc(xml));
+    }
+
+    /**
+     * Constructor.
+     * @param doc VTD document.
+     */
+    private VtdXml(final VtdDoc doc) {
+        this.doc = doc;
     }
 
     @Override
@@ -80,21 +89,40 @@ public final class VtdXml implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return this.doc.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return this.doc.text();
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new VtdXml(this.doc);
     }
 
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    /**
+     * Parse the XML document.
+     * @param xml XML document.
+     * @return VTD XML document.
+     */
+    private static VtdDoc parseDoc(final String xml) {
+        try {
+            final VTDGen vg = new VTDGen();
+            vg.setDoc(xml.getBytes(StandardCharsets.UTF_8));
+            vg.parse(false);
+            return new VtdDoc(vg.getNav());
+        } catch (final ParseException exception) {
+            throw new IllegalArgumentException(
+                String.format("Can't prepare document for VTD: Invalid XML: %s", xml),
+                exception
+            );
+        }
     }
 }

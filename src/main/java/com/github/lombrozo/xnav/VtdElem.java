@@ -43,21 +43,10 @@ public final class VtdElem implements Xml {
 
     /**
      * Constructor.
-     * @param navigator
+     * @param nav VTD navigator.
      */
-    VtdElem(final VTDNav navigator) {
-        this.navigator = navigator.cloneNav();
-    }
-
-    @Override
-    public String toString() {
-        final String name = this.name();
-        return String.format(
-            "<%s>%s</%s>",
-            name,
-            this.children().map(Xml::toString).collect(Collectors.joining()),
-            name
-        );
+    VtdElem(final VTDNav nav) {
+        this.navigator = nav.cloneNav();
     }
 
     @Override
@@ -96,8 +85,7 @@ public final class VtdElem implements Xml {
         );
     }
 
-
-    public static Stream<Xml> child(VTDNav vn) {
+    public static Stream<Xml> child(final VTDNav vn) {
         try {
             final Stream.Builder<Xml> builder = Stream.builder();
             int currentIndex = vn.getCurrentIndex();
@@ -146,5 +134,16 @@ public final class VtdElem implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public String toString() {
+        final String name = this.name();
+        return String.format(
+            "<%s>%s</%s>",
+            name,
+            this.children().map(Xml::toString).collect(Collectors.joining()),
+            name
+        );
     }
 }

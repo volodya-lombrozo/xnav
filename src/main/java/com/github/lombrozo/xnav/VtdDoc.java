@@ -24,9 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
-import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,17 +35,29 @@ import org.w3c.dom.Node;
 public final class VtdDoc implements Xml {
 
     @EqualsAndHashCode.Exclude
-    private final VTDNav vn;
+    private final Xml root;
 
-    public VtdDoc(final VTDNav vn) {
-        this.vn = vn;
+    /**
+     * Constructor.
+     * @param nav VTD navigator.
+     */
+    VtdDoc(final VTDNav nav) {
+        this(new VtdElem(nav));
+    }
+
+    /**
+     * Constructor.
+     * @param root Root element.
+     */
+    private VtdDoc(final Xml root) {
+        this.root = root;
     }
 
     @Override
     public String toString() {
         return String.format(
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
-            new VtdElem(this.vn)
+            this.root
         );
     }
 
@@ -61,21 +71,18 @@ public final class VtdDoc implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(new VtdElem(this.vn));
+        return Stream.of(this.root);
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return new VtdElem(this.vn).attribute(name);
+        return this.root.attribute(name);
     }
-
 
     @Override
     public Optional<String> text() {
-        final Stream<Xml> children = this.children();
-        final List<Xml> collect = children.collect(Collectors.toList());
         return Optional.of(
-            collect.stream()
+            this.children()
                 .map(Xml::text)
                 .flatMap(Optional::stream)
                 .collect(Collectors.joining())
@@ -85,16 +92,12 @@ public final class VtdDoc implements Xml {
     @EqualsAndHashCode.Include
     @Override
     public String name() {
-        try {
-            return vn.cloneNav().toString(this.vn.getCurrentIndex());
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting name", e);
-        }
+        return this.root.name();
     }
 
     @Override
     public Xml copy() {
-        return new VtdDoc(vn.cloneNav());
+        return new VtdDoc(this.root.copy());
     }
 
     @Override
