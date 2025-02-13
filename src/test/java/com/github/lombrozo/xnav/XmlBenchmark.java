@@ -24,19 +24,13 @@
 
 package com.github.lombrozo.xnav;
 
-import com.ximpleware.AutoPilot;
-import com.ximpleware.VTDGen;
-import com.ximpleware.VTDNav;
 import com.yegor256.Together;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.Processor;
@@ -337,34 +331,137 @@ public class XmlBenchmark {
         }
     }
 
-
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE_PARALLEL)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeManyInParallelWithDomXml() {
-        Object[][] queries = new Object[][]{
+        final Object[][] queries = {
             {"/program/@name", "j$Collections"},
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
         final Xml xml = new DomXml(XmlBenchmark.HUGE_XML);
         AtomicInteger counter = new AtomicInteger(1000);
+        final Random random = new Random();
         assertEq(
             new Together<>(i -> {
-                AtomicBoolean res = new AtomicBoolean(true);
+                boolean res = true;
                 while (counter.get() > 0) {
                     final int request = random.nextInt(queries.length);
                     String query = queries[request][0].toString();
                     String expected = queries[request][1].toString();
-                    final boolean equals = new Xpath(xml, query)
+                    final boolean equals;
+                    synchronized (xml) {
+                        equals = new Xpath(xml, query)
+                            .nodes()
+                            .findFirst()
+                            .map(Xml::text).get().get().equals(expected);
+                    }
+                    res = res && equals;
+                    counter.decrementAndGet();
+                }
+                return res;
+            }).asList().stream().allMatch(Boolean::booleanValue)
+        );
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_PARALLEL)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyInParallelWithEagerXml() {
+        final Object[][] queries = {
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+        AtomicInteger counter = new AtomicInteger(1000);
+        final Random random = new Random();
+        assertEq(
+            new Together<>(i -> {
+                boolean res = true;
+                while (counter.get() > 0) {
+                    final int request = random.nextInt(queries.length);
+                    String query = queries[request][0].toString();
+                    String expected = queries[request][1].toString();
+                    final boolean equals;
+                    equals = new Xpath(xml, query)
                         .nodes()
                         .findFirst()
                         .map(Xml::text).get().get().equals(expected);
-                    res.compareAndSet(true, equals);
+                    res = res && equals;
                     counter.decrementAndGet();
                 }
-                return true;
+                return res;
+            }).asList().stream().allMatch(Boolean::booleanValue)
+        );
+    }
+
+//    @Benchmark
+//    @BenchmarkMode(Mode.AverageTime)
+//    @Group(XmlBenchmark.HUGE_PARALLEL)
+//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+//    public void hugeManyInParallelWithOptXml() {
+//        final Object[][] queries = {
+//            {"/program/@name", "j$Collections"},
+//            {"/program/objects/o/@base", "jeo.class"},
+//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+//        };
+//        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
+//        AtomicInteger counter = new AtomicInteger(1000);
+//        final Random random = new Random();
+//        assertEq(
+//            new Together<>(i -> {
+//                boolean res = true;
+//                while (counter.get() > 0) {
+//                    final int request = random.nextInt(queries.length);
+//                    String query = queries[request][0].toString();
+//                    String expected = queries[request][1].toString();
+//                    final boolean equals;
+//                    equals = new Xpath(xml, query)
+//                        .nodes()
+//                        .findFirst()
+//                        .map(Xml::text).get().get().equals(expected);
+//                    res = res && equals;
+//                    counter.decrementAndGet();
+//                }
+//                return res;
+//            }).asList().stream().allMatch(Boolean::booleanValue)
+//        );
+//    }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_PARALLEL)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyInParallelWithVtdXml() {
+        final Object[][] queries = {
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
+        AtomicInteger counter = new AtomicInteger(1000);
+        final Random random = new Random();
+        assertEq(
+            new Together<>(i -> {
+                boolean res = true;
+                while (counter.get() > 0) {
+                    final int request = random.nextInt(queries.length);
+                    String query = queries[request][0].toString();
+                    String expected = queries[request][1].toString();
+                    final boolean equals;
+                    equals = new Xpath(xml, query)
+                        .nodes()
+                        .findFirst()
+                        .map(Xml::text).get().get().equals(expected);
+                    res = res && equals;
+                    counter.decrementAndGet();
+                }
+                return res;
             }).asList().stream().allMatch(Boolean::booleanValue)
         );
     }

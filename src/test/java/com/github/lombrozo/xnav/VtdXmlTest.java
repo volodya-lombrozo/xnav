@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class VtdXmlTest {
-
 
     @Test
     void convertsDocumentToString() {
