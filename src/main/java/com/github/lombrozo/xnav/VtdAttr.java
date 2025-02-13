@@ -24,7 +24,7 @@
 
 package com.github.lombrozo.xnav;
 
-import com.ximpleware.VTDException;
+import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -36,25 +36,35 @@ import org.w3c.dom.Node;
 @EqualsAndHashCode
 public final class VtdAttr implements Xml {
 
+    /**
+     * Attribute name.
+     */
     private final String name;
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private final VTDNav vn;
+    private final VTDNav navigator;
 
-    public VtdAttr(final String name, final VTDNav vn) {
+    /**
+     * Constructor.
+     * @param name Attribute name.
+     * @param nav VTD navigator.
+     */
+    VtdAttr(final String name, final VTDNav nav) {
         this.name = name;
-        this.vn = vn;
+        this.navigator = nav.cloneNav();
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Attributes do not have children");
+        throw new UnsupportedOperationException(
+            String.format("Attributes can't have a child with name %s", element)
+        );
     }
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Attributes do not have children");
+        throw new UnsupportedOperationException("Attributes can't have children");
     }
 
     @Override
@@ -67,33 +77,38 @@ public final class VtdAttr implements Xml {
     @Override
     public Optional<String> text() {
         try {
-            return Optional.ofNullable(vn.toString(vn.getAttrVal(name)));
-//            int index = this.vn.getAttrVal(this.name());
-//            if (index != -1) {
-//                return Optional.of(this.vn.toString(index));
-//            }
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting attribute text", e);
+            final VTDNav nav = this.start();
+            return Optional.ofNullable(nav.toString(nav.getAttrVal(this.name)));
+        } catch (final NavException exception) {
+            throw new IllegalStateException("Error getting attribute text", exception);
         }
-//        return Optional.empty();
     }
 
     @Override
     public String name() {
         try {
-            return vn.toString(this.vn.getCurrentIndex());
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting attribute name", e);
+            final VTDNav nav = this.start();
+            return nav.toString(nav.getCurrentIndex());
+        } catch (final NavException exception) {
+            throw new IllegalStateException("Error getting attribute name", exception);
         }
     }
 
     @Override
     public Xml copy() {
-        return new VtdAttr(this.name, vn.cloneNav());
+        return new VtdAttr(this.name, this.navigator);
     }
 
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    /**
+     * Start navigation.
+     * @return VTD navigator.
+     */
+    private VTDNav start() {
+        return this.navigator.cloneNav();
     }
 }

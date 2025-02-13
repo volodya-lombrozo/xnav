@@ -26,7 +26,6 @@ package com.github.lombrozo.xnav;
 
 
 import com.ximpleware.NavException;
-import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,34 +58,70 @@ public final class VtdElem implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return VtdElem.child(this.navigator.cloneNav());
+        return this.childs();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
         try {
-            int index = this.navigator.cloneNav().getAttrVal(name);
+            final VTDNav nav = this.start();
+            int index = nav.getAttrVal(name);
             if (index != -1) {
-                return Optional.of(new VtdAttr(name, this.navigator.cloneNav()));
+                return Optional.of(new VtdAttr(name, nav));
             }
-        } catch (final VTDException exception) {
+            return Optional.empty();
+        } catch (final NavException exception) {
             throw new RuntimeException("Error getting attribute", exception);
         }
-        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(VtdElem.child(this.navigator.cloneNav())
-            .map(Xml::text)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.joining())
+        return Optional.of(
+            this.childs()
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
         );
     }
 
-    public static Stream<Xml> child(final VTDNav vn) {
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
+    public String name() {
         try {
+            final VTDNav nav = this.start();
+            return nav.toString(nav.getCurrentIndex());
+        } catch (final NavException exception) {
+            throw new RuntimeException("Error getting name", exception);
+        }
+    }
+
+    @Override
+    public Xml copy() {
+        return new VtdElem(this.navigator);
+    }
+
+    @Override
+    public Node node() {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public String toString() {
+        final String name = this.name();
+        return String.format(
+            "<%s>%s</%s>",
+            name,
+            this.children().map(Xml::toString).collect(Collectors.joining()),
+            name
+        );
+    }
+
+    private Stream<Xml> childs() {
+        try {
+            final VTDNav vn = this.start();
             final Stream.Builder<Xml> builder = Stream.builder();
             int currentIndex = vn.getCurrentIndex();
             int index = vn.getCurrentIndex() + 1; //// Start looking at the next token
@@ -114,36 +149,11 @@ public final class VtdElem implements Xml {
         }
     }
 
-
-    @ToString.Include
-    @EqualsAndHashCode.Include
-    @Override
-    public String name() {
-        try {
-            return this.navigator.cloneNav().toString(this.navigator.getCurrentIndex());
-        } catch (final VTDException exception) {
-            throw new RuntimeException("Error getting name", exception);
-        }
-    }
-
-    @Override
-    public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
-    @Override
-    public String toString() {
-        final String name = this.name();
-        return String.format(
-            "<%s>%s</%s>",
-            name,
-            this.children().map(Xml::toString).collect(Collectors.joining()),
-            name
-        );
+    /**
+     * Start the navigation routine.
+     * @return VTD navigator to start from.
+     */
+    private VTDNav start() {
+        return this.navigator.cloneNav();
     }
 }
