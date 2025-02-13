@@ -27,13 +27,17 @@ package com.github.lombrozo.xnav;
 import com.ximpleware.AutoPilot;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
+import com.yegor256.Together;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -65,6 +69,8 @@ public class XmlBenchmark {
     private static final String HUGE = "hugeXmlOneQuery";
 
     private static final String HUGE_MANY = "hugeXmlManyQueries";
+
+    private static final String HUGE_PARALLEL = "hugeXmlParallelQueries";
 
     private static final Random random = new SecureRandom();
 
@@ -330,6 +336,131 @@ public class XmlBenchmark {
             );
         }
     }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_PARALLEL)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyInParallelWithDomXml() {
+        Object[][] queries = new Object[][]{
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new DomXml(XmlBenchmark.HUGE_XML);
+        AtomicInteger counter = new AtomicInteger(1000);
+        assertEq(
+            new Together<>(i -> {
+                AtomicBoolean res = new AtomicBoolean(true);
+                while (counter.get() > 0) {
+                    final int request = random.nextInt(queries.length);
+                    String query = queries[request][0].toString();
+                    String expected = queries[request][1].toString();
+                    final boolean equals = new Xpath(xml, query)
+                        .nodes()
+                        .findFirst()
+                        .map(Xml::text).get().get().equals(expected);
+                    res.compareAndSet(true, equals);
+                    counter.decrementAndGet();
+                }
+                return true;
+            }).asList().stream().allMatch(Boolean::booleanValue)
+        );
+    }
+
+//    @Benchmark
+//    @BenchmarkMode(Mode.AverageTime)
+//    @Group(XmlBenchmark.HUGE_MANY)
+//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+//    public void hugeManyWithOptXml() {
+//        Object[][] queries = new Object[][]{
+//            {"/program/@name", "j$Collections"},
+//            {"/program/objects/o/@base", "jeo.class"},
+//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+//        };
+//        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
+//        for (int i = 0; i < 1000; i++) {
+//            final int request = random.nextInt(queries.length);
+//            String query = queries[request][0].toString();
+//            String expected = queries[request][1].toString();
+//            assert new Xpath(xml, query)
+//                .nodes()
+//                .findFirst()
+//                .map(Xml::text).get().get().equals(expected);
+//        }
+//    }
+//
+//    @Benchmark
+//    @BenchmarkMode(Mode.AverageTime)
+//    @Group(XmlBenchmark.HUGE_MANY)
+//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+//    public void hugeManyWithEagerXml() {
+//        Object[][] queries = new Object[][]{
+//            {"/program/@name", "j$Collections"},
+//            {"/program/objects/o/@base", "jeo.class"},
+//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+//        };
+//        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+//        for (int i = 0; i < 1000; i++) {
+//            final int request = random.nextInt(queries.length);
+//            String query = queries[request][0].toString();
+//            String expected = queries[request][1].toString();
+//            assert new Xpath(xml, query)
+//                .nodes()
+//                .findFirst()
+//                .map(Xml::text).get().get().equals(expected);
+//        }
+//    }
+//
+//    @Benchmark
+//    @BenchmarkMode(Mode.AverageTime)
+//    @Group(XmlBenchmark.HUGE_MANY)
+//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+//    public void hugeManyWithSaxonXpath() throws SaxonApiException, XPathException {
+//        Object[][] queries = new Object[][]{
+//            {"/program/@name", "j$Collections"},
+//            {"/program/objects/o/@base", "jeo.class"},
+//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+//        };
+//        final Processor processor = new Processor(false);
+//        final StreamSource source = new StreamSource(new StringReader(XmlBenchmark.HUGE_XML));
+//        final XdmNode node = processor.newDocumentBuilder()
+//            .build(source);
+//        for (int i = 0; i < 1000; i++) {
+//            final int request = random.nextInt(queries.length);
+//            String query = queries[request][0].toString();
+//            String expected = queries[request][1].toString();
+//            assert processor.newXPathCompiler()
+//                .evaluate(query, node)
+//                .getUnderlyingValue()
+//                .getStringValue().equals(expected);
+//        }
+//    }
+//
+//    @Benchmark
+//    @BenchmarkMode(Mode.AverageTime)
+//    @Group(XmlBenchmark.HUGE_MANY)
+//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+//    public void hugeManyWithVtdXml() {
+//        Object[][] queries = new Object[][]{
+//            {"/program/@name", "j$Collections"},
+//            {"/program/objects/o/@base", "jeo.class"},
+//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+//        };
+//        final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
+//        for (int i = 0; i < 1000; i++) {
+//            final int request = random.nextInt(queries.length);
+//            String query = queries[request][0].toString();
+//            String expected = queries[request][1].toString();
+//            assertEq(
+//                new Xpath(xml, query)
+//                    .nodes()
+//                    .findFirst()
+//                    .map(Xml::text).get().get().equals(expected)
+//            );
+//        }
+//    }
 
     public static String generateXml() {
         final String clazz = Collections.class.getName().replace('.', '/') + ".class";
