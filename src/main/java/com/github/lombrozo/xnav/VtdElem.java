@@ -119,35 +119,100 @@ public final class VtdElem implements Xml {
         );
     }
 
+
+//    private Stream<Xml> childs() {
+//        try {
+//            final Stream.Builder<Xml> res = Stream.builder();
+//            final VTDNav nav = this.start();
+//            int depth = 0;
+//            final int last = nav.getTokenCount();
+//            for (int index = nav.getCurrentIndex(); index < last; index++) {
+//                final int type = nav.getTokenType(index);
+//                if (type == VTDNav.TOKEN_STARTING_TAG) {
+//                    if (depth == 1) {
+//                        final VTDNav copy = nav.cloneNav();
+//                        copy.recoverNode(index);
+//                        res.add(new VtdElem(nav));
+//                    }
+//                    depth++;
+//                } else if (type == VTDNav.TOKEN_ENDING_TAG) {
+//                    depth--;
+//                    if (depth == 0) {
+//                        break;
+//                    }
+//                } else if (type == VTDNav.TOKEN_CHARACTER_DATA) {
+//                    if (depth == 1) {
+//                        res.add(new VtdText(nav));
+//                    }
+//                }
+//            }
+//            return res.build();
+//        } catch (final NavException exception) {
+//            throw new IllegalStateException("Error iterating children", exception);
+//        }
+//    }
+
+
     private Stream<Xml> childs() {
         try {
-            final VTDNav vn = this.start();
-            final Stream.Builder<Xml> builder = Stream.builder();
-            int currentIndex = vn.getCurrentIndex();
-            int index = vn.getCurrentIndex() + 1; //// Start looking at the next token
-            int tokenType = vn.getTokenType(index);
-            while (tokenType != VTDNav.TOKEN_STARTING_TAG
-                && tokenType != VTDNav.TOKEN_CHARACTER_DATA) {
-                index++;
-                tokenType = vn.getTokenType(index);
-            }
-            if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
-                builder.add(new VtdText(vn)); // Preserve raw string to keep spaces
-            } else {
-                final VTDNav current = vn.cloneNav();
-                current.recoverNode(currentIndex);
-                if (current.toElement(VTDNav.FIRST_CHILD)) {
-                    do {
-                        builder.add(new VtdElem(current.cloneNav()));
-                    } while (current.toElement(VTDNav.NEXT_SIBLING));
+            final VTDNav nav = this.start();
+            final int parentIndex = nav.getCurrentIndex();
+            final int parentDepth = nav.getCurrentDepth();
+            final int tokenCount = nav.getTokenCount();
+            final Stream.Builder<Xml> result = Stream.builder();
+
+            System.out.println("parentIndex: " + parentIndex);
+            System.out.println("parentDepth: " + parentDepth);
+            System.out.println("tokenCount: " + tokenCount);
+            System.out.println("tokenLenght: " + nav.getTokenLength(parentIndex));
+            System.out.println("length: " + nav.getStringLength(parentIndex));
+            System.out.println("Raw length: " + nav.getRawStringLength(parentIndex));
+            System.out.println("Normalized length: " + nav.getNormalizedStringLength(parentIndex));
+            System.out.println("fragment: " + nav.getContentFragment());
+            // Iterate over tokens starting right after the parent's token.
+            for (int i = parentIndex; i < tokenCount; i++) {
+                System.out.print(" i: " + i);
+                System.out.print(" tokenType: " + nav.getTokenType(i));
+                System.out.print(" tokenDepth: " + nav.getTokenDepth(i));
+                System.out.print(" tokenString: " + nav.toString(i));
+                System.out.println();
+
+                // Once the token's depth is not greater than the parent's, we're done.
+                if (nav.getTokenDepth(i) == parentDepth) {
+                    int tokenType = nav.getTokenType(i);
+                    // Clone and recover to the specific token so that
+                    // the resulting navigator is positioned on the child.
+                    // ignore tokens that are not element or text
+                    if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
+                        final VTDNav clone = nav.cloneNav();
+                        clone.recoverNode(i);
+                        result.add(new VtdText(clone));
+                        // You might want to handle additional token types if needed.
+                    }
+                }
+
+                // Only consider direct children (depth exactly one level deeper)
+                if (nav.getTokenDepth(i) == parentDepth + 1) {
+                    int tokenType = nav.getTokenType(i);
+                    // Clone and recover to the specific token so that
+                    // the resulting navigator is positioned on the child.
+                    // ignore tokens that are not element or text
+                    if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
+                        final VTDNav clone = nav.cloneNav();
+                        clone.recoverNode(i);
+                        result.add(new VtdElem(clone));
+                        // You might want to handle additional token types if needed.
+                    }
                 }
             }
-            vn.recoverNode(currentIndex); // Restore position
-            return builder.build();
-        } catch (NavException e) {
-            throw new RuntimeException("Error iterating children", e);
+            // Restore original state.
+            nav.recoverNode(parentIndex);
+            return result.build();
+        } catch (final NavException e) {
+            throw new IllegalStateException("Error iterating children", e);
         }
     }
+
 
     /**
      * Start the navigation routine.

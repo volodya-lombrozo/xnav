@@ -27,6 +27,7 @@ package com.github.lombrozo.xnav;
 import com.yegor256.Together;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -213,13 +214,21 @@ class VtdXmlTest {
 
     @Test
     void retrievesSeveralChildren() {
+        final Stream<Xml> children = new VtdXml(
+            "<all>text<o color='beautiful'><o>magic</o>yellow</o>",
+            "<o color='stylish'>green</o></all>"
+        )
+            .child("all")
+            .children();
+        final List<Xml> first = children.collect(Collectors.toList());
+//        final Xml xml = first.get(1);
+//        final List<Xml> collect1 = xml.children().collect(Collectors.toList());
+        final List<Xml> collect = first.stream()
+            .flatMap(Xml::children)
+            .collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to retrieve exactly two children",
-            new VtdXml("<all><o color='yellow'>yellow</o>", "<o color='green'>green</o></all>")
-                .child("all")
-                .children()
-                .flatMap(Xml::children)
-                .collect(Collectors.toList()),
+            collect,
             Matchers.hasSize(2)
         );
     }
