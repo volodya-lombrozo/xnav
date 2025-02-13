@@ -312,7 +312,7 @@ public class XmlBenchmark {
     @Group(XmlBenchmark.HUGE_MANY)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeManyWithVtdXml() {
-        Object[][] queries = new Object[][]{
+        Object[][] queries = {
             {"/program/@name", "j$Collections"},
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
@@ -466,6 +466,45 @@ public class XmlBenchmark {
         );
     }
 
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Group(XmlBenchmark.HUGE_PARALLEL)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void hugeManyInParallelWithSaxon() throws SaxonApiException {
+        final Object[][] queries = {
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Random random = new Random();
+        final Processor processor = new Processor(false);
+        final StreamSource source = new StreamSource(new StringReader(XmlBenchmark.HUGE_XML));
+        final XdmNode node = processor.newDocumentBuilder()
+            .build(source);
+        final AtomicInteger counter = new AtomicInteger(1000);
+        assertEq(
+            new Together<>(i -> {
+                boolean res = true;
+                while (counter.get() > 0) {
+                    final int request = random.nextInt(queries.length);
+                    String query = queries[request][0].toString();
+                    String expected = queries[request][1].toString();
+                    final boolean equals;
+                    final String value = processor.newXPathCompiler()
+                        .evaluate(query, node)
+                        .getUnderlyingValue()
+                        .head()
+                        .getStringValue();
+                    equals = value.equals(expected);
+                    res = res && equals;
+                    counter.decrementAndGet();
+                }
+                return res;
+            }).asList().stream().allMatch(Boolean::booleanValue)
+        );
+    }
+
+
 //    @Benchmark
 //    @BenchmarkMode(Mode.AverageTime)
 //    @Group(XmlBenchmark.HUGE_MANY)
@@ -584,8 +623,12 @@ public class XmlBenchmark {
     }
 
     private boolean assertEq(final boolean assertion) {
+        return assertEq(assertion, "");
+    }
+
+    private boolean assertEq(final boolean assertion, String msg) {
         if (!assertion) {
-            throw new AssertionError();
+            throw new AssertionError(msg);
         }
         return true;
     }
