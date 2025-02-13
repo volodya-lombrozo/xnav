@@ -24,7 +24,6 @@
 
 package com.github.lombrozo.xnav;
 
-import com.ximpleware.AutoPilot;
 import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
 import java.util.List;
@@ -32,19 +31,24 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
 @EqualsAndHashCode
 public final class VtdDoc implements Xml {
 
     @EqualsAndHashCode.Exclude
-    @ToString.Exclude
     private final VTDNav vn;
 
     public VtdDoc(final VTDNav vn) {
         this.vn = vn;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
+            new VtdElem(this.vn)
+        );
     }
 
     @Override
@@ -58,31 +62,11 @@ public final class VtdDoc implements Xml {
     @Override
     public Stream<Xml> children() {
         return Stream.of(new VtdElem(this.vn));
-//        Stream.Builder<Xml> builder = Stream.builder();
-//        try {
-//            final VTDNav current = this.vn.cloneNav();
-//            if (current.toElement(VTDNav.FIRST_CHILD)) {
-//                do {
-//                    builder.add(new VtdElem(current));
-//                } while (current.toElement(VTDNav.NEXT_SIBLING));
-//            }
-//        } catch (VTDException e) {
-//            throw new RuntimeException("Error iterating children", e);
-//        }
-//        return builder.build();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        try {
-            int index = this.vn.cloneNav().getAttrVal(name);
-            if (index != -1) {
-                return Optional.of(new VtdDoc(this.vn.cloneNav()));
-            }
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting attribute", e);
-        }
-        return Optional.empty();
+        return new VtdElem(this.vn).attribute(name);
     }
 
 
@@ -98,7 +82,6 @@ public final class VtdDoc implements Xml {
         );
     }
 
-    @ToString.Include
     @EqualsAndHashCode.Include
     @Override
     public String name() {

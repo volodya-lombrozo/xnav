@@ -34,7 +34,6 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
 @EqualsAndHashCode
 public final class VtdXml implements Xml {
 
@@ -54,6 +53,11 @@ public final class VtdXml implements Xml {
         } catch (final ParseException exception) {
             throw new IllegalArgumentException(String.format("Invalid XML: %s", s), exception);
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.doc.toString();
     }
 
     @Override

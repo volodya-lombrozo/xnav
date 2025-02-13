@@ -33,13 +33,17 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
 @EqualsAndHashCode
 public final class VtdText implements Xml {
     private final VTDNav vn;
 
     public VtdText(final VTDNav vn) {
         this.vn = vn.cloneNav();
+    }
+
+    @Override
+    public String toString() {
+        return this.text().orElse("");
     }
 
     @Override
