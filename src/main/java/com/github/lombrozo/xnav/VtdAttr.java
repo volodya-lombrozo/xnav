@@ -32,7 +32,6 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
 @EqualsAndHashCode
 public final class VtdAttr implements Xml {
 
@@ -86,12 +85,13 @@ public final class VtdAttr implements Xml {
 
     @Override
     public String name() {
-        try {
-            final VTDNav nav = this.start();
-            return nav.toString(nav.getCurrentIndex());
-        } catch (final NavException exception) {
-            throw new IllegalStateException("Error getting attribute name", exception);
-        }
+        return this.name;
+//        try {
+//            final VTDNav nav = this.start();
+//            return nav.toString(nav.getCurrentIndex());
+//        } catch (final NavException exception) {
+//            throw new IllegalStateException("Error getting attribute name", exception);
+//        }
     }
 
     @Override
@@ -102,6 +102,11 @@ public final class VtdAttr implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public String toString() {
+        return this.name + "='" + this.text().orElse("") + "'";
     }
 
     /**

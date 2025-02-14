@@ -136,16 +136,14 @@ class VtdXmlTest {
 
     @Test
     void retrievesTextFromSeveralNodes() {
-        final Xml child = new VtdXml(
-            "<doc>",
-            "  <node>first </node>",
-            "  <node>second</node>",
-            "</doc>"
-        ).child("doc");
-        final List<Xml> collect = child.children().collect(Collectors.toList());
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
-            child.text().orElseThrow(),
+            new VtdXml(
+                "<doc>",
+                "  <node>first </node>",
+                "  <node>second</node>",
+                "</doc>"
+            ).child("doc").text().orElseThrow(),
             Matchers.equalTo("  first   second")
         );
     }
@@ -176,6 +174,17 @@ class VtdXmlTest {
             "We expect to find the correct child names",
             child.children().map(Xml::name).collect(Collectors.toList()),
             Matchers.hasItems("a", "b")
+        );
+    }
+
+
+    @Test
+    void printsAllAttributes() {
+        final String same = "<colors base='bytes' color='red'></colors>";
+        MatcherAssert.assertThat(
+            "We expect to find all attributes",
+            new VtdXml(same).child("colors").toString(),
+            Matchers.equalTo(same)
         );
     }
 

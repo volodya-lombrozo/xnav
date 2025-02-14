@@ -25,10 +25,13 @@
 package com.github.lombrozo.xnav;
 
 
+import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -112,11 +115,53 @@ public final class VtdElem implements Xml {
     public String toString() {
         final String name = this.name();
         return String.format(
-            "<%s>%s</%s>",
+            "<%s%s>%s</%s>",
             name,
+            this.attrs(),
             this.children().map(Xml::toString).collect(Collectors.joining()),
             name
         );
+    }
+
+    private String attrs() {
+        final String res = this.attributes().map(Xml::toString).collect(Collectors.joining(" "));
+        if (res.isEmpty()) {
+            return "";
+        } else {
+            return " " + res;
+        }
+    }
+
+    private Stream<Xml> attributes() {
+        try {
+            final VTDNav nav = this.start();
+            final AutoPilot pilot = new AutoPilot(nav);
+            pilot.selectAttr("*");
+            Stream.Builder<Xml> builder = Stream.builder();
+            int id;
+            while ((id = pilot.iterateAttr()) != -1) {
+                builder.add(new VtdAttr(nav.toString(id), nav));
+            }
+            return builder.build();
+            // attr=value format
+//            return IntStream.iterate(
+//                    pilot.iterateAttr(), i -> i != -1, i -> {
+//                        try {
+//                            return pilot.iterateAttr();
+//                        } catch (final NavException exception) {
+//                            throw new RuntimeException(exception);
+//                        }
+//                    })
+//                .mapToObj(i -> {
+//                    try {
+//                        return nav.toString(i) + "=" + nav.toString(i + 1);
+//                    } catch (final NavException exception) {
+//                        throw new RuntimeException(exception);
+//                    }
+//                });
+        } catch (final NavException exception) {
+            throw new RuntimeException("Error getting attribute", exception);
+        }
     }
 
 
@@ -156,26 +201,26 @@ public final class VtdElem implements Xml {
     private Stream<Xml> childs() {
         try {
             final VTDNav nav = this.start();
-            printXml(nav);
+//            printXml(nav);
             final int parentIndex = nav.getCurrentIndex();
             final int parentDepth = nav.getCurrentDepth();
             final int tokenCount = nav.getTokenCount();
             final Stream.Builder<Xml> result = Stream.builder();
-            System.out.println("parentIndex: " + parentIndex);
-            System.out.println("parentDepth: " + parentDepth);
-            System.out.println("tokenCount: " + tokenCount);
-            System.out.println("tokenLenght: " + nav.getTokenLength(parentIndex));
-            System.out.println("length: " + nav.getStringLength(parentIndex));
-            System.out.println("Raw length: " + nav.getRawStringLength(parentIndex));
-            System.out.println("Normalized length: " + nav.getNormalizedStringLength(parentIndex));
-            System.out.println("fragment: " + nav.getContentFragment());
+//            System.out.println("parentIndex: " + parentIndex);
+//            System.out.println("parentDepth: " + parentDepth);
+//            System.out.println("tokenCount: " + tokenCount);
+//            System.out.println("tokenLenght: " + nav.getTokenLength(parentIndex));
+//            System.out.println("length: " + nav.getStringLength(parentIndex));
+//            System.out.println("Raw length: " + nav.getRawStringLength(parentIndex));
+//            System.out.println("Normalized length: " + nav.getNormalizedStringLength(parentIndex));
+//            System.out.println("fragment: " + nav.getContentFragment());
             // Iterate over tokens starting right after the parent's token.
             for (int i = parentIndex + 1; i < tokenCount; i++) {
-                System.out.print(" i: " + i);
-                System.out.print(" tokenType: " + nav.getTokenType(i));
-                System.out.print(" tokenDepth: " + nav.getTokenDepth(i));
-                System.out.print(" tokenString: " + nav.toRawString(i));
-                System.out.println();
+//                System.out.print(" i: " + i);
+//                System.out.print(" tokenType: " + nav.getTokenType(i));
+//                System.out.print(" tokenDepth: " + nav.getTokenDepth(i));
+//                System.out.print(" tokenString: " + nav.toRawString(i));
+//                System.out.println();
 
                 // Once the token's depth is not greater than the parent's, we're done.
                 if (nav.getTokenDepth(i) == parentDepth) {
@@ -191,7 +236,7 @@ public final class VtdElem implements Xml {
                         // You might want to handle additional token types if needed.
                     }
 
-                    if(tokenType == VTDNav.TOKEN_STARTING_TAG) {
+                    if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
                         break;
                     }
                 }
@@ -263,7 +308,6 @@ public final class VtdElem implements Xml {
             throw new IllegalStateException("Error printing XML", e);
         }
     }
-
 
 
     /**
