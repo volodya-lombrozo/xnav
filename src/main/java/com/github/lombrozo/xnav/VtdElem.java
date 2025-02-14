@@ -195,9 +195,9 @@ public final class VtdElem implements IndexedXml {
 //                OLD:
 //                this.scanDown(nav, nav.getCurrentIndex(), depth, max).forEach(results::add);
 //                _______
+                final int last = this.findLastTokenIndex(nav);
                 nav.toElement(VTDNav.PARENT);
-//                final int last = findLastTokenIndex(nav);
-//                this.scanUP(nav, last, depth).forEach(results::add);
+                this.scanUP(nav, last, depth).forEach(results::add);
             } else {
                 int text;
                 if ((text = nav.getText()) != -1) {
@@ -212,7 +212,9 @@ public final class VtdElem implements IndexedXml {
 
     private Stream<IndexedXml> scanUP(VTDNav nav, int from, int redline) {
         final Stream.Builder<IndexedXml> result = Stream.builder();
+        int iterations = 0;
         for (int i = from - 1; i >= 0; i--) {
+            iterations++;
             final int depth = nav.getTokenDepth(i);
             final int type = nav.getTokenType(i);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
@@ -222,11 +224,14 @@ public final class VtdElem implements IndexedXml {
                 break;
             }
         }
+//        System.out.println(
+//            " | scanUP: from: " + from + " looking depth: " + redline + " Iterations: " + iterations
+//        );
         return result.build();
     }
 
     private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline, int max) {
-        findLastTokenIndex(nav);
+//        findLastTokenIndex(nav);
         final List<IndexedXml> res = new ArrayList<>(0);
         int iterations = 0;
         for (int i = from + 1; i < max; i++) {
@@ -245,13 +250,34 @@ public final class VtdElem implements IndexedXml {
             }
         }
         System.out.println(
-            "scanDown: from: " + from + " looking depth: " + redline + " Number of tokens: " + max + " Iterations: " + iterations
+            " | scanDown: from: " + from + " looking depth: " + redline + " Number of tokens: " + max + " Iterations: " + iterations
         );
 //        return result.build();
         return res.stream();
     }
 
     private int findLastTokenIndex(final VTDNav nav) {
+        final int found = this.findLastRecursively(nav.cloneNav());
+//        System.out.printf("Last token index: %d%n\n", found);
+        return found;
+    }
+
+    private int findLastRecursively(final VTDNav current) {
+        try {
+            if (!current.toElement(VTDNav.PARENT)) {
+                return current.getTokenCount();
+            }
+            if (current.toElement(VTDNav.NEXT_SIBLING)) {
+                return current.getCurrentIndex();
+            } else {
+                return this.findLastRecursively(current);
+            }
+        } catch (final NavException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    private int findLastTokenIndexBinarySearch(final VTDNav nav) {
         try {
             int elementOffset = (int) nav.getElementFragment();
             int length = (int) (nav.getElementFragment() >> 32);
