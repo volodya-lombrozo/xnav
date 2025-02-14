@@ -140,11 +140,11 @@ class VtdXmlTest {
             "Text is not retrieved from several nodes",
             new VtdXml(
                 "<doc>",
-                "  <node>first </node>",
-                "  <node>second</node>",
+                "  <fnode>first </fnode>",
+                "  <snode>second</snode>",
                 "</doc>"
             ).child("doc").text().orElseThrow(),
-            Matchers.equalTo("  first   second")
+            Matchers.equalTo("\n  first \n  second\n")
         );
     }
 

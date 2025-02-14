@@ -28,7 +28,12 @@ package com.github.lombrozo.xnav;
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -76,7 +81,8 @@ public final class VtdElem implements IndexedXml {
     @Override
     public Stream<Xml> children() {
 //        return this.childs();
-        return this.optimizedChildren();
+//        return this.optimizedChildren();
+        return this.optimizedChildren2();
     }
 
     @Override
@@ -162,40 +168,6 @@ public final class VtdElem implements IndexedXml {
         }
     }
 
-
-//    private Stream<Xml> childs() {
-//        try {
-//            final Stream.Builder<Xml> res = Stream.builder();
-//            final VTDNav nav = this.start();
-//            int depth = 0;
-//            final int last = nav.getTokenCount();
-//            for (int index = nav.getCurrentIndex(); index < last; index++) {
-//                final int type = nav.getTokenType(index);
-//                if (type == VTDNav.TOKEN_STARTING_TAG) {
-//                    if (depth == 1) {
-//                        final VTDNav copy = nav.cloneNav();
-//                        copy.recoverNode(index);
-//                        res.add(new VtdElem(nav));
-//                    }
-//                    depth++;
-//                } else if (type == VTDNav.TOKEN_ENDING_TAG) {
-//                    depth--;
-//                    if (depth == 0) {
-//                        break;
-//                    }
-//                } else if (type == VTDNav.TOKEN_CHARACTER_DATA) {
-//                    if (depth == 1) {
-//                        res.add(new VtdText(nav));
-//                    }
-//                }
-//            }
-//            return res.build();
-//        } catch (final NavException exception) {
-//            throw new IllegalStateException("Error iterating children", exception);
-//        }
-//    }
-
-
     /**
      * It is the working solution, but not efficient since it travers all tokens.
      * @return Stream of children.
@@ -229,6 +201,65 @@ public final class VtdElem implements IndexedXml {
         return result.build();
     }
 
+    private Stream<Xml> optimizedChildren2() {
+        try {
+            final SortedSet<IndexedXml> results = new TreeSet<>(
+                Comparator.comparingInt(IndexedXml::index)
+            );
+            final VTDNav nav = this.start();
+//            printIndexes(nav);
+            if (nav.toElement(VTDNav.FIRST_CHILD)) {
+                final int depth = nav.getCurrentDepth();
+                do {
+                    final int curr = nav.getCurrentIndex();
+                    results.add(new VtdElem(nav, curr));
+                    this.scanUP(nav, curr, depth).forEach(results::add);
+                } while (nav.toElement(VTDNav.NEXT_SIBLING));
+                this.scanDown(nav, nav.getCurrentIndex(), depth).forEach(results::add);
+                nav.toElement(VTDNav.PARENT);
+            } else {
+                int text;
+                if ((text = nav.getText()) != -1) {
+                    results.add(new VtdText(nav, text));
+                }
+            }
+            return results.stream().map(Xml.class::cast);
+        } catch (final NavException e) {
+            throw new RuntimeException("Error getting children", e);
+        }
+    }
+
+    private Stream<IndexedXml> scanUP(VTDNav nav, int from, int redline) {
+        final Stream.Builder<IndexedXml> result = Stream.builder();
+        for (int i = from - 1; i >= 0; i--) {
+            final int depth = nav.getTokenDepth(i);
+            final int type = nav.getTokenType(i);
+            if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
+                result.add(new VtdText(nav, i));
+            }
+            if (depth == redline) {
+                break;
+            }
+        }
+        return result.build();
+    }
+
+    private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline) {
+        final Stream.Builder<IndexedXml> result = Stream.builder();
+        final int count = nav.getTokenCount();
+        for (int i = from + 1; i < count; i++) {
+            final int depth = nav.getTokenDepth(i);
+            final int type = nav.getTokenType(i);
+            if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
+                result.add(new VtdText(nav, i));
+            }
+            if (depth == redline) {
+                break;
+            }
+        }
+        return result.build();
+    }
+
 
     private Stream<Xml> optimizedChildren() {
         try {
@@ -236,26 +267,75 @@ public final class VtdElem implements IndexedXml {
                 Comparator.comparingInt(IndexedXml::index)
             );
             final VTDNav nav = this.start();
-            final int original = nav.getCurrentIndex();
+            printIndexes(nav);
 
-            // Collect child elements
+            List<Integer> intervals = new ArrayList<>(0);
+            final int start = nav.getCurrentIndex();
+            intervals.add(start);
             if (nav.toElement(VTDNav.FIRST_CHILD)) {
                 do {
-                    results.add(new VtdElem(nav, nav.getCurrentIndex()));
+                    final int curr = nav.getCurrentIndex();
+                    intervals.add(curr);
+                    results.add(new VtdElem(nav, curr));
                 } while (nav.toElement(VTDNav.NEXT_SIBLING));
                 nav.toElement(VTDNav.PARENT);
+                final VTDNav clone = nav.cloneNav();
+                final boolean last = clone.toElement(VTDNav.NEXT_SIBLING);
+                final int l = last ? clone.getCurrentIndex() : clone.getTokenCount() - 1;
+                intervals.add(l);
+
+                System.out.println(intervals);
+                // wtf
+
+                for (int i = 0; i < intervals.size() - 1; i += 2) {
+                    int from = intervals.get(i);
+                    int to = intervals.get(i + 1);
+                    for (int j = from + 1; j < to; j++) {
+                        if (nav.getTokenType(j) == VTDNav.TOKEN_CHARACTER_DATA) {
+                            System.out.println(
+                                "Try to find text between " + from + " and " + to + " -> " + nav.toString(
+                                    j));
+                        }
+                    }
+                }
+
+//                for (int i = 0; i < intervals.size() - 2; i++) {
+//                    int from = intervals.get(i);
+//                    int to = intervals.get(i + 1);
+//
+//                    for (int j = from + 1; j < to; j++) {
+//                        if (nav.getTokenType(j) == VTDNav.TOKEN_CHARACTER_DATA) {
+//                            System.out.println(
+//                                "Try to find text between " + from + " and " + to + " -> " + nav.toString(
+//                                    j));
+//                        }
+//                    }
+//                }
+            } else {
+                int text;
+                if ((text = nav.getText()) != -1) {
+                    results.add(new VtdText(nav, text));
+                }
             }
 
-            // Collect text nodes
-            final int text = nav.getText();
-            if (text != -1) {
-                results.add(new VtdText(nav, text));
-            }
 
-            nav.recoverNode(original);
             return results.stream().map(Xml.class::cast);
         } catch (final NavException e) {
             throw new RuntimeException("Error getting children", e);
+        }
+    }
+
+    private void printIndexes(final VTDNav nav) {
+        final VTDNav clone = nav.cloneNav();
+        System.out.println("Indexes: ");
+        for (int i = 0; i < clone.getTokenCount(); i++) {
+            try {
+                System.out.println(
+                    i + " -> '" + clone.toString(i) + "'" + " depth: " + clone.getTokenDepth(i)
+                );
+            } catch (final NavException exception) {
+                throw new RuntimeException(exception);
+            }
         }
     }
 

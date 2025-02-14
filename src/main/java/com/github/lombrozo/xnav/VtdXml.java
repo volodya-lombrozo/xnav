@@ -45,7 +45,7 @@ public final class VtdXml implements Xml {
      * @param xml XML document lines.
      */
     VtdXml(final String... xml) {
-        this(String.join("", xml));
+        this(String.join("\n", xml));
     }
 
     /**
