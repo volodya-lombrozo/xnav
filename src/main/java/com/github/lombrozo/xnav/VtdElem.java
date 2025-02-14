@@ -28,25 +28,30 @@ package com.github.lombrozo.xnav;
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
-import java.util.Objects;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-public final class VtdElem implements Xml {
+public final class VtdElem implements IndexedXml {
 
     @EqualsAndHashCode.Exclude
     private final VTDNav navigator;
 
-    VtdElem(final VTDNav nav, int start) {
+    @EqualsAndHashCode.Exclude
+    private final int index;
+
+    VtdElem(final VTDNav nav, int index) {
         try {
             this.navigator = nav.cloneNav();
-            this.navigator.recoverNode(start);
+            this.navigator.recoverNode(index);
+            this.index = index;
         } catch (final NavException exception) {
             throw new RuntimeException("Error recovering node", exception);
         }
@@ -57,8 +62,9 @@ public final class VtdElem implements Xml {
      * @param nav VTD navigator.
      */
     VtdElem(final VTDNav nav) {
-        this.navigator = nav.cloneNav();
+        this(nav, nav.getCurrentIndex());
     }
+
 
     @Override
     public Xml child(final String element) {
@@ -70,7 +76,8 @@ public final class VtdElem implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return this.childs();
+//        return this.childs();
+        return this.optimizedChildren();
     }
 
     @Override
@@ -90,7 +97,7 @@ public final class VtdElem implements Xml {
     @Override
     public Optional<String> text() {
         return Optional.of(
-            this.childs()
+            this.children()
                 .map(Xml::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -146,7 +153,7 @@ public final class VtdElem implements Xml {
             final VTDNav nav = this.start();
             final AutoPilot pilot = new AutoPilot(nav);
             pilot.selectAttr("*");
-            Stream.Builder<Xml> builder = Stream.builder();
+            final Stream.Builder<Xml> builder = Stream.builder();
             int id;
             while ((id = pilot.iterateAttr()) != -1) {
                 builder.add(new VtdAttr(nav.toString(id), nav));
@@ -191,6 +198,10 @@ public final class VtdElem implements Xml {
 //    }
 
 
+    /**
+     * It is the working solution, but not efficient since it travers all tokens.
+     * @return Stream of children.
+     */
     private Stream<Xml> childs() {
         final VTDNav nav = this.start();
         final int parentIndex = nav.getCurrentIndex();
@@ -200,6 +211,9 @@ public final class VtdElem implements Xml {
         for (int i = parentIndex + 1; i < max; i++) {
             final int type = nav.getTokenType(i);
             final int depth = nav.getTokenDepth(i);
+            if (depth < parentDepth) {
+                break;
+            }
             if (depth == parentDepth) {
                 if (type == VTDNav.TOKEN_CHARACTER_DATA) {
                     result.add(new VtdText(nav, i));
@@ -217,11 +231,47 @@ public final class VtdElem implements Xml {
         return result.build();
     }
 
+
+    private Stream<Xml> optimizedChildren() {
+        try {
+            final SortedSet<IndexedXml> results = new TreeSet<>(
+                Comparator.comparingInt(IndexedXml::index)
+            );
+            final VTDNav nav = this.start();
+            int original = nav.getCurrentIndex();
+
+            // Collect child elements
+            if (nav.toElement(VTDNav.FIRST_CHILD)) {
+                do {
+                    results.add(new VtdElem(nav, nav.getCurrentIndex()));
+                } while (nav.toElement(VTDNav.NEXT_SIBLING));
+                nav.toElement(VTDNav.PARENT);
+            }
+
+            // Collect text nodes
+            int textIndex = nav.getText();
+            if (textIndex != -1) {
+                results.add(new VtdText(nav, textIndex));
+            }
+
+            nav.recoverNode(original);
+            return results.stream().map(Xml.class::cast);
+        } catch (final NavException e) {
+            throw new RuntimeException("Error getting children", e);
+        }
+    }
+
     /**
      * Start the navigation routine.
      * @return VTD navigator to start from.
      */
     private VTDNav start() {
         return this.navigator.cloneNav();
+    }
+
+
+    @Override
+    public int index() {
+        return this.index;
     }
 }

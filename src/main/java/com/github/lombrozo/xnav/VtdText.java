@@ -35,8 +35,11 @@ import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-public final class VtdText implements Xml {
+public final class VtdText implements IndexedXml {
+    @EqualsAndHashCode.Exclude
     private final VTDNav vn;
+
+    @EqualsAndHashCode.Exclude
     private final int id;
 
     public VtdText(final VTDNav vn, final int id) {
@@ -86,5 +89,10 @@ public final class VtdText implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public int index() {
+        return this.id;
     }
 }
