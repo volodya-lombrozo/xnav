@@ -35,7 +35,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
@@ -105,8 +104,6 @@ public final class VtdElem implements IndexedXml {
         );
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public String name() {
         try {
@@ -127,6 +124,7 @@ public final class VtdElem implements IndexedXml {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
+    @EqualsAndHashCode.Include
     @Override
     public String toString() {
         final String name = this.name();
@@ -238,7 +236,7 @@ public final class VtdElem implements IndexedXml {
                 Comparator.comparingInt(IndexedXml::index)
             );
             final VTDNav nav = this.start();
-            int original = nav.getCurrentIndex();
+            final int original = nav.getCurrentIndex();
 
             // Collect child elements
             if (nav.toElement(VTDNav.FIRST_CHILD)) {
@@ -249,9 +247,9 @@ public final class VtdElem implements IndexedXml {
             }
 
             // Collect text nodes
-            int textIndex = nav.getText();
-            if (textIndex != -1) {
-                results.add(new VtdText(nav, textIndex));
+            final int text = nav.getText();
+            if (text != -1) {
+                results.add(new VtdText(nav, text));
             }
 
             nav.recoverNode(original);
