@@ -207,15 +207,15 @@ public final class VtdElem implements IndexedXml {
                 Comparator.comparingInt(IndexedXml::index)
             );
             final VTDNav nav = this.start();
-//            printIndexes(nav);
             if (nav.toElement(VTDNav.FIRST_CHILD)) {
+                final int max = nav.getTokenCount();
                 final int depth = nav.getCurrentDepth();
                 do {
                     final int curr = nav.getCurrentIndex();
                     results.add(new VtdElem(nav, curr));
                     this.scanUP(nav, curr, depth).forEach(results::add);
                 } while (nav.toElement(VTDNav.NEXT_SIBLING));
-                this.scanDown(nav, nav.getCurrentIndex(), depth).forEach(results::add);
+                this.scanDown(nav, nav.getCurrentIndex(), depth, max).forEach(results::add);
                 nav.toElement(VTDNav.PARENT);
             } else {
                 int text;
@@ -244,10 +244,9 @@ public final class VtdElem implements IndexedXml {
         return result.build();
     }
 
-    private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline) {
+    private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline, int max) {
         final Stream.Builder<IndexedXml> result = Stream.builder();
-        final int count = nav.getTokenCount();
-        for (int i = from + 1; i < count; i++) {
+        for (int i = from + 1; i < max; i++) {
             final int depth = nav.getTokenDepth(i);
             final int type = nav.getTokenType(i);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {

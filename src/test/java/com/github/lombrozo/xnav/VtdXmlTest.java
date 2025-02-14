@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
@@ -261,5 +262,28 @@ class VtdXmlTest {
             ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
+    }
+
+    @Test
+    public void hugeManyWithVtdXml() {
+        Object[][] queries = {
+            {"/program/@name", "j$Collections"},
+            {"/program/objects/o/@base", "jeo.class"},
+            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        };
+        final Xml xml = new VtdXml(XmlBenchmark.generateXml());
+        Random random = new Random();
+        for (int i = 0; i < 1_000_000; i++) {
+            final int request = random.nextInt(queries.length);
+            String query = queries[request][0].toString();
+            String expected = queries[request][1].toString();
+            MatcherAssert.assertThat(
+                new Xpath(xml, query)
+                    .nodes()
+                    .findFirst()
+                    .map(Xml::text).get().get().equals(expected),
+                Matchers.is(true)
+            );
+        }
     }
 }
