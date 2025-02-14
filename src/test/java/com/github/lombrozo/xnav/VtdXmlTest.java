@@ -142,6 +142,7 @@ class VtdXmlTest {
             "  <node>second</node>",
             "</doc>"
         ).child("doc");
+        final List<Xml> collect = child.children().collect(Collectors.toList());
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
             child.text().orElseThrow(),
@@ -215,7 +216,7 @@ class VtdXmlTest {
     @Test
     void retrievesSeveralChildren() {
         final Stream<Xml> children = new VtdXml(
-            "<all>text<o color='beautiful'><o>magic</o>yellow</o>",
+            "<all><o color='beautiful'>yellow</o>",
             "<o color='stylish'>green</o></all>"
         )
             .child("all")

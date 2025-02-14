@@ -32,7 +32,6 @@ import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-@ToString
 public final class EagerChard implements Xml {
 
     private final String chardata;
@@ -74,5 +73,10 @@ public final class EagerChard implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public String toString() {
+        return this.chardata;
     }
 }

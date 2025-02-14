@@ -115,8 +115,9 @@ public final class VtdXml implements Xml {
     private static VtdDoc parseDoc(final String xml) {
         try {
             final VTDGen vg = new VTDGen();
+            vg.enableIgnoredWhiteSpace(true);
             vg.setDoc(xml.getBytes(StandardCharsets.UTF_8));
-            vg.parse(false);
+            vg.parse(true);
             return new VtdDoc(vg.getNav());
         } catch (final ParseException exception) {
             throw new IllegalArgumentException(

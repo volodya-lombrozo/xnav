@@ -156,11 +156,11 @@ public final class VtdElem implements Xml {
     private Stream<Xml> childs() {
         try {
             final VTDNav nav = this.start();
+            printXml(nav);
             final int parentIndex = nav.getCurrentIndex();
             final int parentDepth = nav.getCurrentDepth();
             final int tokenCount = nav.getTokenCount();
             final Stream.Builder<Xml> result = Stream.builder();
-
             System.out.println("parentIndex: " + parentIndex);
             System.out.println("parentDepth: " + parentDepth);
             System.out.println("tokenCount: " + tokenCount);
@@ -170,11 +170,11 @@ public final class VtdElem implements Xml {
             System.out.println("Normalized length: " + nav.getNormalizedStringLength(parentIndex));
             System.out.println("fragment: " + nav.getContentFragment());
             // Iterate over tokens starting right after the parent's token.
-            for (int i = parentIndex; i < tokenCount; i++) {
+            for (int i = parentIndex + 1; i < tokenCount; i++) {
                 System.out.print(" i: " + i);
                 System.out.print(" tokenType: " + nav.getTokenType(i));
                 System.out.print(" tokenDepth: " + nav.getTokenDepth(i));
-                System.out.print(" tokenString: " + nav.toString(i));
+                System.out.print(" tokenString: " + nav.toRawString(i));
                 System.out.println();
 
                 // Once the token's depth is not greater than the parent's, we're done.
@@ -186,8 +186,13 @@ public final class VtdElem implements Xml {
                     if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
                         final VTDNav clone = nav.cloneNav();
                         clone.recoverNode(i);
-                        result.add(new VtdText(clone));
+//                        result.add(new VtdText(clone));
+                        result.add(new EagerChard(nav.toString(i)));
                         // You might want to handle additional token types if needed.
+                    }
+
+                    if(tokenType == VTDNav.TOKEN_STARTING_TAG) {
+                        break;
                     }
                 }
 
@@ -212,6 +217,53 @@ public final class VtdElem implements Xml {
             throw new IllegalStateException("Error iterating children", e);
         }
     }
+
+    private void printXml(VTDNav nav) {
+        try {
+            int tokenCount = nav.getTokenCount();
+            StringBuilder xml = new StringBuilder();
+
+            for (int i = 0; i < tokenCount; i++) {
+                int tokenType = nav.getTokenType(i);
+                String rawText = nav.toRawString(i); // Preserve original whitespaces
+
+                switch (tokenType) {
+                    case VTDNav.TOKEN_STARTING_TAG:
+                        xml.append("<").append(nav.toString(i)).append(">");
+                        break;
+                    case VTDNav.TOKEN_ENDING_TAG:
+                        xml.append("</").append(nav.toString(i)).append(">");
+                        break;
+                    case VTDNav.TOKEN_CHARACTER_DATA:
+                    case VTDNav.TOKEN_CDATA_VAL: // Include CDATA as well
+                        xml.append(rawText);
+                        break;
+                    case VTDNav.TOKEN_ATTR_NAME:
+                        xml.append(" ").append(rawText).append("=\"");
+                        break;
+                    case VTDNav.TOKEN_ATTR_VAL:
+                        xml.append(rawText).append("\"");
+                        break;
+                    case VTDNav.TOKEN_COMMENT:
+                        xml.append("<!--").append(rawText).append("-->");
+                        break;
+                    case VTDNav.TOKEN_PI_NAME:
+                        xml.append("<?").append(rawText).append(" ");
+                        break;
+                    case VTDNav.TOKEN_PI_VAL:
+                        xml.append(rawText).append("?>");
+                        break;
+                    default:
+                        // Ignore unknown tokens
+                }
+            }
+
+            System.out.println(xml.toString()); // Print full XML
+        } catch (NavException e) {
+            throw new IllegalStateException("Error printing XML", e);
+        }
+    }
+
 
 
     /**
