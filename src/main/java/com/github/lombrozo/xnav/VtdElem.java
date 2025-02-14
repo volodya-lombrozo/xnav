@@ -26,10 +26,8 @@ package com.github.lombrozo.xnav;
 
 
 import com.ximpleware.AutoPilot;
-import com.ximpleware.ElementFragmentNs;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
-import com.ximpleware.VTDNav_L5;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -50,11 +48,19 @@ public final class VtdElem implements IndexedXml {
     @EqualsAndHashCode.Exclude
     private final int index;
 
+//    @EqualsAndHashCode.Exclude
+//    private final long fragment;
+//
+//    @EqualsAndHashCode.Exclude
+//    private final int last;
+
     VtdElem(final VTDNav nav, int index) {
         try {
             this.navigator = nav.cloneNav();
             this.navigator.recoverNode(index);
             this.index = index;
+//            this.fragment = nav.getElementFragment();
+//            this.last = findLastTokenIndex(nav);
         } catch (final NavException exception) {
             throw new RuntimeException("Error recovering node", exception);
         }
@@ -190,8 +196,8 @@ public final class VtdElem implements IndexedXml {
 //                this.scanDown(nav, nav.getCurrentIndex(), depth, max).forEach(results::add);
 //                _______
                 nav.toElement(VTDNav.PARENT);
-                final int last = findLastToken(nav);
-                this.scanUP(nav, last, depth).forEach(results::add);
+//                final int last = findLastTokenIndex(nav);
+//                this.scanUP(nav, last, depth).forEach(results::add);
             } else {
                 int text;
                 if ((text = nav.getText()) != -1) {
@@ -220,7 +226,7 @@ public final class VtdElem implements IndexedXml {
     }
 
     private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline, int max) {
-        findLastToken(nav);
+        findLastTokenIndex(nav);
         final List<IndexedXml> res = new ArrayList<>(0);
         int iterations = 0;
         for (int i = from + 1; i < max; i++) {
@@ -245,10 +251,12 @@ public final class VtdElem implements IndexedXml {
         return res.stream();
     }
 
-    private int findLastToken(final VTDNav nav) {
+    private int findLastTokenIndex(final VTDNav nav) {
         try {
             int elementOffset = (int) nav.getElementFragment();
             int length = (int) (nav.getElementFragment() >> 32);
+//            int elementOffset = (int) fragment;
+//            int length = (int) (fragment >> 32);
             int elementEndOffset = elementOffset + length;
 //            System.out.printf(
 //                "%s | offset: %d length: %d endOffset: %d%n",
