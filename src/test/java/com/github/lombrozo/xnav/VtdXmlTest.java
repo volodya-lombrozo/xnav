@@ -245,6 +245,20 @@ class VtdXmlTest {
     }
 
     @Test
+    void retrievesText___() {
+        MatcherAssert.assertThat(
+            "We expect to find the correct first text from nested XML",
+            new VtdXml(
+                "<o>",
+                "  <o><o color='red'>red</o></o>",
+                "  <o color='blue'>blue</o>",
+                "</o>"
+            ).text().get(),
+            Matchers.equalTo("\n  red\n  blue\n")
+        );
+    }
+
+    @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new VtdXml(
             "<colors><o color='yellow'>yellow</o>",

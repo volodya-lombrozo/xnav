@@ -73,9 +73,9 @@ public class XmlBenchmark {
             .include(XmlBenchmark.class.getSimpleName())
             .forks(1)
             .warmupIterations(2)
-            .warmupTime(TimeValue.seconds(3))
+            .warmupTime(TimeValue.seconds(6))
             .measurementIterations(2)
-            .measurementTime(TimeValue.seconds(6))
+            .measurementTime(TimeValue.seconds(10))
             .build();
         new Runner(opt).run();
     }
