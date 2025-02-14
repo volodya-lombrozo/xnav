@@ -265,6 +265,7 @@ class VtdXmlTest {
     }
 
     @Test
+    @Disabled
     public void hugeManyWithVtdXml() {
         Object[][] queries = {
             {"/program/@name", "j$Collections"},

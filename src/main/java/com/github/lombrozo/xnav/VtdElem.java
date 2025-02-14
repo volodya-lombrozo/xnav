@@ -207,9 +207,10 @@ public final class VtdElem implements IndexedXml {
                 Comparator.comparingInt(IndexedXml::index)
             );
             final VTDNav nav = this.start();
+            final int depth = nav.getCurrentDepth();
             if (nav.toElement(VTDNav.FIRST_CHILD)) {
+                printIndexes(nav);
                 final int max = nav.getTokenCount();
-                final int depth = nav.getCurrentDepth();
                 do {
                     final int curr = nav.getCurrentIndex();
                     results.add(new VtdElem(nav, curr));
@@ -235,6 +236,11 @@ public final class VtdElem implements IndexedXml {
             final int depth = nav.getTokenDepth(i);
             final int type = nav.getTokenType(i);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
+                try {
+                    System.out.println("["+i+"]scanUP: Try to find text between " + from + " and 0 with depth " + redline + " -> " + nav.toString(i));
+                } catch (final NavException exception) {
+                    throw new RuntimeException(exception);
+                }
                 result.add(new VtdText(nav, i));
             }
             if (depth == redline) {
@@ -250,6 +256,11 @@ public final class VtdElem implements IndexedXml {
             final int depth = nav.getTokenDepth(i);
             final int type = nav.getTokenType(i);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
+                try {
+                    System.out.println("scanDown: Try to find text between " + from + " and " + redline + " -> " + nav.toString(i));
+                } catch (final NavException exception) {
+                    throw new RuntimeException(exception);
+                }
                 result.add(new VtdText(nav, i));
             }
             if (depth == redline) {
