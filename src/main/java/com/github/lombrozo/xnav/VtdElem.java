@@ -43,6 +43,15 @@ public final class VtdElem implements Xml {
     @EqualsAndHashCode.Exclude
     private final VTDNav navigator;
 
+    VtdElem(final VTDNav nav, int start) {
+        try {
+            this.navigator = nav.cloneNav();
+            this.navigator.recoverNode(start);
+        } catch (final NavException exception) {
+            throw new RuntimeException("Error recovering node", exception);
+        }
+    }
+
     /**
      * Constructor.
      * @param nav VTD navigator.
@@ -143,22 +152,6 @@ public final class VtdElem implements Xml {
                 builder.add(new VtdAttr(nav.toString(id), nav));
             }
             return builder.build();
-            // attr=value format
-//            return IntStream.iterate(
-//                    pilot.iterateAttr(), i -> i != -1, i -> {
-//                        try {
-//                            return pilot.iterateAttr();
-//                        } catch (final NavException exception) {
-//                            throw new RuntimeException(exception);
-//                        }
-//                    })
-//                .mapToObj(i -> {
-//                    try {
-//                        return nav.toString(i) + "=" + nav.toString(i + 1);
-//                    } catch (final NavException exception) {
-//                        throw new RuntimeException(exception);
-//                    }
-//                });
         } catch (final NavException exception) {
             throw new RuntimeException("Error getting attribute", exception);
         }
@@ -199,116 +192,30 @@ public final class VtdElem implements Xml {
 
 
     private Stream<Xml> childs() {
-        try {
-            final VTDNav nav = this.start();
-//            printXml(nav);
-            final int parentIndex = nav.getCurrentIndex();
-            final int parentDepth = nav.getCurrentDepth();
-            final int tokenCount = nav.getTokenCount();
-            final Stream.Builder<Xml> result = Stream.builder();
-//            System.out.println("parentIndex: " + parentIndex);
-//            System.out.println("parentDepth: " + parentDepth);
-//            System.out.println("tokenCount: " + tokenCount);
-//            System.out.println("tokenLenght: " + nav.getTokenLength(parentIndex));
-//            System.out.println("length: " + nav.getStringLength(parentIndex));
-//            System.out.println("Raw length: " + nav.getRawStringLength(parentIndex));
-//            System.out.println("Normalized length: " + nav.getNormalizedStringLength(parentIndex));
-//            System.out.println("fragment: " + nav.getContentFragment());
-            // Iterate over tokens starting right after the parent's token.
-            for (int i = parentIndex + 1; i < tokenCount; i++) {
-//                System.out.print(" i: " + i);
-//                System.out.print(" tokenType: " + nav.getTokenType(i));
-//                System.out.print(" tokenDepth: " + nav.getTokenDepth(i));
-//                System.out.print(" tokenString: " + nav.toRawString(i));
-//                System.out.println();
-
-                // Once the token's depth is not greater than the parent's, we're done.
-                if (nav.getTokenDepth(i) == parentDepth) {
-                    int tokenType = nav.getTokenType(i);
-                    // Clone and recover to the specific token so that
-                    // the resulting navigator is positioned on the child.
-                    // ignore tokens that are not element or text
-                    if (tokenType == VTDNav.TOKEN_CHARACTER_DATA) {
-                        final VTDNav clone = nav.cloneNav();
-                        clone.recoverNode(i);
-//                        result.add(new VtdText(clone));
-                        result.add(new EagerChard(nav.toString(i)));
-                        // You might want to handle additional token types if needed.
-                    }
-
-                    if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
-                        break;
-                    }
+        final VTDNav nav = this.start();
+        final int parentIndex = nav.getCurrentIndex();
+        final int parentDepth = nav.getCurrentDepth();
+        final int max = nav.getTokenCount();
+        final Stream.Builder<Xml> result = Stream.builder();
+        for (int i = parentIndex + 1; i < max; i++) {
+            final int type = nav.getTokenType(i);
+            final int depth = nav.getTokenDepth(i);
+            if (depth == parentDepth) {
+                if (type == VTDNav.TOKEN_CHARACTER_DATA) {
+                    result.add(new VtdText(nav, i));
                 }
-
-                // Only consider direct children (depth exactly one level deeper)
-                if (nav.getTokenDepth(i) == parentDepth + 1) {
-                    int tokenType = nav.getTokenType(i);
-                    // Clone and recover to the specific token so that
-                    // the resulting navigator is positioned on the child.
-                    // ignore tokens that are not element or text
-                    if (tokenType == VTDNav.TOKEN_STARTING_TAG) {
-                        final VTDNav clone = nav.cloneNav();
-                        clone.recoverNode(i);
-                        result.add(new VtdElem(clone));
-                        // You might want to handle additional token types if needed.
-                    }
+                if (type == VTDNav.TOKEN_STARTING_TAG) {
+                    break;
                 }
             }
-            // Restore original state.
-            nav.recoverNode(parentIndex);
-            return result.build();
-        } catch (final NavException e) {
-            throw new IllegalStateException("Error iterating children", e);
-        }
-    }
-
-    private void printXml(VTDNav nav) {
-        try {
-            int tokenCount = nav.getTokenCount();
-            StringBuilder xml = new StringBuilder();
-
-            for (int i = 0; i < tokenCount; i++) {
-                int tokenType = nav.getTokenType(i);
-                String rawText = nav.toRawString(i); // Preserve original whitespaces
-
-                switch (tokenType) {
-                    case VTDNav.TOKEN_STARTING_TAG:
-                        xml.append("<").append(nav.toString(i)).append(">");
-                        break;
-                    case VTDNav.TOKEN_ENDING_TAG:
-                        xml.append("</").append(nav.toString(i)).append(">");
-                        break;
-                    case VTDNav.TOKEN_CHARACTER_DATA:
-                    case VTDNav.TOKEN_CDATA_VAL: // Include CDATA as well
-                        xml.append(rawText);
-                        break;
-                    case VTDNav.TOKEN_ATTR_NAME:
-                        xml.append(" ").append(rawText).append("=\"");
-                        break;
-                    case VTDNav.TOKEN_ATTR_VAL:
-                        xml.append(rawText).append("\"");
-                        break;
-                    case VTDNav.TOKEN_COMMENT:
-                        xml.append("<!--").append(rawText).append("-->");
-                        break;
-                    case VTDNav.TOKEN_PI_NAME:
-                        xml.append("<?").append(rawText).append(" ");
-                        break;
-                    case VTDNav.TOKEN_PI_VAL:
-                        xml.append(rawText).append("?>");
-                        break;
-                    default:
-                        // Ignore unknown tokens
+            if (depth == parentDepth + 1) {
+                if (type == VTDNav.TOKEN_STARTING_TAG) {
+                    result.add(new VtdElem(nav, i));
                 }
             }
-
-            System.out.println(xml.toString()); // Print full XML
-        } catch (NavException e) {
-            throw new IllegalStateException("Error printing XML", e);
         }
+        return result.build();
     }
-
 
     /**
      * Start the navigation routine.

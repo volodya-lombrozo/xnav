@@ -25,6 +25,7 @@
 package com.github.lombrozo.xnav;
 
 
+import com.ximpleware.NavException;
 import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
 import java.util.Optional;
@@ -36,9 +37,11 @@ import org.w3c.dom.Node;
 @EqualsAndHashCode
 public final class VtdText implements Xml {
     private final VTDNav vn;
+    private final int id;
 
-    public VtdText(final VTDNav vn) {
-        this.vn = vn.cloneNav();
+    public VtdText(final VTDNav vn, final int id) {
+        this.vn = vn;
+        this.id = id;
     }
 
     @Override
@@ -64,14 +67,10 @@ public final class VtdText implements Xml {
     @Override
     public Optional<String> text() {
         try {
-            int index = this.vn.getText();
-            if (index != -1) {
-                return Optional.of(this.vn.toString(index));
-            }
-        } catch (VTDException e) {
-            throw new RuntimeException("Error getting text", e);
+            return Optional.of(this.vn.toString(this.id));
+        } catch (final NavException exception) {
+            throw new RuntimeException(exception);
         }
-        return Optional.empty();
     }
 
     @Override
@@ -81,7 +80,7 @@ public final class VtdText implements Xml {
 
     @Override
     public Xml copy() {
-        return new VtdText(vn.cloneNav());
+        return new VtdText(this.vn.cloneNav(), this.id);
     }
 
     @Override
