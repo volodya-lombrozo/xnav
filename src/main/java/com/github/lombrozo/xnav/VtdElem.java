@@ -24,13 +24,10 @@
 
 package com.github.lombrozo.xnav;
 
-
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDNav;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -39,32 +36,28 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * VTD element.
+ * Represents an XML element.
+ * This class is thread-safe.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class VtdElem implements IndexedXml {
+final class VtdElem implements OrderedXml {
 
+    /**
+     * VTD navigator.
+     */
     @EqualsAndHashCode.Exclude
     private final VTDNav navigator;
 
+    /**
+     * Order number.
+     * Used to sort elements.
+     * This number is unique for each element in the document.
+     */
     @EqualsAndHashCode.Exclude
-    private final int index;
-
-//    @EqualsAndHashCode.Exclude
-//    private final long fragment;
-//
-//    @EqualsAndHashCode.Exclude
-//    private final int last;
-
-    VtdElem(final VTDNav nav, int index) {
-        try {
-            this.navigator = nav.cloneNav();
-            this.navigator.recoverNode(index);
-            this.index = index;
-//            this.fragment = nav.getElementFragment();
-//            this.last = findLastTokenIndex(nav);
-        } catch (final NavException exception) {
-            throw new RuntimeException("Error recovering node", exception);
-        }
-    }
+    private final int order;
 
     /**
      * Constructor.
@@ -74,6 +67,23 @@ public final class VtdElem implements IndexedXml {
         this(nav, nav.getCurrentIndex());
     }
 
+    /**
+     * Constructor.
+     * @param nav VTD navigator.
+     * @param index Element order.
+     */
+    private VtdElem(final VTDNav nav, int index) {
+        try {
+            this.navigator = nav.cloneNav();
+            this.navigator.recoverNode(index);
+            this.order = index;
+        } catch (final NavException exception) {
+            throw new IllegalStateException(
+                "Error recovering node for the future navigation",
+                exception
+            );
+        }
+    }
 
     @Override
     public Xml child(final String element) {
@@ -85,9 +95,31 @@ public final class VtdElem implements IndexedXml {
 
     @Override
     public Stream<Xml> children() {
-//        return this.childs();
-//        return this.optimizedChildren();
-        return this.childs();
+        try {
+            final SortedSet<OrderedXml> results = new TreeSet<>(
+                Comparator.comparingInt(OrderedXml::position)
+            );
+            final VTDNav nav = this.start();
+            final int depth = nav.getCurrentDepth();
+            if (nav.toElement(VTDNav.FIRST_CHILD)) {
+                do {
+                    final int curr = nav.getCurrentIndex();
+                    results.add(new VtdElem(nav, curr));
+                    this.scanUP(nav, curr, depth).forEach(results::add);
+                } while (nav.toElement(VTDNav.NEXT_SIBLING));
+                final int last = this.findLastTokenIndex(nav);
+                nav.toElement(VTDNav.PARENT);
+                this.scanUP(nav, last, depth).forEach(results::add);
+            } else {
+                final int text = nav.getText();
+                if (text != -1) {
+                    results.add(new VtdText(nav, text));
+                }
+            }
+            return results.stream().map(Xml.class::cast);
+        } catch (final NavException exception) {
+            throw new IllegalStateException("Error getting element children", exception);
+        }
     }
 
     @Override
@@ -132,7 +164,7 @@ public final class VtdElem implements IndexedXml {
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new StringNode(this.toString()).toNode().getFirstChild();
     }
 
     @EqualsAndHashCode.Include
@@ -148,16 +180,12 @@ public final class VtdElem implements IndexedXml {
         );
     }
 
-    private String attrs() {
-        final String res = this.attributes().map(Xml::toString).collect(Collectors.joining(" "));
-        if (res.isEmpty()) {
-            return "";
-        } else {
-            return " " + res;
-        }
+    @Override
+    public int position() {
+        return this.order;
     }
 
-    private Stream<Xml> attributes() {
+    private String attrs() {
         try {
             final VTDNav nav = this.start();
             final AutoPilot pilot = new AutoPilot(nav);
@@ -167,54 +195,23 @@ public final class VtdElem implements IndexedXml {
             while ((id = pilot.iterateAttr()) != -1) {
                 builder.add(new VtdAttr(nav.toString(id), nav));
             }
-            return builder.build();
+            final String res = builder.build()
+                .map(Xml::toString)
+                .collect(Collectors.joining(" "));
+            if (res.isEmpty()) {
+                return "";
+            } else {
+                return " " + res;
+            }
         } catch (final NavException exception) {
             throw new RuntimeException("Error getting attribute", exception);
         }
+
     }
 
-    private Stream<Xml> childs() {
-        try {
-            final SortedSet<IndexedXml> results = new TreeSet<>(
-                Comparator.comparingInt(IndexedXml::index)
-            );
-            final VTDNav nav = this.start();
-            final int depth = nav.getCurrentDepth();
-            final int max = nav.getTokenCount();
-//            printIndexes(nav);
-            if (nav.toElement(VTDNav.FIRST_CHILD)) {
-                do {
-                    final int curr = nav.getCurrentIndex();
-                    results.add(new VtdElem(nav, curr));
-                    this.scanUP(nav, curr, depth).forEach(results::add);
-                } while (nav.toElement(VTDNav.NEXT_SIBLING));
-//                final int ind = findLastIndex(nav);
-//                this.scanUP(nav, ind, depth).forEach(results::add);
-//                System.out.println("Last index: " + ind);
-
-//                OLD:
-//                this.scanDown(nav, nav.getCurrentIndex(), depth, max).forEach(results::add);
-//                _______
-                final int last = this.findLastTokenIndex(nav);
-                nav.toElement(VTDNav.PARENT);
-                this.scanUP(nav, last, depth).forEach(results::add);
-            } else {
-                int text;
-                if ((text = nav.getText()) != -1) {
-                    results.add(new VtdText(nav, text));
-                }
-            }
-            return results.stream().map(Xml.class::cast);
-        } catch (final NavException e) {
-            throw new RuntimeException("Error getting children", e);
-        }
-    }
-
-    private Stream<IndexedXml> scanUP(VTDNav nav, int from, int redline) {
-        final Stream.Builder<IndexedXml> result = Stream.builder();
-        int iterations = 0;
+    private Stream<OrderedXml> scanUP(VTDNav nav, int from, int redline) {
+        final Stream.Builder<OrderedXml> result = Stream.builder();
         for (int i = from - 1; i >= 0; i--) {
-            iterations++;
             final int depth = nav.getTokenDepth(i);
             final int type = nav.getTokenType(i);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
@@ -224,42 +221,11 @@ public final class VtdElem implements IndexedXml {
                 break;
             }
         }
-//        System.out.println(
-//            " | scanUP: from: " + from + " looking depth: " + redline + " Iterations: " + iterations
-//        );
         return result.build();
     }
 
-    private Stream<IndexedXml> scanDown(VTDNav nav, int from, int redline, int max) {
-//        findLastTokenIndex(nav);
-        final List<IndexedXml> res = new ArrayList<>(0);
-        int iterations = 0;
-        for (int i = from + 1; i < max; i++) {
-            iterations++;
-            final int depth = nav.getTokenDepth(i);
-            final int type = nav.getTokenType(i);
-            if (
-                depth == redline
-                    && type == VTDNav.TOKEN_CHARACTER_DATA
-                    && nav.getTokenLength(i) > 0
-            ) {
-                res.add(new VtdText(nav, i));
-            }
-            if (depth == redline) {
-                break;
-            }
-        }
-        System.out.println(
-            " | scanDown: from: " + from + " looking depth: " + redline + " Number of tokens: " + max + " Iterations: " + iterations
-        );
-//        return result.build();
-        return res.stream();
-    }
-
     private int findLastTokenIndex(final VTDNav nav) {
-        final int found = this.findLastRecursively(nav.cloneNav());
-//        System.out.printf("Last token index: %d%n\n", found);
-        return found;
+        return this.findLastRecursively(nav.cloneNav());
     }
 
     private int findLastRecursively(final VTDNav current) {
@@ -277,62 +243,6 @@ public final class VtdElem implements IndexedXml {
         }
     }
 
-    private int findLastTokenIndexBinarySearch(final VTDNav nav) {
-        try {
-            int elementOffset = (int) nav.getElementFragment();
-            int length = (int) (nav.getElementFragment() >> 32);
-//            int elementOffset = (int) fragment;
-//            int length = (int) (fragment >> 32);
-            int elementEndOffset = elementOffset + length;
-//            System.out.printf(
-//                "%s | offset: %d length: %d endOffset: %d%n",
-//                new VtdElem(nav),
-//                elementOffset,
-//                length,
-//                elementEndOffset
-//            );
-            int low = nav.getCurrentIndex();
-            int high = nav.getTokenCount();
-            int lastTokenIndex = -1;
-            while (low <= high) {
-                int mid = (low + high) / 2;
-                int tokenOffset = nav.getTokenOffset(mid);
-                int tokenLength = nav.getTokenLength(mid);
-                int tokenEndOffset = tokenOffset + tokenLength;
-
-                if (tokenOffset >= elementOffset && tokenEndOffset <= elementEndOffset) {
-                    lastTokenIndex = mid;
-                    low = mid + 1; // Continue searching in the upper half
-                } else if (tokenOffset < elementOffset) {
-                    low = mid + 1; // Search in the upper half
-                } else {
-                    high = mid - 1; // Search in the lower half
-                }
-            }
-            return lastTokenIndex;
-//            System.out.println("Last token index: " + lastTokenIndex);
-
-
-        } catch (final NavException exception) {
-            throw new RuntimeException(exception);
-        }
-    }
-
-
-    private void printIndexes(final VTDNav nav) {
-        final VTDNav clone = nav.cloneNav();
-        System.out.println("Indexes: ");
-        for (int i = 0; i < clone.getTokenCount(); i++) {
-            try {
-                System.out.println(
-                    i + " -> '" + clone.toString(i) + "'" + " depth: " + clone.getTokenDepth(i)
-                );
-            } catch (final NavException exception) {
-                throw new RuntimeException(exception);
-            }
-        }
-    }
-
     /**
      * Start the navigation routine.
      * @return VTD navigator to start from.
@@ -341,9 +251,4 @@ public final class VtdElem implements IndexedXml {
         return this.navigator.cloneNav();
     }
 
-
-    @Override
-    public int index() {
-        return this.index;
-    }
 }

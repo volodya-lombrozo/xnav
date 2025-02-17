@@ -31,9 +31,18 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * VTD document.
+ * Represents an XML document.
+ * This class is thread-safe.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class VtdDoc implements Xml {
+final class VtdDoc implements Xml {
 
+    /**
+     * Root element.
+     */
     @EqualsAndHashCode.Exclude
     private final Xml root;
 
@@ -102,6 +111,6 @@ public final class VtdDoc implements Xml {
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new StringNode(this.toString()).toNode();
     }
 }

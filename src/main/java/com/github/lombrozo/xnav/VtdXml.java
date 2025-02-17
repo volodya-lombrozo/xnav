@@ -26,9 +26,15 @@ package com.github.lombrozo.xnav;
 
 import com.ximpleware.ParseException;
 import com.ximpleware.VTDGen;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
@@ -39,6 +45,19 @@ public final class VtdXml implements Xml {
      * Root document.
      */
     private VtdDoc doc;
+
+    /**
+     * Original XML.
+     */
+    private final String original;
+
+    /**
+     * Constructor.
+     * @param node XML node.
+     */
+    VtdXml(final Node node) {
+        this(VtdXml.nodeToString(node));
+    }
 
     /**
      * Constructor.
@@ -53,15 +72,16 @@ public final class VtdXml implements Xml {
      * @param xml XML document string.
      */
     VtdXml(final String xml) {
-        this(VtdXml.parseDoc(xml));
+        this(VtdXml.parseDoc(xml), xml);
     }
 
     /**
      * Constructor.
      * @param doc VTD document.
      */
-    private VtdXml(final VtdDoc doc) {
+    private VtdXml(final VtdDoc doc, final String original) {
         this.doc = doc;
+        this.original = original;
     }
 
     @Override
@@ -99,12 +119,12 @@ public final class VtdXml implements Xml {
 
     @Override
     public Xml copy() {
-        return new VtdXml(this.doc);
+        return new VtdXml(this.doc, this.original);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new StringNode(this.original).toNode();
     }
 
     /**
@@ -124,6 +144,23 @@ public final class VtdXml implements Xml {
                 String.format("Can't prepare document for VTD: Invalid XML: %s", xml),
                 exception
             );
+        }
+    }
+
+    /**
+     * Convert node to string.
+     * @param node XML node.
+     * @return XML string.
+     */
+    private static String nodeToString(final Node node) {
+        try {
+            final TransformerFactory factory = TransformerFactory.newInstance();
+            final Transformer transformer = factory.newTransformer();
+            final StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(node), new StreamResult(writer));
+            return writer.getBuffer().toString();
+        } catch (final TransformerException exception) {
+            throw new IllegalStateException("Can't convert node to string", exception);
         }
     }
 }

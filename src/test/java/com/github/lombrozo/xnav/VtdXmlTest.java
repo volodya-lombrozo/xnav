@@ -26,16 +26,17 @@ package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-class VtdXmlTest {
+/**
+ * Test cases for {@link VtdXml}.
+ * @since 0.1
+ */
+final class VtdXmlTest {
 
     @Test
     void convertsDocumentToString() {
@@ -118,9 +119,7 @@ class VtdXmlTest {
         );
     }
 
-    //todo: fix this test
     @Test
-    @Disabled
     void retrievesNode() {
         MatcherAssert.assertThat(
             "We expect the node to be retrieved",
@@ -129,7 +128,8 @@ class VtdXmlTest {
                 .child("node")
                 .node()
                 .isEqualNode(
-                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
+                    new StringNode("<node attr='value'>text</node>").toNode()
+                        .getFirstChild()
                 ),
             Matchers.is(true)
         );
@@ -178,7 +178,6 @@ class VtdXmlTest {
         );
     }
 
-
     @Test
     void printsAllAttributes() {
         final String same = "<colors base='bytes' color='red'></colors>";
@@ -225,21 +224,12 @@ class VtdXmlTest {
 
     @Test
     void retrievesSeveralChildren() {
-        final Stream<Xml> children = new VtdXml(
-            "<all><o color='beautiful'>yellow</o>",
-            "<o color='stylish'>green</o></all>"
-        )
-            .child("all")
-            .children();
-        final List<Xml> first = children.collect(Collectors.toList());
-//        final Xml xml = first.get(1);
-//        final List<Xml> collect1 = xml.children().collect(Collectors.toList());
-        final List<Xml> collect = first.stream()
-            .flatMap(Xml::children)
-            .collect(Collectors.toList());
         MatcherAssert.assertThat(
             "We expect to retrieve exactly two children",
-            collect,
+            new VtdXml(
+                "<all><o color='beautiful'>yellow</o>",
+                "<o color='stylish'>green</o></all>"
+            ).child("all").children().flatMap(Xml::children).collect(Collectors.toList()),
             Matchers.hasSize(2)
         );
     }
@@ -276,29 +266,5 @@ class VtdXmlTest {
             ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
-    }
-
-    @Test
-    @Disabled
-    public void hugeManyWithVtdXml() {
-        Object[][] queries = {
-            {"/program/@name", "j$Collections"},
-            {"/program/objects/o/@base", "jeo.class"},
-            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-        };
-        final Xml xml = new VtdXml(XmlBenchmark.generateXml());
-        Random random = new Random();
-        for (int i = 0; i < 1_000_000; i++) {
-            final int request = random.nextInt(queries.length);
-            String query = queries[request][0].toString();
-            String expected = queries[request][1].toString();
-            MatcherAssert.assertThat(
-                new Xpath(xml, query)
-                    .nodes()
-                    .findFirst()
-                    .map(Xml::text).get().get().equals(expected),
-                Matchers.is(true)
-            );
-        }
     }
 }

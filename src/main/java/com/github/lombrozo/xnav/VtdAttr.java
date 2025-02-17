@@ -32,14 +32,23 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * VTD attribute.
+ * Represents an XML attribute.
+ * This class is thread-safe.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class VtdAttr implements Xml {
+final class VtdAttr implements Xml {
 
     /**
      * Attribute name.
      */
     private final String name;
 
+    /**
+     * VTD navigator.
+     */
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private final VTDNav navigator;
@@ -63,12 +72,12 @@ public final class VtdAttr implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Attributes can't have children");
+        return Stream.empty();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("Attributes do not have attributes");
+        return Optional.empty();
     }
 
     @ToString.Include
@@ -86,12 +95,6 @@ public final class VtdAttr implements Xml {
     @Override
     public String name() {
         return this.name;
-//        try {
-//            final VTDNav nav = this.start();
-//            return nav.toString(nav.getCurrentIndex());
-//        } catch (final NavException exception) {
-//            throw new IllegalStateException("Error getting attribute name", exception);
-//        }
     }
 
     @Override
@@ -101,7 +104,7 @@ public final class VtdAttr implements Xml {
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Attributes can't be converted to DOM nodes");
     }
 
     @Override

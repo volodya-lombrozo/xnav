@@ -24,6 +24,6 @@
 
 package com.github.lombrozo.xnav;
 
-public interface IndexedXml extends Xml{
-    int index();
+interface OrderedXml extends Xml {
+    int position();
 }

@@ -24,27 +24,24 @@
 
 package com.github.lombrozo.xnav;
 
-
 import com.ximpleware.NavException;
-import com.ximpleware.VTDException;
 import com.ximpleware.VTDNav;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-public final class VtdText implements IndexedXml {
+final class VtdText implements OrderedXml {
     @EqualsAndHashCode.Exclude
-    private final VTDNav vn;
+    private final VTDNav navigator;
 
     @EqualsAndHashCode.Exclude
-    private final int id;
+    private final int index;
 
-    public VtdText(final VTDNav vn, final int id) {
-        this.vn = vn;
-        this.id = id;
+    VtdText(final VTDNav navigator, final int index) {
+        this.navigator = navigator;
+        this.index = index;
     }
 
     @Override
@@ -70,7 +67,7 @@ public final class VtdText implements IndexedXml {
     @Override
     public Optional<String> text() {
         try {
-            return Optional.of(this.vn.toString(this.id));
+            return Optional.of(this.navigator.toString(this.index));
         } catch (final NavException exception) {
             throw new RuntimeException(exception);
         }
@@ -83,16 +80,16 @@ public final class VtdText implements IndexedXml {
 
     @Override
     public Xml copy() {
-        return new VtdText(this.vn.cloneNav(), this.id);
+        return new VtdText(this.navigator.cloneNav(), this.index);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Text can't be converted to DOM node");
     }
 
     @Override
-    public int index() {
-        return this.id;
+    public int position() {
+        return this.index;
     }
 }
