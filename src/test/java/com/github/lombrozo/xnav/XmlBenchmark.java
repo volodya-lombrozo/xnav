@@ -204,24 +204,10 @@ public class XmlBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
-    @Group(XmlBenchmark.HUGE)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void hugeSingleWithAntlr() {
-        final XMLParser p = new XMLParser(
-            new CommonTokenStream(new XMLLexer(CharStreams.fromString(XmlBenchmark.HUGE_XML)))
-        );
-        p.setErrorHandler(new BailErrorStrategy());
-        final CounterVisitor visitor = new CounterVisitor();
-        visitor.visitDocument(p.document());
-        assert p.document() != null;
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE_MANY)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeManyWithDomXml() {
-        Object[][] queries = new Object[][]{
+        Object[][] queries = {
             {"/program/@name", "j$Collections"},
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},

@@ -37,7 +37,7 @@ import org.w3c.dom.Node;
  *     : chardata? ((element | reference | CDATA | PI | COMMENT) chardata?)*
  *     ;
  */
-public final class AntlrXmlContent implements Xml {
+final class AntlrXmlContent implements Xml {
 
     private final XMLParser.ContentContext content;
 

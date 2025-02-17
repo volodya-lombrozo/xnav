@@ -24,29 +24,50 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.w3c.dom.Node;
 
-final class AntlrElementVisitor extends XMLParserBaseVisitor<Xml> {
+final class AntlrChardata implements Xml {
 
-    @Override
-    public Xml visitElement(final XMLParser.ElementContext ctx) {
-        if (ctx == null) {
-            return new Empty();
-        } else {
-            return new AntlrXmlElement(ctx);
-        }
-//        return new AntlrXmlContent(ctx.content());
-//        final List<Xml> children = new ArrayList<>(0);
-//        final XMLParser.ContentContext content = ctx.content();
-//        if (content == null) {
-//            return new Empty();
-//        }
-//        for (final XMLParser.ElementContext context : content.element()) {
-//            children.add(this.visit(context));
-//        }
-//        return new AntlrXmlElement(ctx);
+    private final XMLParser.ChardataContext context;
+
+    AntlrChardata(final XMLParser.ChardataContext context) {
+        this.context = context;
     }
 
+    @Override
+    public Xml child(final String element) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
 
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Optional<String> text() {
+        return Optional.ofNullable(this.context.getText());
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return Stream.empty();
+    }
+
+    @Override
+    public String name() {
+        return "";
+    }
+
+    @Override
+    public Xml copy() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Node node() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
 }

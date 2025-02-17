@@ -29,54 +29,79 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * element
+ *     : '<' Name attribute* '>' content '<' '/' Name '>'
+ *     | '<' Name attribute* '/>'
+ *     ;
+ */
 @EqualsAndHashCode
-public final class AntlrAttribute implements Xml {
+final class AntlrXmlElement implements Xml {
 
     @EqualsAndHashCode.Exclude
-    private final XMLParser.AttributeContext context;
+    XMLParser.ElementContext context;
 
-    public AntlrAttribute(final XMLParser.AttributeContext context) {
+    public AntlrXmlElement(XMLParser.ElementContext context) {
         this.context = context;
     }
 
     @Override
     public Xml child(final String element) {
-        return null;
+        final XMLParser.ContentContext content = this.context.content();
+        for (final XMLParser.ElementContext context : content.element()) {
+            final AntlrXmlElement elem = new AntlrXmlElement(context);
+            if (elem.name().equals(element)) {
+                return elem;
+            }
+        }
+        return new Empty();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<String> text() {
-        final String text = this.context.STRING().getText();
-        return Optional.of(text.substring(1, text.length() - 1));
+        return this.context.attribute()
+            .stream()
+            .map(attr -> (Xml) new AntlrAttribute(attr))
+            .filter(attr -> attr.name().equals(name))
+            .findFirst();
+//        if (this.context.attribute() == null) {
+//            return Optional.empty();
+//        } else {
+//            return Optional.empty();
+//        }
+//        return new AntlrXmlAttributes(this.context.attribute());
     }
 
     @Override
     public Stream<Xml> children() {
-        return null;
+        if (this.context.content() == null) {
+            return Stream.empty();
+        }
+        return new AntlrXmlContent(this.context.content()).children();
+    }
+
+    @Override
+    public Optional<String> text() {
+        return new AntlrXmlContent(this.context.content()).text();
     }
 
     @Override
     public String name() {
-        return this.context.Name().getText();
+        return this.context.Name(0).getText();
     }
 
     @Override
     public Xml copy() {
-        return null;
+        return new AntlrXmlElement(this.context);
     }
 
     @Override
     public Node node() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
-    @EqualsAndHashCode.Include
     @Override
+    @EqualsAndHashCode.Include
     public String toString() {
         return this.context.getText();
     }

@@ -24,46 +24,16 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.Objects;
-import org.antlr.v4.runtime.ParserRuleContext;
-
-public final class CounterVisitor extends XMLParserBaseVisitor<Integer> {
+final class AntlrElementVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
-    public Integer visitDocument(final XMLParser.DocumentContext ctx) {
-        return 1 + this.visitChildren(ctx);
-    }
-
-    @Override
-    public Integer visitElement(final XMLParser.ElementContext ctx) {
-        return 1 + this.visitChildren(ctx);
-    }
-
-    @Override
-    public Integer visitAttribute(final XMLParser.AttributeContext ctx) {
-        return 1;
-    }
-
-    @Override
-    public Integer visitContent(final XMLParser.ContentContext ctx) {
-        return 1 + this.visitChildren(ctx);
-    }
-
-    @Override
-    public Integer visitChardata(final XMLParser.ChardataContext ctx) {
-        return 1;
-    }
-
-    private int visitChildren(ParserRuleContext ctx) {
+    public Xml visitElement(final XMLParser.ElementContext ctx) {
         if (ctx == null) {
-            return 0;
+            return new Empty();
+        } else {
+            return new AntlrXmlElement(ctx);
         }
-        if (ctx.children == null) {
-            return 0;
-        }
-        return ctx.children.stream()
-            .map(this::visit)
-            .filter(Objects::nonNull)
-            .reduce(0, Integer::sum);
     }
+
+
 }
