@@ -25,7 +25,6 @@
 package com.github.lombrozo.xnav;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -64,22 +63,62 @@ final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitContent(final XMLParser.ContentContext ctx) {
-        final List<Xml> res = new ArrayList<>(0);
-        final List<ParseTree> children = Optional.ofNullable(ctx)
-            .map(c -> c.children)
-            .orElse(new ArrayList<>(0));
-        for (final ParseTree child : children) {
-            if (child instanceof XMLParser.ElementContext) {
-                res.add(this.visitElement((XMLParser.ElementContext) child));
-            } else if (child instanceof XMLParser.ChardataContext) {
-                res.add(this.visitChardata((XMLParser.ChardataContext) child));
-            }
-        }
-        return new ObjectContent(res);
+        return new ObjectContent(
+            Optional.ofNullable(ctx)
+                .map(content -> content.children)
+                .orElse(new ArrayList<>(0))
+                .stream()
+                .filter(ObjectXmlVisitor::isChild)
+                .map(this::toChild)
+                .collect(Collectors.toList())
+        );
     }
 
     @Override
     public Xml visitChardata(final XMLParser.ChardataContext ctx) {
         return new ObjectChardata(ctx.getText());
+    }
+
+    /**
+     * Convert child to XML.
+     * @param child Child to convert
+     * @return XML
+     */
+    private Xml toChild(final ParseTree child) {
+        if (ObjectXmlVisitor.isElement(child)) {
+            return this.visitElement((XMLParser.ElementContext) child);
+        } else if (child instanceof XMLParser.ChardataContext) {
+            return this.visitChardata((XMLParser.ChardataContext) child);
+        }
+        throw new IllegalStateException(
+            String.format("Unexpected child type: %s", child.getClass())
+        );
+    }
+
+    /**
+     * Check if the ANTLR context is a content child.
+     * @param child Context to check.
+     * @return True if the context is a content child.
+     */
+    private static boolean isChild(final ParseTree child) {
+        return ObjectXmlVisitor.isChardata(child) || ObjectXmlVisitor.isElement(child);
+    }
+
+    /**
+     * Check if the child is chardata.
+     * @param child Child to check
+     * @return True if the child is chardata
+     */
+    private static boolean isChardata(final ParseTree child) {
+        return child instanceof XMLParser.ChardataContext;
+    }
+
+    /**
+     * Check if the child is an element.
+     * @param child Child to check
+     * @return True if the child is an element
+     */
+    private static boolean isElement(final ParseTree child) {
+        return child instanceof XMLParser.ElementContext;
     }
 }
