@@ -27,13 +27,11 @@ package com.github.lombrozo.xnav;
 import com.yegor256.Together;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -63,56 +61,61 @@ final class XmlTest {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("implementations")
-    void convertsDocumentToString(final Function<String, Xml> implementation, final String label) {
+    void convertsDocumentToString(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Document is not converted to string by %s", label),
-            implementation.apply("<doc></doc>").toString(),
+            impl.apply("<doc></doc>").toString(),
             Matchers.equalTo(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
             )
         );
     }
 
-    @Test
-    void convertsNodeToString() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void convertsNodeToString(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Node is not converted to string",
-            new VtdXml("<doc><node>text</node></doc>").child("doc").child("node")
+            String.format("Node is not converted to string by %s", label),
+            impl.apply("<doc><node>text</node></doc>")
+                .child("doc")
+                .child("node")
                 .toString(),
             Matchers.equalTo("<node>text</node>")
         );
     }
 
-    @Test
-    void failsToCreateCorruptedDocument() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void failsToCreateCorruptedDocument(final Function<String, Xml> impl, final String label) {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new VtdXml("<doc...").children(),
-            "Corrupted document is not created, exception is expected"
+            () -> impl.apply("<doc...").children(),
+            String.format("We expected the corrupted document is not created by %s", label)
         );
     }
 
-    @Test
-    void retrievesChildren() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesChildren(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Children are not retrieved",
-            new VtdXml(
-                "<doc><node>first</node><node>second</node></doc>")
+            String.format("Children are not retrieved by '%s' implementation", label),
+            impl.apply("<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                new VtdXml("<node>first</node>").child("node"),
-                new VtdXml("<node>second</node>").child("node")
+                impl.apply("<node>first</node>").child("node"),
+                impl.apply("<node>second</node>").child("node")
             )
         );
     }
 
-    @Test
-    void retrievesAttribute() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesAttribute(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Attribute is not retrieved",
-            new VtdXml("<doc><node attribute='value'>text</node></doc>")
+            String.format("Attribute is not retrieved by '%s' implementation", label),
+            impl.apply("<doc><node attribute='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .attribute("attribute")
@@ -123,100 +126,117 @@ final class XmlTest {
         );
     }
 
-    @Test
-    void retrivesSameElementTwice() {
-        final Xml doc = new VtdXml("<doc><node attribute='value'>text</node></doc>")
-            .child("doc");
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrivesSameElementTwice(final Function<String, Xml> impl, final String label) {
+        final Xml doc = impl.apply("<doc><node attribute='value'>text</node></doc>").child("doc");
         MatcherAssert.assertThat(
+            String.format("We expect to retrieve the same element twice by '%s'", label),
             doc.child("node"),
             Matchers.equalTo(doc.child("node"))
         );
     }
 
-    @Test
-    void copiesNode() {
-        final Xml xml = new VtdXml("<doc><node>text</node></doc>");
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void copiesNode(final Function<String, Xml> impl, final String label) {
+        final Xml xml = impl.apply("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
-            "Node is not copied",
+            String.format("Node is not copied by %s implementation", label),
             xml.copy().toString(),
             Matchers.equalTo(xml.toString())
         );
     }
 
-    @Test
-    void retrievesNode() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesNode(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "We expect the node to be retrieved",
-            new VtdXml("<doc><node attr='value'>text</node></doc>")
+            String.format("We expect the node to be retrieved by '%s' implementation", label),
+            impl.apply("<doc><node attr='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .node()
                 .isEqualNode(
-                    new StringNode("<node attr='value'>text</node>").toNode()
-                        .getFirstChild()
+                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
                 ),
             Matchers.is(true)
         );
     }
 
-    @Test
-    void retrievesTextFromSeveralNodes() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesTextFromSeveralNodes(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Text is not retrieved from several nodes",
-            new VtdXml(
-                "<doc>",
-                "  <fnode>first </fnode>",
-                "  <snode>second</snode>",
-                "</doc>"
+            String.format("Text is not retrieved from several nodes by '%s' implementation", label),
+            impl.apply(
+                String.join(
+                    "\n",
+                    "<doc>",
+                    "  <fnode>first </fnode>",
+                    "  <snode>second</snode>",
+                    "</doc>"
+                )
             ).child("doc").text().orElseThrow(),
             Matchers.equalTo("\n  first \n  second\n")
         );
     }
 
-    @Test
-    void retrievesDocName() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesDocName(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "We expect to find the correct document name",
-            new VtdXml(
-                "<o base='bytes'>",
-                "  <o base='bytes'>2-bytes-</o>",
-                "  <o base='bytes'><o base='bytes'>content</o></o>",
-                "</o>"
+            String.format(
+                "We expect to find the correct document name by '%s' implementation", label
+            ),
+            impl.apply(
+                String.join(
+                    "\n",
+                    "<o base='bytes'>",
+                    "  <o base='bytes'>2-bytes-</o>",
+                    "  <o base='bytes'><o base='bytes'>content</o></o>",
+                    "</o>"
+                )
             ).name(),
             Matchers.equalTo("o")
         );
     }
 
-    @Test
-    void retrievesChildNames() {
-        final Xml child = new VtdXml(
-            "<o base='child'>",
-            "  <a base='bytes'>3-bytes-</a>",
-            "  <b base='bytes'><c base='bytes'>4</c></b>",
-            "</o>"
-        ).child("o");
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesChildNames(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
-            child.children().map(Xml::name).collect(Collectors.toList()),
+            impl.apply(
+                String.join(
+                    "\n",
+                    "<o base='child'>",
+                    "  <a base='bytes'>3-bytes-</a>",
+                    "  <b base='bytes'><c base='bytes'>4</c></b>",
+                    "</o>"
+                )
+            ).child("o").children().map(Xml::name).collect(Collectors.toList()),
             Matchers.hasItems("a", "b")
         );
     }
 
-    @Test
-    void printsAllAttributes() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void printsAllAttributes(final Function<String, Xml> impl, final String label) {
         final String same = "<colors base='bytes' color='red'></colors>";
         MatcherAssert.assertThat(
-            "We expect to find all attributes",
-            new VtdXml(same).child("colors").toString(),
+            String.format("We expect to find all attributes by '%s' implementation", label),
+            impl.apply(same).child("colors").toString(),
             Matchers.equalTo(same)
         );
     }
 
-    @Test
-    void retrievesObjects() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesObjects(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Objects are not retrieved",
-            new VtdXml(
+            String.format("Objects are not retrieved by '%s' implementation", label),
+            impl.apply(
                 String.join(
                     "\n",
                     "<o>",
@@ -226,61 +246,80 @@ final class XmlTest {
                 )
             ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
             Matchers.hasItems(
-                new VtdXml("<o color='red'>red</o>").child("o"),
-                new VtdXml("<o color='blue'>blue</o>").child("o")
+                impl.apply("<o color='red'>red</o>").child("o"),
+                impl.apply("<o color='blue'>blue</o>").child("o")
             )
         );
     }
 
-    @Test
-    void retrievesText() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesText(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "Retrieved text is not correct",
-            new VtdXml("<o><o>yellow</o></o>")
+            String.format("Retrieved text is not correct by '%s' implementation", label),
+            impl.apply("<o><o>yellow</o></o>")
                 .child("o")
                 .children()
                 .flatMap(Xml::children)
                 .findFirst()
-                .orElseThrow().text().orElseThrow(),
+                .orElseThrow()
+                .text()
+                .orElseThrow(),
             Matchers.equalTo("yellow")
         );
     }
 
-    @Test
-    void retrievesSeveralChildren() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesSeveralChildren(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
-            "We expect to retrieve exactly two children",
-            new VtdXml(
-                "<all><o color='beautiful'>yellow</o>",
-                "<o color='stylish'>green</o></all>"
+            String.format(
+                "We expect to retrieve exactly two children by '%s' implementation", label
+            ),
+            impl.apply(
+                String.join(
+                    "\n",
+                    "<all><o color='beautiful'>yellow</o>",
+                    "<o color='stylish'>green</o></all>"
+                )
             ).child("all").children().flatMap(Xml::children).collect(Collectors.toList()),
             Matchers.hasSize(2)
         );
     }
 
-    @Test
-    void retrievesText___() {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesTextWithAllSpaces(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             "We expect to find the correct first text from nested XML",
-            new VtdXml(
-                "<o>",
-                "  <o><o color='red'>red</o></o>",
-                "  <o color='blue'>blue</o>",
-                "</o>"
+            impl.apply(
+                String.join(
+                    "\n",
+                    "<o>",
+                    "  <o><o color='red'>red</o></o>",
+                    "  <o color='blue'>blue</o>",
+                    "</o>"
+                )
             ).text().get(),
             Matchers.equalTo("\n  red\n  blue\n")
         );
     }
 
-    @Test
-    void retrievesChildrenConcurrently() {
-        final Xml xml = new VtdXml(
-            "<colors><o color='yellow'>yellow</o>",
-            "<o color='green'>green</o></colors>"
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("implementations")
+    void retrievesChildrenConcurrently(final Function<String, Xml> impl, final String label) {
+        final Xml xml = impl.apply(
+            String.join(
+                "\n",
+                "<colors><o color='yellow'>yellow</o>",
+                "<o color='green'>green</o></colors>"
+            )
         );
         final int threads = 10;
         MatcherAssert.assertThat(
-            "We expect to retrieve all children concurrently",
+            String.format(
+                "We expect to retrieve all children concurrently by '%s' implementation", label
+            ),
             new Together<>(
                 threads,
                 indx -> xml.child("colors")
