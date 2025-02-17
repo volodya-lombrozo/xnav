@@ -93,7 +93,7 @@ final class ObjectXmlDocument implements Xml {
     @Override
     public String toString() {
         return String.format(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>%s",
             this.element.toString()
         );
     }

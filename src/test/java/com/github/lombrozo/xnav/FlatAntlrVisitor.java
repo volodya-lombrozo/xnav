@@ -25,7 +25,9 @@
 package com.github.lombrozo.xnav;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -111,7 +113,11 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
             null
         );
         this.stack.push(this.index.get());
-        ctx.children.forEach(super::visit);
+        Optional.ofNullable(ctx)
+            .map(c -> c.children)
+            .stream()
+            .flatMap(Collection::stream)
+            .forEach(super::visit);
         this.stack.pop();
         return this.xml;
     }

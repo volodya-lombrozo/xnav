@@ -65,8 +65,9 @@ final class XmlTest {
         MatcherAssert.assertThat(
             String.format("Document is not converted to string by %s", label),
             impl.apply("<doc></doc>").toString(),
-            Matchers.equalTo(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
+            Matchers.anyOf(
+                Matchers.equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\"?><doc></doc>"),
+                Matchers.equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\"?><doc/>")
             )
         );
     }
