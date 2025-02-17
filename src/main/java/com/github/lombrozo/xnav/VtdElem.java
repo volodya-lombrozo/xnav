@@ -42,6 +42,7 @@ import org.w3c.dom.Node;
  * This class is thread-safe.
  * @since 0.1
  */
+@SuppressWarnings("PMD.TooManyMethods")
 @EqualsAndHashCode
 final class VtdElem implements OrderedXml {
 
@@ -72,7 +73,8 @@ final class VtdElem implements OrderedXml {
      * @param nav VTD navigator.
      * @param index Element order.
      */
-    private VtdElem(final VTDNav nav, int index) {
+    @SuppressWarnings("PMD.ConstructorOnlyInitializesOrCallOtherConstructors")
+    private VtdElem(final VTDNav nav, final int index) {
         try {
             this.navigator = nav.cloneNav();
             this.navigator.recoverNode(index);
@@ -105,11 +107,11 @@ final class VtdElem implements OrderedXml {
                 do {
                     final int curr = nav.getCurrentIndex();
                     results.add(new VtdElem(nav, curr));
-                    this.scanUP(nav, curr, depth).forEach(results::add);
+                    this.scanUp(nav, curr, depth).forEach(results::add);
                 } while (nav.toElement(VTDNav.NEXT_SIBLING));
                 final int last = this.findLastTokenIndex(nav);
                 nav.toElement(VTDNav.PARENT);
-                this.scanUP(nav, last, depth).forEach(results::add);
+                this.scanUp(nav, last, depth).forEach(results::add);
             } else {
                 final int text = nav.getText();
                 if (text != -1) {
@@ -126,13 +128,19 @@ final class VtdElem implements OrderedXml {
     public Optional<Xml> attribute(final String name) {
         try {
             final VTDNav nav = this.start();
-            int index = nav.getAttrVal(name);
-            if (index != -1) {
-                return Optional.of(new VtdAttr(name, nav));
+            final int index = nav.getAttrVal(name);
+            final Optional<Xml> result;
+            if (index == -1) {
+                result = Optional.empty();
+            } else {
+                result = Optional.of(new VtdAttr(name, nav));
             }
-            return Optional.empty();
+            return result;
         } catch (final NavException exception) {
-            throw new RuntimeException("Error getting attribute", exception);
+            throw new IllegalStateException(
+                String.format("Error getting attribute '%s'", name),
+                exception
+            );
         }
     }
 
@@ -153,7 +161,10 @@ final class VtdElem implements OrderedXml {
             final VTDNav nav = this.start();
             return nav.toString(nav.getCurrentIndex());
         } catch (final NavException exception) {
-            throw new RuntimeException("Error getting name", exception);
+            throw new IllegalStateException(
+                String.format("Error getting name from '%s'", this),
+                exception
+            );
         }
     }
 
@@ -185,37 +196,54 @@ final class VtdElem implements OrderedXml {
         return this.order;
     }
 
+    /**
+     * Get a list of attributes.
+     * @return List of attributes.
+     */
     private String attrs() {
         try {
             final VTDNav nav = this.start();
             final AutoPilot pilot = new AutoPilot(nav);
             pilot.selectAttr("*");
             final Stream.Builder<Xml> builder = Stream.builder();
-            int id;
-            while ((id = pilot.iterateAttr()) != -1) {
-                builder.add(new VtdAttr(nav.toString(id), nav));
+            int identifier = pilot.iterateAttr();
+            while (identifier != -1) {
+                builder.add(new VtdAttr(nav.toString(identifier), nav));
+                identifier = pilot.iterateAttr();
             }
-            final String res = builder.build()
+            final String all = builder.build()
                 .map(Xml::toString)
                 .collect(Collectors.joining(" "));
-            if (res.isEmpty()) {
-                return "";
+            final String res;
+            if (all.isEmpty()) {
+                res = "";
             } else {
-                return " " + res;
+                res = String.format(" %s", all);
             }
+            return res;
         } catch (final NavException exception) {
-            throw new RuntimeException("Error getting attribute", exception);
+            throw new IllegalStateException(
+                String.format("Error getting list of attributes in '%s'", this),
+                exception
+            );
         }
 
     }
 
-    private Stream<OrderedXml> scanUP(VTDNav nav, int from, int redline) {
+    /**
+     * Find elements from the current element upper to the redline.
+     * @param nav VTD navigator to use.
+     * @param from Start index.
+     * @param redline Redline depth - the depth to stop at.
+     * @return Stream of elements from top to up.
+     */
+    private Stream<OrderedXml> scanUp(final VTDNav nav, final int from, final int redline) {
         final Stream.Builder<OrderedXml> result = Stream.builder();
-        for (int i = from - 1; i >= 0; i--) {
-            final int depth = nav.getTokenDepth(i);
-            final int type = nav.getTokenType(i);
+        for (int index = from - 1; index >= 0; index = index - 1) {
+            final int depth = nav.getTokenDepth(index);
+            final int type = nav.getTokenType(index);
             if (depth == redline && type == VTDNav.TOKEN_CHARACTER_DATA) {
-                result.add(new VtdText(nav, i));
+                result.add(new VtdText(nav, index));
             }
             if (depth == redline) {
                 break;
@@ -224,22 +252,41 @@ final class VtdElem implements OrderedXml {
         return result.build();
     }
 
+    /**
+     * Find the last token index in the current element.
+     * <p>
+     *     This method is used to find the last token index in the current element.
+     *     It's used to determine the end of the element.
+     * </p>
+     * @param nav VTD navigator.
+     * @return Last token index.
+     */
     private int findLastTokenIndex(final VTDNav nav) {
-        return this.findLastRecursively(nav.cloneNav());
+        return this.findLastToken(nav.cloneNav());
     }
 
-    private int findLastRecursively(final VTDNav current) {
+    /**
+     * Find the last token index in the current element.
+     * @param current VTD navigator.
+     * @return Last token index.
+     */
+    @SuppressWarnings("PMD.ConfusingTernary")
+    private int findLastToken(final VTDNav current) {
         try {
+            final int result;
             if (!current.toElement(VTDNav.PARENT)) {
-                return current.getTokenCount();
-            }
-            if (current.toElement(VTDNav.NEXT_SIBLING)) {
-                return current.getCurrentIndex();
+                result = current.getTokenCount();
+            } else if (current.toElement(VTDNav.NEXT_SIBLING)) {
+                result = current.getCurrentIndex();
             } else {
-                return this.findLastRecursively(current);
+                result = this.findLastToken(current);
             }
+            return result;
         } catch (final NavException exception) {
-            throw new RuntimeException(exception);
+            throw new IllegalStateException(
+                String.format("Error finding last token index in '%s'", current),
+                exception
+            );
         }
     }
 

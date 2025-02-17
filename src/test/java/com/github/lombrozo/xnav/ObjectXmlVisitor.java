@@ -81,14 +81,17 @@ final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
      * @return XML
      */
     private Xml toChild(final ParseTree child) {
+        final Xml result;
         if (ObjectXmlVisitor.isElement(child)) {
-            return this.visitElement((XMLParser.ElementContext) child);
+            result = this.visitElement((XMLParser.ElementContext) child);
         } else if (child instanceof XMLParser.ChardataContext) {
-            return this.visitChardata((XMLParser.ChardataContext) child);
+            result = this.visitChardata((XMLParser.ChardataContext) child);
+        } else {
+            throw new IllegalStateException(
+                String.format("Unexpected child type: %s", child.getClass())
+            );
         }
-        throw new IllegalStateException(
-            String.format("Unexpected child type: %s", child.getClass())
-        );
+        return result;
     }
 
     /**

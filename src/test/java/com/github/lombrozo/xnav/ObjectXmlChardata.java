@@ -39,14 +39,14 @@ final class ObjectXmlChardata implements Xml {
     /**
      * Chardata.
      */
-    private final String text;
+    private final String characters;
 
     /**
      * Constructor.
      * @param chardata Text.
      */
     ObjectXmlChardata(final String chardata) {
-        this.text = chardata;
+        this.characters = chardata;
     }
 
     @Override
@@ -61,7 +61,7 @@ final class ObjectXmlChardata implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.text);
+        return Optional.of(this.characters);
     }
 
     @Override
@@ -76,7 +76,7 @@ final class ObjectXmlChardata implements Xml {
 
     @Override
     public Xml copy() {
-        return new ObjectXmlChardata(this.text);
+        return new ObjectXmlChardata(this.characters);
     }
 
     @Override
@@ -86,6 +86,6 @@ final class ObjectXmlChardata implements Xml {
 
     @Override
     public String toString() {
-        return this.text;
+        return this.characters;
     }
 }

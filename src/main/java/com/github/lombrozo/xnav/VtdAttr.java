@@ -44,7 +44,7 @@ final class VtdAttr implements Xml {
     /**
      * Attribute name.
      */
-    private final String name;
+    private final String attr;
 
     /**
      * VTD navigator.
@@ -59,7 +59,7 @@ final class VtdAttr implements Xml {
      * @param nav VTD navigator.
      */
     VtdAttr(final String name, final VTDNav nav) {
-        this.name = name;
+        this.attr = name;
         this.navigator = nav.cloneNav();
     }
 
@@ -86,7 +86,7 @@ final class VtdAttr implements Xml {
     public Optional<String> text() {
         try {
             final VTDNav nav = this.start();
-            return Optional.ofNullable(nav.toString(nav.getAttrVal(this.name)));
+            return Optional.ofNullable(nav.toString(nav.getAttrVal(this.attr)));
         } catch (final NavException exception) {
             throw new IllegalStateException("Error getting attribute text", exception);
         }
@@ -94,12 +94,12 @@ final class VtdAttr implements Xml {
 
     @Override
     public String name() {
-        return this.name;
+        return this.attr;
     }
 
     @Override
     public Xml copy() {
-        return new VtdAttr(this.name, this.navigator);
+        return new VtdAttr(this.attr, this.navigator);
     }
 
     @Override
@@ -109,7 +109,7 @@ final class VtdAttr implements Xml {
 
     @Override
     public String toString() {
-        return this.name + "='" + this.text().orElse("") + "'";
+        return this.attr + "='" + this.text().orElse("") + "'";
     }
 
     /**

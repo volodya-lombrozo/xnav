@@ -41,6 +41,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * @since 0.1
  */
+@SuppressWarnings("PMD.TooManyMethods")
 final class XmlTest {
 
     @ParameterizedTest(name = "{1}")
@@ -61,11 +62,11 @@ final class XmlTest {
     void convertsNodeToString(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Node is not converted to string by %s", label),
-            impl.apply("<doc><node>text</node></doc>")
-                .child("doc")
-                .child("node")
+            impl.apply("<paragraph><line>text</line></paragraph>")
+                .child("paragraph")
+                .child("line")
                 .toString(),
-            Matchers.equalTo("<node>text</node>")
+            Matchers.equalTo("<line>text</line>")
         );
     }
 
@@ -84,13 +85,13 @@ final class XmlTest {
     void retrievesChildren(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Children are not retrieved by '%s' implementation", label),
-            impl.apply("<doc><node>first</node><node>second</node></doc>")
+            impl.apply("<doc><char>first</char><char>second</char></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                impl.apply("<node>first</node>").child("node"),
-                impl.apply("<node>second</node>").child("node")
+                impl.apply("<char>first</char>").child("char"),
+                impl.apply("<char>second</char>").child("char")
             )
         );
     }
@@ -100,10 +101,10 @@ final class XmlTest {
     void retrievesAttribute(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Attribute is not retrieved by '%s' implementation", label),
-            impl.apply("<doc><node attribute='value'>text</node></doc>")
-                .child("doc")
-                .child("node")
-                .attribute("attribute")
+            impl.apply("<script><idea author='value'>text</idea></script>")
+                .child("script")
+                .child("idea")
+                .attribute("author")
                 .orElseThrow()
                 .text()
                 .get(),
@@ -114,11 +115,12 @@ final class XmlTest {
     @ParameterizedTest(name = "{1}")
     @MethodSource("all")
     void retrivesSameElementTwice(final Function<String, Xml> impl, final String label) {
-        final Xml doc = impl.apply("<doc><node attribute='value'>text</node></doc>").child("doc");
+        final Xml doc = impl.apply("<zoo><cage attribute='value'>monkey</cage></zoo>").child("zoo");
+        final String animal = "monkey";
         MatcherAssert.assertThat(
             String.format("We expect to retrieve the same element twice by '%s'", label),
-            doc.child("node"),
-            Matchers.equalTo(doc.child("node"))
+            doc.child(animal),
+            Matchers.equalTo(doc.child(animal))
         );
     }
 

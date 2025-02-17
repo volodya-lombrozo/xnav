@@ -87,7 +87,10 @@ final class VtdText implements OrderedXml {
         try {
             return Optional.of(this.navigator.toString(this.index));
         } catch (final NavException exception) {
-            throw new RuntimeException(exception);
+            throw new IllegalStateException(
+                String.format("Can't retrive text from '%s'", this),
+                exception
+            );
         }
     }
 

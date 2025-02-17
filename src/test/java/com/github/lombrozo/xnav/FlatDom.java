@@ -65,7 +65,7 @@ final class FlatDom implements FlatParser {
             final int id = this.index.incrementAndGet();
             switch (node.getNodeType()) {
                 case Node.DOCUMENT_NODE:
-                    xml.addElement(parent, id, FlatXmlModel.Type.DOCUMENT, "");
+                    xml.add(parent, id, FlatXmlModel.Type.DOCUMENT, "");
                     final NodeList nodes = node.getChildNodes();
                     for (int i = 0; i < nodes.getLength(); i++) {
                         this.parse(id, nodes.item(i), xml);
@@ -73,7 +73,7 @@ final class FlatDom implements FlatParser {
                     break;
                 case Node.ELEMENT_NODE:
                     final String name = node.getNodeName();
-                    xml.addElement(parent, id, FlatXmlModel.Type.ELEMENT, name);
+                    xml.add(parent, id, FlatXmlModel.Type.ELEMENT, name);
                     final NamedNodeMap attributes = node.getAttributes();
                     if (attributes != null) {
                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -84,7 +84,7 @@ final class FlatDom implements FlatParser {
                                 attr.getNodeName(),
                                 attr.getNodeValue()
                             );
-                            xml.addElement(
+                            xml.add(
                                 id,
                                 attrId,
                                 FlatXmlModel.Type.ATTRIBUTE,
@@ -93,7 +93,7 @@ final class FlatDom implements FlatParser {
                         }
                     }
                     final int contentId = this.index.incrementAndGet();
-                    xml.addElement(id, contentId, FlatXmlModel.Type.CONTENT, null);
+                    xml.add(id, contentId, FlatXmlModel.Type.CONTENT, null);
                     final NodeList children = node.getChildNodes();
                     for (int i = 0; i < children.getLength(); i++) {
                         this.parse(contentId, children.item(i), xml);
@@ -101,7 +101,7 @@ final class FlatDom implements FlatParser {
                     break;
                 case Node.TEXT_NODE:
                     final String value = node.getNodeValue();
-                    xml.addElement(parent, id, FlatXmlModel.Type.CHARDATA, value);
+                    xml.add(parent, id, FlatXmlModel.Type.CHARDATA, value);
                     break;
             }
         }

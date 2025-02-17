@@ -67,7 +67,7 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
 
     @Override
     public FlatXmlModel visitDocument(final XMLParser.DocumentContext ctx) {
-        this.xml.addElement(
+        this.xml.add(
             this.index.get(),
             this.index.incrementAndGet(),
             FlatXmlModel.Type.DOCUMENT,
@@ -81,7 +81,7 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
 
     @Override
     public FlatXmlModel visitElement(final XMLParser.ElementContext ctx) {
-        this.xml.addElement(
+        this.xml.add(
             this.stack.peek(),
             this.index.incrementAndGet(),
             FlatXmlModel.Type.ELEMENT,
@@ -95,7 +95,7 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
 
     @Override
     public FlatXmlModel visitAttribute(final XMLParser.AttributeContext ctx) {
-        this.xml.addElement(
+        this.xml.add(
             this.stack.peek(),
             this.index.incrementAndGet(),
             FlatXmlModel.Type.ATTRIBUTE,
@@ -106,7 +106,7 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
 
     @Override
     public FlatXmlModel visitContent(final XMLParser.ContentContext ctx) {
-        this.xml.addElement(
+        this.xml.add(
             this.stack.peek(),
             this.index.incrementAndGet(),
             FlatXmlModel.Type.CONTENT,
@@ -126,7 +126,7 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
     public FlatXmlModel visitChardata(final XMLParser.ChardataContext ctx) {
         final String text = ctx.getText();
         final int current = this.index.incrementAndGet();
-        this.xml.addElement(
+        this.xml.add(
             this.stack.peek(),
             current,
             FlatXmlModel.Type.CHARDATA,

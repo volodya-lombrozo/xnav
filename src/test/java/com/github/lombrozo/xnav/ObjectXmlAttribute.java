@@ -39,7 +39,7 @@ final class ObjectXmlAttribute implements Xml {
     /**
      * Attribute name.
      */
-    private final String name;
+    private final String attr;
 
     /**
      * Attribute value.
@@ -52,7 +52,7 @@ final class ObjectXmlAttribute implements Xml {
      * @param value Attribute value
      */
     ObjectXmlAttribute(final String name, final String value) {
-        this.name = name;
+        this.attr = name;
         this.value = value;
     }
 
@@ -78,12 +78,12 @@ final class ObjectXmlAttribute implements Xml {
 
     @Override
     public String name() {
-        return this.name;
+        return this.attr;
     }
 
     @Override
     public Xml copy() {
-        return new ObjectXmlAttribute(this.name, this.value);
+        return new ObjectXmlAttribute(this.attr, this.value);
     }
 
     @Override
@@ -93,6 +93,6 @@ final class ObjectXmlAttribute implements Xml {
 
     @Override
     public String toString() {
-        return String.format("%s=%s", this.name, this.value);
+        return String.format("%s=%s", this.attr, this.value);
     }
 }
