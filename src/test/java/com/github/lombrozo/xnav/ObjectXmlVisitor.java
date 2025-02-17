@@ -35,17 +35,17 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * Antlr visitor for XML parsing.
  * @since 0.1
  */
-public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
+final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitDocument(final XMLParser.DocumentContext ctx) {
         final XMLParser.ElementContext context = ctx.element();
-        return new EagerDocument(this.visitElement(context));
+        return new ObjectDocument(this.visitElement(context));
     }
 
     @Override
     public Xml visitElement(final XMLParser.ElementContext ctx) {
-        return new EagerElement(
+        return new ObjectElement(
             ctx.Name(0).getText(),
             ctx.attribute()
                 .stream()
@@ -59,7 +59,7 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
     public Xml visitAttribute(final XMLParser.AttributeContext ctx) {
         final TerminalNode name = ctx.Name();
         final TerminalNode value = ctx.STRING();
-        return new EagerAttribute(name.getText(), value.getText());
+        return new ObjectAttribute(name.getText(), value.getText());
     }
 
     @Override
@@ -75,11 +75,11 @@ public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
                 res.add(this.visitChardata((XMLParser.ChardataContext) child));
             }
         }
-        return new EagerContent(res);
+        return new ObjectContent(res);
     }
 
     @Override
     public Xml visitChardata(final XMLParser.ChardataContext ctx) {
-        return new EagerChardata(ctx.getText());
+        return new ObjectChardata(ctx.getText());
     }
 }

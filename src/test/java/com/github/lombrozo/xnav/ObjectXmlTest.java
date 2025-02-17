@@ -33,16 +33,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test for {@link EagerXml}.
+ * Test for {@link ObjectXml}.
  * @since 0.1
  */
-final class EagerXmlTest {
+final class ObjectXmlTest {
 
     @Test
     void convertsDocumentToString() {
         MatcherAssert.assertThat(
             "Document is not converted to string",
-            new EagerXml("<doc></doc>").toString(),
+            new ObjectXml("<doc></doc>").toString(),
             Matchers.equalTo(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
             )
@@ -53,7 +53,7 @@ final class EagerXmlTest {
     void convertsNodeToString() {
         MatcherAssert.assertThat(
             "Node is not converted to string",
-            new EagerXml("<doc><node>text</node></doc>").child("doc").child("node")
+            new ObjectXml("<doc><node>text</node></doc>").child("doc").child("node")
                 .toString(),
             Matchers.equalTo("<node>text</node>")
         );
@@ -63,7 +63,7 @@ final class EagerXmlTest {
     void failsToCreateCorruptedDocument() {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new EagerXml("<doc...").children(),
+            () -> new ObjectXml("<doc...").children(),
             "Corrupted document is not created, exception is expected"
         );
     }
@@ -72,14 +72,14 @@ final class EagerXmlTest {
     void retrievesChildren() {
         MatcherAssert.assertThat(
             "Children are not retrieved",
-            new EagerXml(
+            new ObjectXml(
                 "<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.hasItems(
-                new EagerXml("<node>first</node>").child("node"),
-                new EagerXml("<node>second</node>").child("node")
+                new ObjectXml("<node>first</node>").child("node"),
+                new ObjectXml("<node>second</node>").child("node")
             )
         );
     }
@@ -88,7 +88,7 @@ final class EagerXmlTest {
     void retrievesText() {
         MatcherAssert.assertThat(
             "Text is not retrieved",
-            new EagerXml("<doc><node>text</node></doc>")
+            new ObjectXml("<doc><node>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .text()
@@ -101,7 +101,7 @@ final class EagerXmlTest {
     void retrievesAttribute() {
         MatcherAssert.assertThat(
             "Attribute is not retrieved",
-            new EagerXml("<doc><node attribute='value'>text</node></doc>")
+            new ObjectXml("<doc><node attribute='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .attribute("attribute")
@@ -114,7 +114,7 @@ final class EagerXmlTest {
 
     @Test
     void copiesNode() {
-        final Xml xml = new EagerXml("<doc><node>text</node></doc>");
+        final Xml xml = new ObjectXml("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
             "Node is not copied",
             xml.copy().toString(),
@@ -126,7 +126,7 @@ final class EagerXmlTest {
     void retrievesTextFromSeveralNodes() {
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
-            new EagerXml(
+            new ObjectXml(
                 "<doc>",
                 "  <node>first </node>",
                 "  <node>second</node>",
@@ -140,7 +140,7 @@ final class EagerXmlTest {
     void retrievesDocName() {
         MatcherAssert.assertThat(
             "We expect to find the correct document name",
-            new EagerXml(
+            new ObjectXml(
                 "<o base='bytes'>",
                 "  <o base='bytes'>2-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>content</o></o>",
@@ -154,7 +154,7 @@ final class EagerXmlTest {
     void retrievesChildNames() {
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
-            new EagerXml(
+            new ObjectXml(
                 "<o base='child'>",
                 "  <o base='bytes'>3-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>4</o></o>",
@@ -168,7 +168,7 @@ final class EagerXmlTest {
     void retrievesObjects() {
         MatcherAssert.assertThat(
             "Objects are not retrieved",
-            new EagerXml(
+            new ObjectXml(
                 String.join(
                     "\n",
                     "<o>",
@@ -178,15 +178,15 @@ final class EagerXmlTest {
                 )
             ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
             Matchers.hasItems(
-                new EagerXml("<o color='red'>red</o>").child("o"),
-                new EagerXml("<o color='blue'>blue</o>").child("o")
+                new ObjectXml("<o color='red'>red</o>").child("o"),
+                new ObjectXml("<o color='blue'>blue</o>").child("o")
             )
         );
     }
 
     @Test
     void retrievesChildrenConcurrently() {
-        final Xml xml = new EagerXml(
+        final Xml xml = new ObjectXml(
             String.join(
                 "",
                 "<ob><o color='yellow'>yellow</o>",

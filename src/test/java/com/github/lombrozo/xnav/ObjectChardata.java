@@ -29,32 +29,29 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * Chardata as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class EagerAttribute implements Xml {
+final class ObjectChardata implements Xml {
 
     /**
-     * Attribute name.
+     * Chardata.
      */
-    private final String name;
-
-    /**
-     * Attribute value.
-     */
-    private final String value;
+    private final String text;
 
     /**
      * Constructor.
-     * @param name Attribute name
-     * @param value Attribute value
+     * @param chardata Text.
      */
-    EagerAttribute(final String name, final String value) {
-        this.name = name;
-        this.value = value;
+    ObjectChardata(final String chardata) {
+        this.text = chardata;
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Text node has no children.");
     }
 
     @Override
@@ -64,31 +61,31 @@ public final class EagerAttribute implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.value.substring(1, this.value.length() - 1));
+        return Optional.of(this.text);
     }
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Not supported.");
+        return Stream.empty();
     }
 
     @Override
     public String name() {
-        return this.name;
+        return "";
     }
 
     @Override
     public Xml copy() {
-        return new EagerAttribute(this.name, this.value);
+        return new ObjectChardata(this.text);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Text node can't be converted to a DOM node.");
     }
 
     @Override
     public String toString() {
-        return String.format("%s=\"%s\"", this.name, this.value);
+        return this.text;
     }
 }

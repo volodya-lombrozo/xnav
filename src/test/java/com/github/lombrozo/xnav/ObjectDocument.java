@@ -27,11 +27,14 @@ package com.github.lombrozo.xnav;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * Xml document as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-final class EagerDocument implements Xml {
+final class ObjectDocument implements Xml {
 
     /**
      * Element.
@@ -42,7 +45,7 @@ final class EagerDocument implements Xml {
      * Constructor.
      * @param element Root element.
      * */
-    EagerDocument(final Xml element) {
+    ObjectDocument(final Xml element) {
         this.element = element;
     }
 
@@ -79,7 +82,7 @@ final class EagerDocument implements Xml {
 
     @Override
     public Xml copy() {
-        return new EagerDocument(this.element.copy());
+        return new ObjectDocument(this.element.copy());
     }
 
     @Override

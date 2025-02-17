@@ -24,87 +24,87 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
+/**
+ * XML content as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class EagerXml implements Xml {
+public final class ObjectContent implements Xml {
 
-    private final Xml doc;
+    /**
+     * All elements.
+     */
+    private final List<Xml> all;
 
-    public EagerXml(final String... xml) {
-        this(String.join("", xml));
+    /**
+     * Constructor.
+     * @param all All elements
+     */
+    ObjectContent(final List<Xml> all) {
+        this.all = all;
     }
-
-    private EagerXml(final String xml) {
-        this(EagerXml.parse(xml));
-    }
-
-    private EagerXml(final Xml doc) {
-        this.doc = doc;
-    }
-
-    private static Xml parse(final String xml) {
-        try {
-            final EagerVisitor visitor = new EagerVisitor();
-            final XMLParser parser = new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            );
-            parser.setErrorHandler(new BailErrorStrategy());
-            return visitor.visitDocument(parser.document());
-        } catch (final ParseCancellationException exception) {
-            throw new IllegalArgumentException(
-                String.format("Invalid XML: %s", xml.substring(0, Math.min(100, xml.length()))),
-                exception
-            );
-        }
-    }
-
 
     @Override
     public Xml child(final String element) {
-        return this.doc.child(element);
-    }
-
-    @Override
-    public Optional<Xml> attribute(final String name) {
-        return this.doc.attribute(name);
-    }
-
-    @Override
-    public Optional<String> text() {
-        return this.doc.text();
+        return this.elements()
+            .filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElse(new Empty());
     }
 
     @Override
     public Stream<Xml> children() {
-        return this.doc.children();
+        return this.all.stream();
+    }
+
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        throw new UnsupportedOperationException("XML content does not have attributes.");
+    }
+
+    @Override
+    public Optional<String> text() {
+        return Optional.of(
+            this.all.stream()
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
+        );
     }
 
     @Override
     public String name() {
-        return this.doc.name();
+        throw new UnsupportedOperationException("XML content does not have a name.");
     }
 
     @Override
     public Xml copy() {
-        return this.doc.copy();
+        return new ObjectContent(this.all.stream().map(Xml::copy).collect(Collectors.toList()));
     }
 
     @Override
     public Node node() {
-        return this.doc.node();
+        throw new UnsupportedOperationException("XML content can't be converted to a node.");
     }
 
     @Override
     public String toString() {
-        return this.doc.toString();
+        return this.all.stream().map(Object::toString).collect(Collectors.joining());
+    }
+
+    /**
+     * Get all elements.
+     * @return All elements.
+     */
+    private Stream<Xml> elements() {
+        return this.all.stream().filter(ObjectElement.class::isInstance);
     }
 }

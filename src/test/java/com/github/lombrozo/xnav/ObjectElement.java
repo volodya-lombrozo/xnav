@@ -31,8 +31,12 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * Xml element as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-final class EagerElement implements Xml {
+final class ObjectElement implements Xml {
 
     /**
      * Element name.
@@ -54,7 +58,7 @@ final class EagerElement implements Xml {
      * @param attrs Element attributes
      * @param content Element content
      */
-    EagerElement(final String name, final List<Xml> attrs, final Xml content) {
+    ObjectElement(final String name, final List<Xml> attrs, final Xml content) {
         this.name = name;
         this.attributes = attrs;
         this.content = content;
@@ -89,7 +93,7 @@ final class EagerElement implements Xml {
 
     @Override
     public Xml copy() {
-        return new EagerElement(
+        return new ObjectElement(
             this.name,
             this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
             this.content.copy()

@@ -24,83 +24,75 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * Xml attribute as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class EagerContent implements Xml {
+public final class ObjectAttribute implements Xml {
 
     /**
-     * All elements.
+     * Attribute name.
      */
-    private final List<Xml> all;
+    private final String name;
+
+    /**
+     * Attribute value.
+     */
+    private final String value;
 
     /**
      * Constructor.
-     * @param all All elements
+     * @param name Attribute name
+     * @param value Attribute value
      */
-    EagerContent(final List<Xml> all) {
-        this.all = all;
+    ObjectAttribute(final String name, final String value) {
+        this.name = name;
+        this.value = value;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.elements()
-            .filter(e -> e.name().equals(element))
-            .findFirst()
-            .orElse(new Empty());
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.all.stream();
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("XML content does not have attributes.");
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(
-            this.all.stream()
-                .map(Xml::text)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.joining())
-        );
+        return Optional.of(this.value.substring(1, this.value.length() - 1));
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("XML content does not have a name.");
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        return new EagerContent(this.all.stream().map(Xml::copy).collect(Collectors.toList()));
+        return new ObjectAttribute(this.name, this.value);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("XML content can't be converted to a node.");
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public String toString() {
-        return this.all.stream().map(Object::toString).collect(Collectors.joining());
-    }
-
-    /**
-     * Get all elements.
-     * @return All elements.
-     */
-    private Stream<Xml> elements() {
-        return this.all.stream().filter(EagerElement.class::isInstance);
+        return String.format("%s=\"%s\"", this.name, this.value);
     }
 }

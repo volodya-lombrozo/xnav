@@ -27,65 +27,108 @@ package com.github.lombrozo.xnav;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
 /**
- * Chardata.
+ * Object representation of XML.
+ * Inefficient implementation, but simple and thread-safe.
  * @since 0.1
  */
 @EqualsAndHashCode
-final class EagerChardata implements Xml {
+public final class ObjectXml implements Xml {
 
     /**
-     * Chardata.
+     * XML document.
      */
-    private final String text;
+    private final Xml doc;
 
     /**
      * Constructor.
-     * @param chardata Text.
+     * @param xml XML string.
      */
-    EagerChardata(final String chardata) {
-        this.text = chardata;
+    ObjectXml(final String... xml) {
+        this(String.join("", xml));
     }
+
+    /**
+     * Constructor.
+     * @param xml XML string.
+     */
+    private ObjectXml(final String xml) {
+        this(ObjectXml.parse(xml));
+    }
+
+    /**
+     * Constructor.
+     * @param doc XML document.
+     */
+    private ObjectXml(final Xml doc) {
+        this.doc = doc;
+    }
+
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Text node has no children.");
+        return this.doc.child(element);
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        return this.doc.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.text);
+        return this.doc.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.empty();
+        return this.doc.children();
     }
 
     @Override
     public String name() {
-        return "";
+        return this.doc.name();
     }
 
     @Override
     public Xml copy() {
-        return new EagerChardata(this.text);
+        return this.doc.copy();
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Text node can't be converted to a DOM node.");
+        return this.doc.node();
     }
 
     @Override
     public String toString() {
-        return this.text;
+        return this.doc.toString();
+    }
+
+    /**
+     * Parse XML string.
+     * We use ANTLR to parse XML.
+     * @param xml XML string.
+     * @return XML document.
+     */
+    private static Xml parse(final String xml) {
+        try {
+            final XMLParser parser = new XMLParser(
+                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+            );
+            parser.setErrorHandler(new BailErrorStrategy());
+            return new ObjectXmlVisitor().visitDocument(parser.document());
+        } catch (final ParseCancellationException exception) {
+            throw new IllegalArgumentException(
+                String.format("Invalid XML: %s", xml.substring(0, Math.min(100, xml.length()))),
+                exception
+            );
+        }
     }
 }

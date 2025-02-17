@@ -37,9 +37,6 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.trans.XPathException;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.eolang.jeo.representation.BytecodeRepresentation;
 import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -121,7 +118,7 @@ public class XmlBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithEagerXml() {
-        final Xml xml = new EagerXml(XmlBenchmark.SIMPLE_XML);
+        final Xml xml = new ObjectXml(XmlBenchmark.SIMPLE_XML);
         assert new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
@@ -182,7 +179,7 @@ public class XmlBenchmark {
     @Group(XmlBenchmark.HUGE)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithEagerXml() {
-        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+        final Xml xml = new ObjectXml(XmlBenchmark.HUGE_XML);
         assert new Xpath(xml, "/program/@name")
             .nodes()
             .findFirst()
@@ -256,7 +253,7 @@ public class XmlBenchmark {
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
-        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+        final Xml xml = new ObjectXml(XmlBenchmark.HUGE_XML);
         for (int i = 0; i < 1000; i++) {
             final int request = random.nextInt(queries.length);
             String query = queries[request][0].toString();
@@ -362,7 +359,7 @@ public class XmlBenchmark {
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
-        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
+        final Xml xml = new ObjectXml(XmlBenchmark.HUGE_XML);
         AtomicInteger counter = new AtomicInteger(1000);
         final Random random = new Random();
         assertEq(
