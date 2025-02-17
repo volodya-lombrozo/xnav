@@ -43,24 +43,8 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 final class XmlTest {
 
-    private static Stream<Arguments> implementations() {
-        return Stream.of(
-            Arguments.of((Function<String, Xml>) VtdXml::new, "vtd-xml"),
-            Arguments.of((Function<String, Xml>) DomXml::new, "dom-xml"),
-            Arguments.of((Function<String, Xml>) ObjectXml::new, "antlr-object-xml"),
-            Arguments.of(
-                (Function<String, Xml>) xml -> new FlatXml(xml, new FlatDom()),
-                "flat-dom-xml"
-            ),
-            Arguments.of(
-                (Function<String, Xml>) xml -> new FlatXml(xml, new FlatAntlr()),
-                "flat-antlr-xml"
-            )
-        );
-    }
-
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void convertsDocumentToString(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Document is not converted to string by %s", label),
@@ -73,7 +57,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void convertsNodeToString(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Node is not converted to string by %s", label),
@@ -86,7 +70,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void failsToCreateCorruptedDocument(final Function<String, Xml> impl, final String label) {
         Assertions.assertThrows(
             IllegalArgumentException.class,
@@ -96,7 +80,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesChildren(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Children are not retrieved by '%s' implementation", label),
@@ -112,7 +96,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesAttribute(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Attribute is not retrieved by '%s' implementation", label),
@@ -128,7 +112,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrivesSameElementTwice(final Function<String, Xml> impl, final String label) {
         final Xml doc = impl.apply("<doc><node attribute='value'>text</node></doc>").child("doc");
         MatcherAssert.assertThat(
@@ -139,7 +123,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void copiesNode(final Function<String, Xml> impl, final String label) {
         final Xml xml = impl.apply("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
@@ -150,7 +134,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("mightBeConvertedToDom")
     void retrievesNode(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("We expect the node to be retrieved by '%s' implementation", label),
@@ -166,7 +150,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesTextFromSeveralNodes(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Text is not retrieved from several nodes by '%s' implementation", label),
@@ -184,7 +168,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesDocName(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format(
@@ -204,7 +188,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesChildNames(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             "We expect to find the correct child names",
@@ -222,7 +206,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void printsAllAttributes(final Function<String, Xml> impl, final String label) {
         final String same = "<colors base='bytes' color='red'></colors>";
         MatcherAssert.assertThat(
@@ -236,7 +220,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesObjects(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Objects are not retrieved by '%s' implementation", label),
@@ -257,7 +241,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesText(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("Retrieved text is not correct by '%s' implementation", label),
@@ -274,7 +258,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesSeveralChildren(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format(
@@ -292,7 +276,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesTextWithAllSpaces(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             "We expect to find the correct first text from nested XML",
@@ -310,7 +294,7 @@ final class XmlTest {
     }
 
     @ParameterizedTest(name = "{1}")
-    @MethodSource("implementations")
+    @MethodSource("all")
     void retrievesChildrenConcurrently(final Function<String, Xml> impl, final String label) {
         final Xml xml = impl.apply(
             String.join(
@@ -332,6 +316,38 @@ final class XmlTest {
                     .collect(Collectors.toList())
             ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
+        );
+    }
+
+    /**
+     * All implementations.
+     * @return All XML implementations as arguments.
+     */
+    private static Stream<Arguments> all() {
+        return Stream.of(
+            Arguments.of((Function<String, Xml>) VtdXml::new, "vtd-xml"),
+            Arguments.of((Function<String, Xml>) DomXml::new, "dom-xml"),
+            Arguments.of((Function<String, Xml>) ObjectXml::new, "antlr-object-xml"),
+            Arguments.of(
+                (Function<String, Xml>) xml -> new FlatXml(xml, new FlatDom()),
+                "flat-dom-xml"
+            ),
+            Arguments.of(
+                (Function<String, Xml>) xml -> new FlatXml(xml, new FlatAntlr()),
+                "flat-antlr-xml"
+            )
+        );
+    }
+
+    /**
+     * Might be converted to DOM.
+     * All implementations that might be converted to DOM.
+     * @return Arguments.
+     */
+    private static Stream<Arguments> mightBeConvertedToDom() {
+        return Stream.of(
+            Arguments.of((Function<String, Xml>) VtdXml::new, "vtd-xml"),
+            Arguments.of((Function<String, Xml>) DomXml::new, "dom-xml")
         );
     }
 
