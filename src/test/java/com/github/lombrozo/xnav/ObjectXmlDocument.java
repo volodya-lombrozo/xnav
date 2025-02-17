@@ -77,7 +77,7 @@ final class ObjectXmlDocument implements Xml {
 
     @Override
     public String name() {
-        return this.element.name();
+        return "#document";
     }
 
     @Override

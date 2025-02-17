@@ -101,7 +101,7 @@ final class VtdDoc implements Xml {
     @EqualsAndHashCode.Include
     @Override
     public String name() {
-        return this.root.name();
+        return "#document";
     }
 
     @Override

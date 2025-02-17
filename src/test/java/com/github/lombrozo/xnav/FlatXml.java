@@ -104,7 +104,7 @@ final class FlatXml implements Xml {
 
     @Override
     public String name() {
-        return this.doc.content(1);
+        return "#document";
     }
 
     @Override

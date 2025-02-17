@@ -199,7 +199,7 @@ final class XmlTest {
                     "</o>"
                 )
             ).name(),
-            Matchers.equalTo("o")
+            Matchers.equalTo("#document")
         );
     }
 
