@@ -24,37 +24,10 @@
 
 package com.github.lombrozo.xnav;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-
-/**
- * Flat model parsed by Antlr from XML.
- *
- * @since 0.1
- */
-final class FlatAntlr implements FlatParser {
-
-    private final FlatAntlrVisitor visitor;
-
+public interface FlatParser {
     /**
-     * Constructor.
+     * Parse XML to a flat model.
+     * @return Flat XML model.
      */
-    FlatAntlr() {
-        this.visitor = new FlatAntlrVisitor();
-    }
-
-    @Override
-    public FlatXmlModel parse(final String xml) {
-        try {
-            final XMLParser parser = new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            );
-            parser.setErrorHandler(new BailErrorStrategy());
-            return this.visitor.visitDocument(parser.document());
-        } catch (final ParseCancellationException e) {
-            throw new IllegalArgumentException("Invalid XML", e);
-        }
-    }
+    FlatXmlModel parse(final String xml);
 }

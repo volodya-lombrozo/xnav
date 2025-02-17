@@ -29,21 +29,20 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-final class FlatDom {
+final class FlatDom implements FlatParser {
 
-    private final Node node;
+    private final AtomicInteger index;
 
-    public FlatDom(final Node node) {
-        this.node = node;
+    public FlatDom() {
+        this.index = new AtomicInteger(-1);
     }
 
-    public FlatXmlModel parse() {
+    @Override
+    public FlatXmlModel parse(final String raw) {
         final FlatXmlModel xml = new FlatXmlModel();
-        parse(-1, this.node, xml);
+        this.parse(-1, new StringNode(raw).toNode(), xml);
         return xml;
     }
-
-    private final AtomicInteger index = new AtomicInteger(-1);
 
     private void parse(int parent, Node node, FlatXmlModel xml) {
         if (node == null) {

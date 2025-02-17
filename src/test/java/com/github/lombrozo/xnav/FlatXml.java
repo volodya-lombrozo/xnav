@@ -47,29 +47,27 @@ final class FlatXml implements Xml {
         this(String.join("", xml));
     }
 
+    FlatXml(final String xml, final FlatParser parser){
+        this(parser.parse(xml));
+    }
+
     /**
      * Constructor.
      * @param xml XML string.
      */
     private FlatXml(final String xml) {
-        this(new StringNode(xml).toNode());
+        this(xml, new FlatDom());
     }
 
-    /**
-     * Constructor.
-     * @param node XML node.
-     */
-    private FlatXml(final Node node) {
-        this(new FlatDom(node).parse());
-    }
 
     /**
      * Constructor.
      * @param doc Flat XML model.
      */
-    private FlatXml(final FlatXmlModel doc) {
+    FlatXml(final FlatXmlModel doc) {
         this.doc = doc;
     }
+
 
     @Override
     public Xml child(final String element) {
