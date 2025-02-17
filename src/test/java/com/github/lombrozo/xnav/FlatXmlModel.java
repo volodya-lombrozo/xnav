@@ -132,7 +132,7 @@ public final class FlatXmlModel {
         private final List<String> indexed = new ArrayList<>(0);
 
         int id(final String string) {
-            return this.map.computeIfAbsent(string, this::addStringContent);
+            return this.map.computeIfAbsent(string, this::add);
         }
 
         String string(int id) {
@@ -142,7 +142,7 @@ public final class FlatXmlModel {
             return this.indexed.get(id);
         }
 
-        private int addStringContent(final String k) {
+        private int add(final String k) {
             this.indexed.add(k);
             return this.indexed.size() - 1;
         }

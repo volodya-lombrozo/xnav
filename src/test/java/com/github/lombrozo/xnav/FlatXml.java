@@ -26,39 +26,49 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
-public final class FlatXml implements Xml {
+/**
+ * Flat representation of XML.
+ * @since 0.1
+ */
+final class FlatXml implements Xml {
 
+    /**
+     * Document flat model.
+     */
     private final FlatXmlModel doc;
 
+    /**
+     * Constructor.
+     * @param xml XML string.
+     */
     FlatXml(final String... xml) {
         this(String.join("", xml));
     }
 
+    /**
+     * Constructor.
+     * @param xml XML string.
+     */
     private FlatXml(final String xml) {
         this(new StringNode(xml).toNode());
     }
 
+    /**
+     * Constructor.
+     * @param node XML node.
+     */
     private FlatXml(final Node node) {
-        this.doc = new FlatDom(node).parse();
+        this(new FlatDom(node).parse());
     }
 
-    private static FlatXmlModel parseAntlr(final String xml) {
-        try {
-            final FlatAntlrVisitor visitor = new FlatAntlrVisitor();
-            final XMLParser p = new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            );
-            p.setErrorHandler(new BailErrorStrategy());
-            return visitor.visitDocument(p.document());
-        } catch (ParseCancellationException e) {
-            throw new IllegalArgumentException("Invalid XML", e);
-        }
+    /**
+     * Constructor.
+     * @param doc Flat XML model.
+     */
+    private FlatXml(final FlatXmlModel doc) {
+        this.doc = doc;
     }
 
     @Override
@@ -91,7 +101,7 @@ public final class FlatXml implements Xml {
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new FlatXml(this.doc);
     }
 
     @Override
@@ -101,6 +111,9 @@ public final class FlatXml implements Xml {
 
     @Override
     public String toString() {
-        return this.doc.toString();
+        return String.format(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
+            this.doc.child(1)
+        );
     }
 }

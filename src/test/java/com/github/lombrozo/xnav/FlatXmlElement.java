@@ -31,21 +31,33 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * Flat representation of XML element.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-@ToString
 public final class FlatXmlElement implements Xml {
 
+    /**
+     * Element id.
+     */
     @EqualsAndHashCode.Exclude
-    @ToString.Exclude
     private final int id;
 
-    @ToString.Exclude
+    /**
+     * Model of flat xml.
+     */
     @EqualsAndHashCode.Exclude
     private final FlatXmlModel xml;
 
-    FlatXmlElement(final int id, final FlatXmlModel xml) {
-        this.id = id;
-        this.xml = xml;
+    /**
+     * Constructor.
+     * @param identifier Element id.
+     * @param model Flat xml model.
+     */
+    FlatXmlElement(final int identifier, final FlatXmlModel model) {
+        this.id = identifier;
+        this.xml = model;
     }
 
     @Override
@@ -64,7 +76,6 @@ public final class FlatXmlElement implements Xml {
             .findFirst();
     }
 
-    @ToString.Include
     @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
@@ -83,7 +94,6 @@ public final class FlatXmlElement implements Xml {
             .flatMap(Xml::children);
     }
 
-    @ToString.Include
     @EqualsAndHashCode.Include
     @Override
     public String name() {
@@ -98,5 +108,15 @@ public final class FlatXmlElement implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "<%s>%s</%s>",
+            this.name(),
+            this.text().orElse(""),
+            this.name()
+        );
     }
 }

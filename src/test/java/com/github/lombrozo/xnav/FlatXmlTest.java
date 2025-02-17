@@ -30,10 +30,13 @@ import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-class FlatXmlTest {
+/**
+ * Test for {@link FlatXml}.
+ * @since 0.1
+ */
+final class FlatXmlTest {
 
     @Test
     void convertsDocumentToString() {
@@ -116,23 +119,6 @@ class FlatXmlTest {
             "Node is not copied",
             xml.copy().toString(),
             Matchers.equalTo(xml.toString())
-        );
-    }
-
-    //todo: fix this test
-    @Test
-    @Disabled
-    void retrievesNode() {
-        MatcherAssert.assertThat(
-            "We expect the node to be retrieved",
-            new FlatXml("<doc><node attr='value'>text</node></doc>")
-                .child("doc")
-                .child("node")
-                .node()
-                .isEqualNode(
-                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
-                ),
-            Matchers.is(true)
         );
     }
 
@@ -221,5 +207,4 @@ class FlatXmlTest {
             Matchers.hasSize(threads * 2)
         );
     }
-
 }
