@@ -26,22 +26,17 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
 public final class OptXml implements Xml {
 
-    final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
-
     private final OptimizedXml doc;
 
-    public OptXml(final String... xml) {
+    OptXml(final String... xml) {
         this(String.join("", xml));
     }
 
@@ -50,7 +45,7 @@ public final class OptXml implements Xml {
     }
 
     private OptXml(final Node node) {
-        this.doc = OptXml.parseDom(node);
+        this.doc = new OptimizedDom(node).parse();
     }
 
     private static OptimizedXml parseAntlr(final String xml) {
@@ -65,11 +60,6 @@ public final class OptXml implements Xml {
             throw new IllegalArgumentException("Invalid XML", e);
         }
     }
-
-    private static OptimizedXml parseDom(final Node node) {
-        return new OptimizedDom(node).parse();
-    }
-
 
     @Override
     public Xml child(final String element) {
@@ -96,7 +86,6 @@ public final class OptXml implements Xml {
 
     @Override
     public String name() {
-        //wtf? Why no 0?
         return this.doc.content(1);
     }
 
@@ -108,5 +97,10 @@ public final class OptXml implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public String toString() {
+        return this.doc.toString();
     }
 }

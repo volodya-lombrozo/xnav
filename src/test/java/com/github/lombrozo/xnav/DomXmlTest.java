@@ -43,7 +43,7 @@ final class DomXmlTest {
         MatcherAssert.assertThat(
             "Document is not converted to string",
             new DomXml("<doc></doc>").toString(),
-            Matchers.equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc/>")
+            Matchers.equalTo("<?xml version=\"1.0\" encoding=\"UTF-8\"?><doc/>")
         );
     }
 

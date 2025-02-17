@@ -31,14 +31,32 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * VTD text.
+ * Represents an XML text node.
+ * This class is thread-safe.
+ * @since 0.1
+ */
 @EqualsAndHashCode
 final class VtdText implements OrderedXml {
+
+    /**
+     * VTD navigator.
+     */
     @EqualsAndHashCode.Exclude
     private final VTDNav navigator;
 
+    /**
+     * Order number.
+     */
     @EqualsAndHashCode.Exclude
     private final int index;
 
+    /**
+     * Constructor.
+     * @param navigator VTD navigator.
+     * @param index Order number.
+     */
     VtdText(final VTDNav navigator, final int index) {
         this.navigator = navigator;
         this.index = index;

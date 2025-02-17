@@ -25,24 +25,14 @@
 package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Group;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 
-class EagerXmlTest {
+final class EagerXmlTest {
 
     @Test
     void convertsDocumentToString() {
@@ -128,23 +118,6 @@ class EagerXmlTest {
         );
     }
 
-    //todo: fix this test
-    @Test
-    @Disabled
-    void retrievesNode() {
-        MatcherAssert.assertThat(
-            "We expect the node to be retrieved",
-            new EagerXml("<doc><node attr='value'>text</node></doc>")
-                .child("doc")
-                .child("node")
-                .node()
-                .isEqualNode(
-                    new StringNode("<node attr='value'>text</node>").toNode().getFirstChild()
-                ),
-            Matchers.is(true)
-        );
-    }
-
     @Test
     void retrievesTextFromSeveralNodes() {
         MatcherAssert.assertThat(
@@ -158,7 +131,6 @@ class EagerXmlTest {
             Matchers.equalTo("  first   second")
         );
     }
-
 
     @Test
     void retrievesDocName() {
@@ -208,31 +180,6 @@ class EagerXmlTest {
         );
     }
 
-    //todo: remove me
-//    @Test
-//    void hugeManyWithEagerXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        Random random = new SecureRandom();
-//        for (int j = 0; j < 100; j++) {
-//            final Xml xml = new EagerXml(XmlBenchmark.generateXml());
-//            for (int i = 0; i < 100_000; i++) {
-//                final int request = random.nextInt(queries.length);
-//                String query = queries[request][0].toString();
-//                String expected = queries[request][1].toString();
-//                new Xpath(xml, query)
-//                    .nodes()
-//                    .findFirst()
-//                    .map(Xml::text).get().get().equals(expected);
-//            }
-//
-//        }
-//    }
-
-
     @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new EagerXml(
@@ -243,19 +190,15 @@ class EagerXmlTest {
             )
         );
         final int threads = 10;
-        final Together<List<Xml>> all = new Together<>(
-            threads,
-            indx -> {
-                return xml.child("ob").children()
-                    .flatMap(Xml::children)
-                    .collect(Collectors.toList());
-            }
-        );
         MatcherAssert.assertThat(
             "Children are not retrieved concurrently",
-            all.asList().stream().flatMap(List::stream).collect(Collectors.toList()),
+            new Together<>(
+                threads,
+                indx -> xml.child("ob").children()
+                    .flatMap(Xml::children)
+                    .collect(Collectors.toList())
+            ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
     }
-
 }

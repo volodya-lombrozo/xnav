@@ -24,22 +24,9 @@
 
 package com.github.lombrozo.xnav;
 
-import com.ximpleware.AutoPilot;
-import com.ximpleware.NavException;
-import com.ximpleware.ParseException;
-import com.ximpleware.VTDGen;
-import com.ximpleware.VTDNav;
 import com.yegor256.Together;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.UnbufferedTokenStream;
-import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -47,7 +34,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class OptXmlTest {
-
 
     @Test
     void convertsDocumentToString() {
@@ -214,86 +200,6 @@ class OptXmlTest {
         );
     }
 
-    //todo: remove me
-    @Test
-    @Disabled
-    void hugeManyWithLazyXml() {
-        Object[][] queries = {
-            {"/program/@name", "j$Collections"},
-            {"/program/objects/o/@base", "jeo.class"},
-            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-        };
-        Random random = new SecureRandom();
-        final String large = XmlBenchmark.generateXml();
-        for (int j = 0; j < 100; j++) {
-            final Xml xml = new OptXml(large);
-            for (int i = 0; i < 100_000; i++) {
-                final int request = random.nextInt(queries.length);
-                final String query = queries[request][0].toString();
-                final String expected = queries[request][1].toString();
-//                new Xpath(xml, query)
-//                    .nodes()
-//                    .findFirst()
-//                    .map(Xml::text).get().get().equals(expected);
-            }
-
-        }
-    }
-
-    @Test
-    void removeMeANTLR() {
-        final String large = XmlBenchmark.generateXml();
-        final long start = System.currentTimeMillis();
-        final XMLParser p = new XMLParser(
-            new UnbufferedTokenStream<>(new XMLLexer(CharStreams.fromString(large)))
-        );
-//        p.setBuildParseTree(false);
-        p.setErrorHandler(new BailErrorStrategy());
-        final CounterVisitor visitor = new CounterVisitor();
-        final Integer res = visitor.visitDocument(p.document());
-        final long end = System.currentTimeMillis();
-        System.out.println("ANTLR: " + (end - start) + " ms " + res);
-    }
-
-    @Test
-    void removeMeDom() {
-        final String large = XmlBenchmark.generateXml();
-        final long start = System.currentTimeMillis();
-        final int res = new DomParser(new StringNode(large).toNode()).numberElements();
-        MatcherAssert.assertThat(
-            "Number of elements is not correct",
-            res,
-            Matchers.equalTo(69120)
-        );
-        final long end = System.currentTimeMillis();
-        System.out.println("DOM: " + (end - start) + " ms " + res);
-
-    }
-
-    @Test
-    void removeMeVTD() throws ParseException, NavException {
-        final String large = XmlBenchmark.generateXml();
-        final byte[] bytes = large.getBytes(StandardCharsets.UTF_8);
-        final long start = System.currentTimeMillis();
-        final VTDGen vg = new VTDGen();
-        vg.setDoc(bytes);
-        vg.parse(false);
-        VTDNav vn = vg.getNav();
-        int elementCount = 0;
-        int attributeCount = 0;
-        // Select all elements
-        AutoPilot ap = new AutoPilot(vn);
-        ap.selectElement("*");
-        while (ap.iterate()) {
-            elementCount++;  // Count elements
-            attributeCount += vn.getAttrCount();  // Count attributes
-        }
-        int res = elementCount + attributeCount;
-        final long end = System.currentTimeMillis();
-        System.out.println("VTG: " + (end - start) + " ms " + res);
-    }
-
-
     @Test
     void retrievesChildrenConcurrently() {
         final Xml xml = new OptXml(
@@ -304,17 +210,14 @@ class OptXmlTest {
             )
         );
         final int threads = 10;
-        final Together<List<Xml>> all = new Together<>(
-            threads,
-            indx -> {
-                return xml.child("ob").children()
-                    .flatMap(Xml::children)
-                    .collect(Collectors.toList());
-            }
-        );
         MatcherAssert.assertThat(
             "Children are not retrieved concurrently",
-            all.asList().stream().flatMap(List::stream).collect(Collectors.toList()),
+            new Together<>(
+                threads,
+                indx -> xml.child("ob").children()
+                    .flatMap(Xml::children)
+                    .collect(Collectors.toList())
+            ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
         );
     }
