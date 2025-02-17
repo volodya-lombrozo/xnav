@@ -24,6 +24,15 @@
 
 package com.github.lombrozo.xnav;
 
+/**
+ * Ordered XML with position.
+ * @since 0.1
+ */
 interface OrderedXml extends Xml {
+    /**
+     * Index position of the XML node.
+     * DFS order.
+     * @return Position.
+     */
     int position();
 }
