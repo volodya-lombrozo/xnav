@@ -26,66 +26,81 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
-/**
- * Chardata as an object.
- * @since 0.1
- */
-@EqualsAndHashCode
-final class ObjectChardata implements Xml {
+public final class FlatXml implements Xml {
 
-    /**
-     * Chardata.
-     */
-    private final String text;
+    private final FlatXmlModel doc;
 
-    /**
-     * Constructor.
-     * @param chardata Text.
-     */
-    ObjectChardata(final String chardata) {
-        this.text = chardata;
+    FlatXml(final String... xml) {
+        this(String.join("", xml));
+    }
+
+    private FlatXml(final String xml) {
+        this(new StringNode(xml).toNode());
+    }
+
+    private FlatXml(final Node node) {
+        this.doc = new FlatDom(node).parse();
+    }
+
+    private static FlatXmlModel parseAntlr(final String xml) {
+        try {
+            final FlatAntlrVisitor visitor = new FlatAntlrVisitor();
+            final XMLParser p = new XMLParser(
+                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
+            );
+            p.setErrorHandler(new BailErrorStrategy());
+            return visitor.visitDocument(p.document());
+        } catch (ParseCancellationException e) {
+            throw new IllegalArgumentException("Invalid XML", e);
+        }
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Text node has no children.");
+        return this.children()
+            .filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElseThrow();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.text);
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.empty();
+        return this.doc.children(0);
     }
 
     @Override
     public String name() {
-        return "";
+        return this.doc.content(1);
     }
 
     @Override
     public Xml copy() {
-        return new ObjectChardata(this.text);
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Text node can't be converted to a DOM node.");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public String toString() {
-        return this.text;
+        return this.doc.toString();
     }
 }

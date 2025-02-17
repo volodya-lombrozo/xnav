@@ -26,39 +26,25 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
-/**
- * Xml attribute as an object.
- * @since 0.1
- */
-@EqualsAndHashCode
-public final class ObjectAttribute implements Xml {
+public final class FlatXmlChardata implements Xml {
+    private final int id;
+    private final FlatXmlModel xml;
 
-    /**
-     * Attribute name.
-     */
-    private final String name;
-
-    /**
-     * Attribute value.
-     */
-    private final String value;
-
-    /**
-     * Constructor.
-     * @param name Attribute name
-     * @param value Attribute value
-     */
-    ObjectAttribute(final String name, final String value) {
-        this.name = name;
-        this.value = value;
+    FlatXmlChardata(final int id, final FlatXmlModel xml) {
+        this.id = id;
+        this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return Stream.empty();
     }
 
     @Override
@@ -68,31 +54,21 @@ public final class ObjectAttribute implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.value.substring(1, this.value.length() - 1));
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Not supported.");
+        return Optional.of(this.xml.content(this.id));
     }
 
     @Override
     public String name() {
-        return this.name;
+        return "";
     }
 
     @Override
     public Xml copy() {
-        return new ObjectAttribute(this.name, this.value);
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s=\"%s\"", this.name, this.value);
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

@@ -24,33 +24,36 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * XML content as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-@ToString
-public final class OptCont implements Xml {
+final class ObjectXmlContent implements Xml {
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private final int id;
+    /**
+     * All elements.
+     */
+    private final List<Xml> all;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private final OptimizedXml xml;
-
-    public OptCont(final int id, final OptimizedXml xml) {
-        this.id = id;
-        this.xml = xml;
+    /**
+     * Constructor.
+     * @param all All elements
+     */
+    ObjectXmlContent(final List<Xml> all) {
+        this.all = all;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.children()
+        return this.elements()
             .filter(e -> e.name().equals(element))
             .findFirst()
             .orElse(new Empty());
@@ -58,20 +61,18 @@ public final class OptCont implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return this.xml.children(this.id);
+        return this.all.stream();
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
+        throw new UnsupportedOperationException("XML content does not have attributes.");
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
         return Optional.of(
-            this.xml.children(this.id)
+            this.all.stream()
                 .map(Xml::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -81,16 +82,29 @@ public final class OptCont implements Xml {
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("XML content does not have a name.");
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented");
+        return new ObjectXmlContent(this.all.stream().map(Xml::copy).collect(Collectors.toList()));
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("XML content can't be converted to a node.");
+    }
+
+    @Override
+    public String toString() {
+        return this.all.stream().map(Object::toString).collect(Collectors.joining());
+    }
+
+    /**
+     * Get all elements.
+     * @return All elements.
+     */
+    private Stream<Xml> elements() {
+        return this.all.stream().filter(ObjectXmlElement.class::isInstance);
     }
 }

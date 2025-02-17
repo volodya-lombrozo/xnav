@@ -24,87 +24,79 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-/**
- * XML content as an object.
- * @since 0.1
- */
 @EqualsAndHashCode
-public final class ObjectContent implements Xml {
+@ToString
+public final class FlatXmlElement implements Xml {
 
-    /**
-     * All elements.
-     */
-    private final List<Xml> all;
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private final int id;
 
-    /**
-     * Constructor.
-     * @param all All elements
-     */
-    ObjectContent(final List<Xml> all) {
-        this.all = all;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final FlatXmlModel xml;
+
+    FlatXmlElement(final int id, final FlatXmlModel xml) {
+        this.id = id;
+        this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.elements()
+        return this.children()
             .filter(e -> e.name().equals(element))
             .findFirst()
             .orElse(new Empty());
     }
 
     @Override
-    public Stream<Xml> children() {
-        return this.all.stream();
-    }
-
-    @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("XML content does not have attributes.");
+        return this.xml.children(this.id)
+            .filter(FlatXmlAttribute.class::isInstance)
+            .filter(e -> e.name().equals(name))
+            .findFirst();
     }
 
+    @ToString.Include
+    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
         return Optional.of(
-            this.all.stream()
+            this.children()
                 .map(Xml::text)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(Optional::stream)
                 .collect(Collectors.joining())
         );
     }
 
     @Override
+    public Stream<Xml> children() {
+        return this.xml.children(this.id)
+            .filter(e -> !(e instanceof FlatXmlAttribute))
+            .flatMap(Xml::children);
+    }
+
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
     public String name() {
-        throw new UnsupportedOperationException("XML content does not have a name.");
+        return this.xml.content(this.id);
     }
 
     @Override
     public Xml copy() {
-        return new ObjectContent(this.all.stream().map(Xml::copy).collect(Collectors.toList()));
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("XML content can't be converted to a node.");
-    }
-
-    @Override
-    public String toString() {
-        return this.all.stream().map(Object::toString).collect(Collectors.joining());
-    }
-
-    /**
-     * Get all elements.
-     * @return All elements.
-     */
-    private Stream<Xml> elements() {
-        return this.all.stream().filter(ObjectElement.class::isInstance);
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

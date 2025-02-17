@@ -25,76 +25,77 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-/**
- * Xml document as an object.
- * @since 0.1
- */
 @EqualsAndHashCode
-final class ObjectDocument implements Xml {
+@ToString
+final class FlatXmlContent implements Xml {
 
-    /**
-     * Element.
-     */
-    private final Xml element;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final int id;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final FlatXmlModel xml;
 
     /**
      * Constructor.
-     * @param element Root element.
-     * */
-    ObjectDocument(final Xml element) {
-        this.element = element;
+     * @param id Element id.
+     * @param xml Flat xml model.
+     */
+    FlatXmlContent(final int id, final FlatXmlModel xml) {
+        this.id = id;
+        this.xml = xml;
     }
 
     @Override
     public Xml child(final String element) {
-        final Xml result;
-        if (this.element.name().equals(element)) {
-            result = this.element;
-        } else {
-            result = new Empty();
-        }
-        return result;
-    }
-
-    @Override
-    public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
-    }
-
-    @Override
-    public Optional<String> text() {
-        return this.element.text();
+        return this.children()
+            .filter(e -> e.name().equals(element))
+            .findFirst()
+            .orElse(new Empty());
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        return this.xml.children(this.id);
+    }
+
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        return Optional.empty();
+    }
+
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
+    public Optional<String> text() {
+        return Optional.of(
+            this.xml.children(this.id)
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
+        );
     }
 
     @Override
     public String name() {
-        return this.element.name();
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Xml copy() {
-        return new ObjectDocument(this.element.copy());
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Document cannot be converted to a Node.");
-    }
-
-    @Override
-    public String toString() {
-        return String.format(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
-            this.element.toString()
-        );
+        throw new UnsupportedOperationException("Not implemented");
     }
 }

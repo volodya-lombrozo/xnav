@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
  * Antlr visitor for XML parsing.
@@ -38,13 +37,12 @@ final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitDocument(final XMLParser.DocumentContext ctx) {
-        final XMLParser.ElementContext context = ctx.element();
-        return new ObjectDocument(this.visitElement(context));
+        return new ObjectXmlDocument(this.visitElement(ctx.element()));
     }
 
     @Override
     public Xml visitElement(final XMLParser.ElementContext ctx) {
-        return new ObjectElement(
+        return new ObjectXmlElement(
             ctx.Name(0).getText(),
             ctx.attribute()
                 .stream()
@@ -56,14 +54,12 @@ final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitAttribute(final XMLParser.AttributeContext ctx) {
-        final TerminalNode name = ctx.Name();
-        final TerminalNode value = ctx.STRING();
-        return new ObjectAttribute(name.getText(), value.getText());
+        return new ObjectXmlAttribute(ctx.Name().getText(), ctx.STRING().getText());
     }
 
     @Override
     public Xml visitContent(final XMLParser.ContentContext ctx) {
-        return new ObjectContent(
+        return new ObjectXmlContent(
             Optional.ofNullable(ctx)
                 .map(content -> content.children)
                 .orElse(new ArrayList<>(0))
@@ -76,7 +72,7 @@ final class ObjectXmlVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitChardata(final XMLParser.ChardataContext ctx) {
-        return new ObjectChardata(ctx.getText());
+        return new ObjectXmlChardata(ctx.getText());
     }
 
     /**

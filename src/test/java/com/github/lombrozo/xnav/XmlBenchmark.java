@@ -106,7 +106,7 @@ public class XmlBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithOptXml() {
-        final Xml xml = new OptXml(XmlBenchmark.SIMPLE_XML);
+        final Xml xml = new FlatXml(XmlBenchmark.SIMPLE_XML);
         assert new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
@@ -167,7 +167,7 @@ public class XmlBenchmark {
     @Group(XmlBenchmark.HUGE)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithOptXml() {
-        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
+        final Xml xml = new FlatXml(XmlBenchmark.HUGE_XML);
         assert new Xpath(xml, "/program/@name")
             .nodes()
             .findFirst()
@@ -231,7 +231,7 @@ public class XmlBenchmark {
             {"/program/objects/o/@base", "jeo.class"},
             {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
         };
-        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
+        final Xml xml = new FlatXml(XmlBenchmark.HUGE_XML);
         for (int i = 0; i < 1000; i++) {
             final int request = random.nextInt(queries.length);
             String query = queries[request][0].toString();

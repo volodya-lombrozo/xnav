@@ -34,7 +34,7 @@ import lombok.ToString;
 
 @ToString
 @EqualsAndHashCode
-public final class OptimizedXml {
+public final class FlatXmlModel {
 
     private final Map<Integer, Integer> firstChild;
     private final Map<Integer, Integer> nextSibling;
@@ -42,7 +42,7 @@ public final class OptimizedXml {
     private final List<Type> type;
     private final StringPool pool;
 
-    public OptimizedXml() {
+    FlatXmlModel() {
         this.firstChild = new HashMap<>(0);
         this.nextSibling = new HashMap<>(0);
         this.tag = new ArrayList<>(0);
@@ -54,13 +54,13 @@ public final class OptimizedXml {
         switch (this.type.get(id)) {
             case DOCUMENT:
             case ELEMENT:
-                return new OptElem(id, this);
+                return new FlatXmlElement(id, this);
             case CONTENT:
-                return new OptCont(id, this);
+                return new FlatXmlContent(id, this);
             case CHARDATA:
-                return new OptChard(id, this);
+                return new FlatXmlChardata(id, this);
             case ATTRIBUTE:
-                return new OptAttr(id, this);
+                return new FlatXmlAttribute(id, this);
             default:
                 throw new IllegalStateException("Unknown type");
         }

@@ -29,30 +29,30 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public final class OptimizedDom {
+final class FlatDom {
 
     private final Node node;
 
-    public OptimizedDom(final Node node) {
+    public FlatDom(final Node node) {
         this.node = node;
     }
 
-    public OptimizedXml parse() {
-        final OptimizedXml xml = new OptimizedXml();
+    public FlatXmlModel parse() {
+        final FlatXmlModel xml = new FlatXmlModel();
         parse(-1, this.node, xml);
         return xml;
     }
 
     private final AtomicInteger index = new AtomicInteger(-1);
 
-    private void parse(int parent, Node node, OptimizedXml xml) {
+    private void parse(int parent, Node node, FlatXmlModel xml) {
         if (node == null) {
             return;
         }
         final int id = this.index.incrementAndGet();
         switch (node.getNodeType()) {
             case Node.DOCUMENT_NODE:
-                xml.addElement(parent, id, OptimizedXml.Type.DOCUMENT, "");
+                xml.addElement(parent, id, FlatXmlModel.Type.DOCUMENT, "");
                 final NodeList nodes = node.getChildNodes();
                 for (int i = 0; i < nodes.getLength(); i++) {
                     this.parse(id, nodes.item(i), xml);
@@ -60,7 +60,7 @@ public final class OptimizedDom {
                 break;
             case Node.ELEMENT_NODE:
                 final String name = node.getNodeName();
-                xml.addElement(parent, id, OptimizedXml.Type.ELEMENT, name);
+                xml.addElement(parent, id, FlatXmlModel.Type.ELEMENT, name);
                 final NamedNodeMap attributes = node.getAttributes();
                 if (attributes != null) {
                     for (int i = 0; i < attributes.getLength(); i++) {
@@ -70,13 +70,13 @@ public final class OptimizedDom {
                         xml.addElement(
                             id,
                             attrId,
-                            OptimizedXml.Type.ATTRIBUTE,
+                            FlatXmlModel.Type.ATTRIBUTE,
                             text
                         );
                     }
                 }
                 final int contentId = this.index.incrementAndGet();
-                xml.addElement(id, contentId, OptimizedXml.Type.CONTENT, null);
+                xml.addElement(id, contentId, FlatXmlModel.Type.CONTENT, null);
                 final NodeList children = node.getChildNodes();
                 for (int i = 0; i < children.getLength(); i++) {
                     this.parse(contentId, children.item(i), xml);
@@ -84,7 +84,7 @@ public final class OptimizedDom {
                 break;
             case Node.TEXT_NODE:
                 final String value = node.getNodeValue();
-                xml.addElement(parent, id, OptimizedXml.Type.CHARDATA, value);
+                xml.addElement(parent, id, FlatXmlModel.Type.CHARDATA, value);
                 break;
         }
 

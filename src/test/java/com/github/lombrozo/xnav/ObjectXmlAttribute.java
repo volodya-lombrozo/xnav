@@ -24,66 +24,56 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
 /**
- * Xml element as an object.
+ * Xml attribute as an object.
  * @since 0.1
  */
 @EqualsAndHashCode
-final class ObjectElement implements Xml {
+final class ObjectXmlAttribute implements Xml {
 
     /**
-     * Element name.
+     * Attribute name.
      */
     private final String name;
-    /**
-     * Element attributes.
-     */
-    private final List<Xml> attributes;
 
     /**
-     * Element content.
+     * Attribute value.
      */
-    private final Xml content;
+    private final String value;
 
     /**
      * Constructor.
-     * @param name Element name
-     * @param attrs Element attributes
-     * @param content Element content
+     * @param name Attribute name
+     * @param value Attribute value
      */
-    ObjectElement(final String name, final List<Xml> attrs, final Xml content) {
+    ObjectXmlAttribute(final String name, final String value) {
         this.name = name;
-        this.attributes = attrs;
-        this.content = content;
+        this.value = value;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.content.child(element);
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.content.children();
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.attributes.stream()
-            .filter(attr -> attr.name().equals(name))
-            .findFirst();
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return this.content.text();
+        return Optional.of(this.value.substring(1, this.value.length() - 1));
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
@@ -93,28 +83,16 @@ final class ObjectElement implements Xml {
 
     @Override
     public Xml copy() {
-        return new ObjectElement(
-            this.name,
-            this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
-            this.content.copy()
-        );
+        return new ObjectXmlAttribute(this.name, this.value);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public String toString() {
-        return String.format(
-            "<%s%s>%s</%s>",
-            this.name,
-            this.attributes.stream()
-                .map(Xml::toString)
-                .collect(Collectors.joining(" ")),
-            this.content,
-            this.name
-        );
+        return String.format("%s=\"%s\"", this.name, this.value);
     }
 }

@@ -24,61 +24,80 @@
 
 package com.github.lombrozo.xnav;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
+/**
+ * Xml element as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-public final class OptAttr implements Xml {
+final class ObjectXmlElement implements Xml {
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private final int id;
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private final OptimizedXml xml;
+    /**
+     * Element name.
+     */
+    private final String name;
+    /**
+     * Element attributes.
+     */
+    private final List<Xml> attributes;
 
-    public OptAttr(final int id, final OptimizedXml xml) {
-        this.id = id;
-        this.xml = xml;
+    /**
+     * Element content.
+     */
+    private final Xml content;
+
+    /**
+     * Constructor.
+     * @param name Element name
+     * @param attrs Element attributes
+     * @param content Element content
+     */
+    ObjectXmlElement(final String name, final List<Xml> attrs, final Xml content) {
+        this.name = name;
+        this.attributes = attrs;
+        this.content = content;
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
-    }
-
-    @ToString.Include
-    @EqualsAndHashCode.Include
-    @Override
-    public String name() {
-        return this.full().split("=", 2)[0];
-    }
-
-    @ToString.Include
-    @EqualsAndHashCode.Include
-    @Override
-    public Optional<String> text() {
-        final String s = this.full().split("=", 2)[1];
-        return Optional.of(s.substring(1, s.length() - 1));
+        return this.content.child(element);
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.empty();
+        return this.content.children();
+    }
+
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        return this.attributes.stream()
+            .filter(attr -> attr.name().equals(name))
+            .findFirst();
+    }
+
+    @Override
+    public Optional<String> text() {
+        return this.content.text();
+    }
+
+    @Override
+    public String name() {
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented");
+        return new ObjectXmlElement(
+            this.name,
+            this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
+            this.content.copy()
+        );
     }
 
     @Override
@@ -86,7 +105,16 @@ public final class OptAttr implements Xml {
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    private String full() {
-        return this.xml.content(this.id);
+    @Override
+    public String toString() {
+        return String.format(
+            "<%s%s>%s</%s>",
+            this.name,
+            this.attributes.stream()
+                .map(Xml::toString)
+                .collect(Collectors.joining(" ")),
+            this.content,
+            this.name
+        );
     }
 }

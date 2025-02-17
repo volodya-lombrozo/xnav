@@ -28,26 +28,47 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
+/**
+ * Antlr visitor to build a flat XML model.
+ * @since 0.1
+ */
+final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
 
+    /**
+     * Index of the current element.
+     */
     private final AtomicInteger index = new AtomicInteger(-1);
+    /**
+     * Stack of the current element.
+     */
     private final Deque<Integer> stack = new ArrayDeque<>(0);
-    private OptimizedXml xml;
 
-    public OptimizedVisitor() {
-        this(new OptimizedXml());
+    /**
+     * Flat XML model.
+     */
+    private FlatXmlModel xml;
+
+    /**
+     * Constructor.
+     */
+    FlatAntlrVisitor() {
+        this(new FlatXmlModel());
     }
 
-    public OptimizedVisitor(final OptimizedXml xml) {
+    /**
+     * Constructor.
+     * @param xml Flat XML model to fill.
+     */
+    private FlatAntlrVisitor(final FlatXmlModel xml) {
         this.xml = xml;
     }
 
     @Override
-    public OptimizedXml visitDocument(final XMLParser.DocumentContext ctx) {
+    public FlatXmlModel visitDocument(final XMLParser.DocumentContext ctx) {
         this.xml.addElement(
             this.index.get(),
             this.index.incrementAndGet(),
-            OptimizedXml.Type.DOCUMENT,
+            FlatXmlModel.Type.DOCUMENT,
             ""
         );
         this.stack.push(this.index.get());
@@ -57,11 +78,11 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
     }
 
     @Override
-    public OptimizedXml visitElement(final XMLParser.ElementContext ctx) {
+    public FlatXmlModel visitElement(final XMLParser.ElementContext ctx) {
         this.xml.addElement(
             this.stack.peek(),
             this.index.incrementAndGet(),
-            OptimizedXml.Type.ELEMENT,
+            FlatXmlModel.Type.ELEMENT,
             ctx.Name(0).getText()
         );
         this.stack.push(this.index.get());
@@ -71,22 +92,22 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
     }
 
     @Override
-    public OptimizedXml visitAttribute(final XMLParser.AttributeContext ctx) {
+    public FlatXmlModel visitAttribute(final XMLParser.AttributeContext ctx) {
         this.xml.addElement(
             this.stack.peek(),
             this.index.incrementAndGet(),
-            OptimizedXml.Type.ATTRIBUTE,
+            FlatXmlModel.Type.ATTRIBUTE,
             ctx.getText()
         );
         return this.xml;
     }
 
     @Override
-    public OptimizedXml visitContent(final XMLParser.ContentContext ctx) {
+    public FlatXmlModel visitContent(final XMLParser.ContentContext ctx) {
         this.xml.addElement(
             this.stack.peek(),
             this.index.incrementAndGet(),
-            OptimizedXml.Type.CONTENT,
+            FlatXmlModel.Type.CONTENT,
             null
         );
         this.stack.push(this.index.get());
@@ -96,13 +117,13 @@ public final class OptimizedVisitor extends XMLParserBaseVisitor<OptimizedXml> {
     }
 
     @Override
-    public OptimizedXml visitChardata(final XMLParser.ChardataContext ctx) {
+    public FlatXmlModel visitChardata(final XMLParser.ChardataContext ctx) {
         final String text = ctx.getText();
         final int current = this.index.incrementAndGet();
         this.xml.addElement(
             this.stack.peek(),
             current,
-            OptimizedXml.Type.CHARDATA,
+            FlatXmlModel.Type.CHARDATA,
             text
         );
         return this.xml;

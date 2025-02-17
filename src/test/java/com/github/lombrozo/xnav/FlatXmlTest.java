@@ -33,13 +33,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-class OptXmlTest {
+class FlatXmlTest {
 
     @Test
     void convertsDocumentToString() {
         MatcherAssert.assertThat(
             "Document is not converted to string",
-            new OptXml("<doc></doc>").toString(),
+            new FlatXml("<doc></doc>").toString(),
             Matchers.equalTo(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><doc></doc>"
             )
@@ -50,7 +50,7 @@ class OptXmlTest {
     void convertsNodeToString() {
         MatcherAssert.assertThat(
             "Node is not converted to string",
-            new OptXml("<doc><node>text</node></doc>").child("doc").child("node")
+            new FlatXml("<doc><node>text</node></doc>").child("doc").child("node")
                 .toString(),
             Matchers.equalTo("<node>text</node>")
         );
@@ -60,7 +60,7 @@ class OptXmlTest {
     void failsToCreateCorruptedDocument() {
         Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> new OptXml("<doc...").children(),
+            () -> new FlatXml("<doc...").children(),
             "Corrupted document is not created, exception is expected"
         );
     }
@@ -69,14 +69,14 @@ class OptXmlTest {
     void retrievesChildren() {
         MatcherAssert.assertThat(
             "Children are not retrieved",
-            new OptXml(
+            new FlatXml(
                 "<doc><node>first</node><node>second</node></doc>")
                 .child("doc")
                 .children()
                 .collect(Collectors.toList()),
             Matchers.contains(
-                new OptXml("<node>first</node>").child("node"),
-                new OptXml("<node>second</node>").child("node")
+                new FlatXml("<node>first</node>").child("node"),
+                new FlatXml("<node>second</node>").child("node")
             )
         );
     }
@@ -85,7 +85,7 @@ class OptXmlTest {
     void retrievesText() {
         MatcherAssert.assertThat(
             "Text is not retrieved",
-            new OptXml("<doc><node>text</node></doc>")
+            new FlatXml("<doc><node>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .text()
@@ -98,7 +98,7 @@ class OptXmlTest {
     void retrievesAttribute() {
         MatcherAssert.assertThat(
             "Attribute is not retrieved",
-            new OptXml("<doc><node attribute='value'>text</node></doc>")
+            new FlatXml("<doc><node attribute='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .attribute("attribute")
@@ -111,7 +111,7 @@ class OptXmlTest {
 
     @Test
     void copiesNode() {
-        final Xml xml = new OptXml("<doc><node>text</node></doc>");
+        final Xml xml = new FlatXml("<doc><node>text</node></doc>");
         MatcherAssert.assertThat(
             "Node is not copied",
             xml.copy().toString(),
@@ -125,7 +125,7 @@ class OptXmlTest {
     void retrievesNode() {
         MatcherAssert.assertThat(
             "We expect the node to be retrieved",
-            new OptXml("<doc><node attr='value'>text</node></doc>")
+            new FlatXml("<doc><node attr='value'>text</node></doc>")
                 .child("doc")
                 .child("node")
                 .node()
@@ -140,7 +140,7 @@ class OptXmlTest {
     void retrievesTextFromSeveralNodes() {
         MatcherAssert.assertThat(
             "Text is not retrieved from several nodes",
-            new OptXml(
+            new FlatXml(
                 "<doc>",
                 "  <node>first </node>",
                 "  <node>second</node>",
@@ -154,7 +154,7 @@ class OptXmlTest {
     void retrievesDocName() {
         MatcherAssert.assertThat(
             "We expect to find the correct document name",
-            new OptXml(
+            new FlatXml(
                 "<o base='bytes'>",
                 "  <o base='bytes'>2-bytes-</o>",
                 "  <o base='bytes'><o base='bytes'>content</o></o>",
@@ -166,7 +166,7 @@ class OptXmlTest {
 
     @Test
     void retrievesChildNames() {
-        final OptXml xml = new OptXml(
+        final FlatXml xml = new FlatXml(
             "<o base='child'>",
             "  <o base='bytes'>3-bytes-</o>",
             "  <o base='bytes'><o base='bytes'>4</o></o>",
@@ -184,7 +184,7 @@ class OptXmlTest {
     void retrievesObjects() {
         MatcherAssert.assertThat(
             "Objects are not retrieved",
-            new OptXml(
+            new FlatXml(
                 String.join(
                     "\n",
                     "<o>",
@@ -194,15 +194,15 @@ class OptXmlTest {
                 )
             ).child("o").children().filter(Filter.withName("o")).collect(Collectors.toList()),
             Matchers.hasItems(
-                new OptXml("<o color='red'>red</o>").child("o"),
-                new OptXml("<o color='blue'>blue</o>").child("o")
+                new FlatXml("<o color='red'>red</o>").child("o"),
+                new FlatXml("<o color='blue'>blue</o>").child("o")
             )
         );
     }
 
     @Test
     void retrievesChildrenConcurrently() {
-        final Xml xml = new OptXml(
+        final Xml xml = new FlatXml(
             String.join(
                 "",
                 "<ob><o color='yellow'>yellow</o>",

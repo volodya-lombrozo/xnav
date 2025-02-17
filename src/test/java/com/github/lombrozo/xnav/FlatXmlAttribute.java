@@ -26,13 +26,22 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.w3c.dom.Node;
 
-public final class OptChard implements Xml {
-    private final int id;
-    private final OptimizedXml xml;
+@ToString
+@EqualsAndHashCode
+final class FlatXmlAttribute implements Xml {
 
-    public OptChard(final int id, final OptimizedXml xml) {
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final int id;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private final FlatXmlModel xml;
+
+    public FlatXmlAttribute(final int id, final FlatXmlModel xml) {
         this.id = id;
         this.xml = xml;
     }
@@ -43,23 +52,28 @@ public final class OptChard implements Xml {
     }
 
     @Override
-    public Stream<Xml> children() {
-        return Stream.empty();
-    }
-
-    @Override
     public Optional<Xml> attribute(final String name) {
         return Optional.empty();
     }
 
+    @ToString.Include
+    @EqualsAndHashCode.Include
+    @Override
+    public String name() {
+        return this.full().split("=", 2)[0];
+    }
+
+    @ToString.Include
+    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
-        return Optional.of(this.xml.content(this.id));
+        final String s = this.full().split("=", 2)[1];
+        return Optional.of(s.substring(1, s.length() - 1));
     }
 
     @Override
-    public String name() {
-        return "";
+    public Stream<Xml> children() {
+        return Stream.empty();
     }
 
     @Override
@@ -70,5 +84,9 @@ public final class OptChard implements Xml {
     @Override
     public Node node() {
         throw new UnsupportedOperationException("Not implemented");
+    }
+
+    private String full() {
+        return this.xml.content(this.id);
     }
 }

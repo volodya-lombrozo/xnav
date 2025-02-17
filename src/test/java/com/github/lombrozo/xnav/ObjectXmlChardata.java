@@ -25,78 +25,67 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * Chardata as an object.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-@ToString
-public final class OptElem implements Xml {
+final class ObjectXmlChardata implements Xml {
 
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    private final int id;
+    /**
+     * Chardata.
+     */
+    private final String text;
 
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private final OptimizedXml xml;
-
-    public OptElem(final int id, final OptimizedXml xml) {
-        this.id = id;
-        this.xml = xml;
+    /**
+     * Constructor.
+     * @param chardata Text.
+     */
+    ObjectXmlChardata(final String chardata) {
+        this.text = chardata;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.children()
-            .filter(e -> e.name().equals(element))
-            .findFirst()
-            .orElse(new Empty());
+        throw new UnsupportedOperationException("Text node has no children.");
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.xml.children(this.id)
-            .filter(OptAttr.class::isInstance)
-            .filter(e -> e.name().equals(name))
-            .findFirst();
+        return Optional.empty();
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
-        return Optional.of(
-            this.children()
-                .map(Xml::text)
-                .flatMap(Optional::stream)
-                .collect(Collectors.joining())
-        );
+        return Optional.of(this.text);
     }
 
     @Override
     public Stream<Xml> children() {
-        return this.xml.children(this.id)
-            .filter(e -> !(e instanceof OptAttr))
-            .flatMap(Xml::children);
+        return Stream.empty();
     }
 
-    @ToString.Include
-    @EqualsAndHashCode.Include
     @Override
     public String name() {
-        return this.xml.content(this.id);
+        return "";
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new ObjectXmlChardata(this.text);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Text node can't be converted to a DOM node.");
+    }
+
+    @Override
+    public String toString() {
+        return this.text;
     }
 }

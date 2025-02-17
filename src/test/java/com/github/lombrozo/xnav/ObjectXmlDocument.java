@@ -26,81 +26,75 @@ package com.github.lombrozo.xnav;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
+import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
-public final class OptXml implements Xml {
+/**
+ * Xml document as an object.
+ * @since 0.1
+ */
+@EqualsAndHashCode
+final class ObjectXmlDocument implements Xml {
 
-    private final OptimizedXml doc;
+    /**
+     * Element.
+     */
+    private final Xml element;
 
-    OptXml(final String... xml) {
-        this(String.join("", xml));
-    }
-
-    private OptXml(final String xml) {
-        this(new StringNode(xml).toNode());
-    }
-
-    private OptXml(final Node node) {
-        this.doc = new OptimizedDom(node).parse();
-    }
-
-    private static OptimizedXml parseAntlr(final String xml) {
-        try {
-            final OptimizedVisitor visitor = new OptimizedVisitor();
-            final XMLParser p = new XMLParser(
-                new CommonTokenStream(new XMLLexer(CharStreams.fromString(xml)))
-            );
-            p.setErrorHandler(new BailErrorStrategy());
-            return visitor.visitDocument(p.document());
-        } catch (ParseCancellationException e) {
-            throw new IllegalArgumentException("Invalid XML", e);
-        }
+    /**
+     * Constructor.
+     * @param element Root element.
+     * */
+    ObjectXmlDocument(final Xml element) {
+        this.element = element;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.children()
-            .filter(e -> e.name().equals(element))
-            .findFirst()
-            .orElseThrow();
+        final Xml result;
+        if (this.element.name().equals(element)) {
+            result = this.element;
+        } else {
+            result = new Empty();
+        }
+        return result;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return this.element.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return this.element.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return this.doc.children(0);
+        return Stream.of(this.element);
     }
 
     @Override
     public String name() {
-        return this.doc.content(1);
+        return this.element.name();
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new ObjectXmlDocument(this.element.copy());
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        throw new UnsupportedOperationException("Document cannot be converted to a Node.");
     }
 
     @Override
     public String toString() {
-        return this.doc.toString();
+        return String.format(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
+            this.element.toString()
+        );
     }
 }
