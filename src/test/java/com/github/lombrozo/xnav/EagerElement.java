@@ -24,59 +24,93 @@
 
 package com.github.lombrozo.xnav;
 
-import com.github.lombrozo.xnav.Xml;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-public final class EagerChard implements Xml {
+final class EagerElement implements Xml {
 
-    private final String chardata;
+    /**
+     * Element name.
+     */
+    private final String name;
+    /**
+     * Element attributes.
+     */
+    private final List<Xml> attributes;
 
-    public EagerChard(final String chardata) {
-        this.chardata = chardata;
+    /**
+     * Element content.
+     */
+    private final Xml content;
+
+    /**
+     * Constructor.
+     * @param name Element name
+     * @param attrs Element attributes
+     * @param content Element content
+     */
+    EagerElement(final String name, final List<Xml> attrs, final Xml content) {
+        this.name = name;
+        this.attributes = attrs;
+        this.content = content;
     }
 
     @Override
     public Xml child(final String element) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public Optional<Xml> attribute(final String name) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<String> text() {
-        return Optional.of(this.chardata);
+        return this.content.child(element);
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.empty();
+        return this.content.children();
+    }
+
+    @Override
+    public Optional<Xml> attribute(final String name) {
+        return this.attributes.stream()
+            .filter(attr -> attr.name().equals(name))
+            .findFirst();
+    }
+
+    @Override
+    public Optional<String> text() {
+        return this.content.text();
     }
 
     @Override
     public String name() {
-        return "";
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not supported.");
+        return new EagerElement(
+            this.name,
+            this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
+            this.content.copy()
+        );
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
     public String toString() {
-        return this.chardata;
+        return String.format(
+            "<%s%s>%s</%s>",
+            this.name,
+            this.attributes.stream()
+                .map(Xml::toString)
+                .collect(Collectors.joining(" ")),
+            this.content,
+            this.name
+        );
     }
 }

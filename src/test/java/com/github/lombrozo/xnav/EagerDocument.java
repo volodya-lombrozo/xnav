@@ -24,67 +24,74 @@
 
 package com.github.lombrozo.xnav;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.antlr.v4.runtime.misc.Interval;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-@ToString
-public final class EagerElem implements Xml {
+final class EagerDocument implements Xml {
 
-    private final String name;
-    private final List<Xml> attributes;
-    private final Xml content;
+    /**
+     * Element.
+     */
+    private final Xml element;
 
-    public EagerElem(final String name, final List<Xml> attrs, final Xml content) {
-        this.name = name;
-        this.attributes = attrs;
-        this.content = content;
+    /**
+     * Constructor.
+     * @param element Root element.
+     * */
+    EagerDocument(final Xml element) {
+        this.element = element;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.content.child(element);
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.content.children();
+        final Xml result;
+        if (this.element.name().equals(element)) {
+            result = this.element;
+        } else {
+            result = new Empty();
+        }
+        return result;
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.attributes.stream()
-            .filter(attr -> attr.name().equals(name))
-            .findFirst();
+        return this.element.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        return this.content.text();
+        return this.element.text();
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return Stream.of(this.element);
     }
 
     @Override
     public String name() {
-        return this.name;
+        return this.element.name();
     }
 
     @Override
     public Xml copy() {
-        return new EagerElem(
-            this.name,
-            this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
-            this.content.copy()
-        );
+        return new EagerDocument(this.element.copy());
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Document cannot be converted to a Node.");
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>%s",
+            this.element.toString()
+        );
     }
 }

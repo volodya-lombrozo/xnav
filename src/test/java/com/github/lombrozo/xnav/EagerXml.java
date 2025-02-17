@@ -35,7 +35,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-@ToString
 public final class EagerXml implements Xml {
 
     private final Xml doc;
@@ -102,5 +101,10 @@ public final class EagerXml implements Xml {
     @Override
     public Node node() {
         return this.doc.node();
+    }
+
+    @Override
+    public String toString() {
+        return this.doc.toString();
     }
 }

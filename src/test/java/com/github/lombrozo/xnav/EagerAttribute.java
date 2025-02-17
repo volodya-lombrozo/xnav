@@ -27,54 +27,68 @@ package com.github.lombrozo.xnav;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-@ToString
-public final class EagerDoc implements Xml {
+public final class EagerAttribute implements Xml {
 
-    private final Xml element;
-    public EagerDoc(final Xml element) {
-        this.element = element;
+    /**
+     * Attribute name.
+     */
+    private final String name;
+
+    /**
+     * Attribute value.
+     */
+    private final String value;
+
+    /**
+     * Constructor.
+     * @param name Attribute name
+     * @param value Attribute value
+     */
+    EagerAttribute(final String name, final String value) {
+        this.name = name;
+        this.value = value;
     }
 
     @Override
     public Xml child(final String element) {
-        if (this.element.name().equals(element)) {
-            return this.element;
-        } else {
-            return new Empty();
-        }
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return this.element.text();
+        return Optional.of(this.value.substring(1, this.value.length() - 1));
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
     public String name() {
-        return this.element.name();
+        return this.name;
     }
 
     @Override
     public Xml copy() {
-        return new EagerDoc(this.element.copy());
+        return new EagerAttribute(this.name, this.value);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not implemented");
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s=\"%s\"", this.name, this.value);
     }
 }

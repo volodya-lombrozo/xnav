@@ -24,76 +24,68 @@
 
 package com.github.lombrozo.xnav;
 
-import com.github.lombrozo.xnav.Xml;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * Chardata.
+ * @since 0.1
+ */
 @EqualsAndHashCode
-@ToString
-public final class EagerCont implements Xml {
+final class EagerChardata implements Xml {
 
+    /**
+     * Chardata.
+     */
+    private final String text;
 
-//    private final List<Xml> elements;
-//    private final List<Xml> chardata;
-
-    private final List<Xml> all;
-
-
-    public EagerCont(final List<Xml> all) {
-        this.all = all;
+    /**
+     * Constructor.
+     * @param chardata Text.
+     */
+    EagerChardata(final String chardata) {
+        this.text = chardata;
     }
 
     @Override
     public Xml child(final String element) {
-        return this.elements()
-            .filter(e -> e.name().equals(element))
-            .findFirst()
-            .orElse(new Empty());
-    }
-
-    @Override
-    public Stream<Xml> children() {
-        return this.all.stream();
+        throw new UnsupportedOperationException("Text node has no children.");
     }
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        throw new UnsupportedOperationException("Not supported.");
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> text() {
-        return Optional.of(
-            this.all.stream()
-                .map(Xml::text)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.joining())
-        );
+        return Optional.of(this.text);
+    }
+
+    @Override
+    public Stream<Xml> children() {
+        return Stream.empty();
     }
 
     @Override
     public String name() {
-        throw new UnsupportedOperationException("Not supported.");
+        return "";
     }
 
     @Override
     public Xml copy() {
-        throw new UnsupportedOperationException("Not supported.");
+        return new EagerChardata(this.text);
     }
 
     @Override
     public Node node() {
-        throw new UnsupportedOperationException("Not supported.");
+        throw new UnsupportedOperationException("Text node can't be converted to a DOM node.");
     }
 
-
-    private Stream<Xml> elements() {
-        return this.all.stream().filter(EagerElem.class::isInstance);
+    @Override
+    public String toString() {
+        return this.text;
     }
 }

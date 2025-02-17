@@ -32,6 +32,10 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test for {@link EagerXml}.
+ * @since 0.1
+ */
 final class EagerXmlTest {
 
     @Test

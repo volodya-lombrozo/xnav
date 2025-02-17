@@ -31,50 +31,55 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+/**
+ * Antlr visitor for XML parsing.
+ * @since 0.1
+ */
 public final class EagerVisitor extends XMLParserBaseVisitor<Xml> {
 
     @Override
     public Xml visitDocument(final XMLParser.DocumentContext ctx) {
         final XMLParser.ElementContext context = ctx.element();
-        return new EagerDoc(this.visitElement(context));
+        return new EagerDocument(this.visitElement(context));
     }
 
     @Override
     public Xml visitElement(final XMLParser.ElementContext ctx) {
-        final TerminalNode name = ctx.Name(0);
-        final List<Xml> attrs = ctx.attribute()
-            .stream()
-            .map(this::visitAttribute)
-            .collect(Collectors.toList());
-        final Xml content = this.visitContent(ctx.content());
-        return new EagerElem(name.getText(), attrs, content);
+        return new EagerElement(
+            ctx.Name(0).getText(),
+            ctx.attribute()
+                .stream()
+                .map(this::visitAttribute)
+                .collect(Collectors.toList()),
+            this.visitContent(ctx.content())
+        );
     }
 
     @Override
     public Xml visitAttribute(final XMLParser.AttributeContext ctx) {
         final TerminalNode name = ctx.Name();
         final TerminalNode value = ctx.STRING();
-        return new EagerAttr(name.getText(), value.getText());
+        return new EagerAttribute(name.getText(), value.getText());
     }
 
     @Override
     public Xml visitContent(final XMLParser.ContentContext ctx) {
-        final List<Xml> all = new ArrayList<>(0);
+        final List<Xml> res = new ArrayList<>(0);
         final List<ParseTree> children = Optional.ofNullable(ctx)
             .map(c -> c.children)
             .orElse(new ArrayList<>(0));
         for (final ParseTree child : children) {
             if (child instanceof XMLParser.ElementContext) {
-                all.add(this.visitElement((XMLParser.ElementContext) child));
+                res.add(this.visitElement((XMLParser.ElementContext) child));
             } else if (child instanceof XMLParser.ChardataContext) {
-                all.add(this.visitChardata((XMLParser.ChardataContext) child));
+                res.add(this.visitChardata((XMLParser.ChardataContext) child));
             }
         }
-        return new EagerCont(all);
+        return new EagerContent(res);
     }
 
     @Override
     public Xml visitChardata(final XMLParser.ChardataContext ctx) {
-        return new EagerChard(ctx.getText());
+        return new EagerChardata(ctx.getText());
     }
 }
