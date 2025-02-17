@@ -70,8 +70,7 @@ public final class FlatXmlElement implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.xml.children(this.id)
-            .filter(FlatXmlAttribute.class::isInstance)
+        return this.attributes()
             .filter(e -> e.name().equals(name))
             .findFirst();
     }
@@ -112,11 +111,27 @@ public final class FlatXmlElement implements Xml {
 
     @Override
     public String toString() {
+        String atts = this.attributes()
+            .map(Xml::toString)
+            .collect(Collectors.joining(" "));
+        if (!atts.isEmpty()) {
+            atts = String.format(" %s", atts);
+        }
         return String.format(
-            "<%s>%s</%s>",
+            "<%s%s>%s</%s>",
             this.name(),
+            atts,
             this.text().orElse(""),
             this.name()
         );
+    }
+
+    /**
+     * Attributes.
+     * @return Stream of attributes.
+     */
+    private Stream<Xml> attributes() {
+        return this.xml.children(this.id)
+            .filter(FlatXmlAttribute.class::isInstance);
     }
 }

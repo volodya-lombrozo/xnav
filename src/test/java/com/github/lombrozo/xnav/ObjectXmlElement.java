@@ -107,14 +107,12 @@ final class ObjectXmlElement implements Xml {
 
     @Override
     public String toString() {
-        return String.format(
-            "<%s%s>%s</%s>",
-            this.name,
-            this.attributes.stream()
-                .map(Xml::toString)
-                .collect(Collectors.joining(" ")),
-            this.content,
-            this.name
-        );
+        String atts = this.attributes.stream()
+            .map(Xml::toString)
+            .collect(Collectors.joining(" "));
+        if (!atts.isEmpty()) {
+            atts = String.format(" %s", atts);
+        }
+        return String.format("<%s%s>%s</%s>", this.name, atts, this.content, this.name);
     }
 }

@@ -30,19 +30,32 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
-@ToString
+/**
+ * Flat representation of XML attribute.
+ * @since 0.1
+ */
 @EqualsAndHashCode
 final class FlatXmlAttribute implements Xml {
 
-    @ToString.Exclude
+    /**
+     * Element id.
+     */
     @EqualsAndHashCode.Exclude
-    private final int id;
-    @ToString.Exclude
+    private final int identifier;
+
+    /**
+     * Model of flat xml.
+     */
     @EqualsAndHashCode.Exclude
     private final FlatXmlModel xml;
 
-    public FlatXmlAttribute(final int id, final FlatXmlModel xml) {
-        this.id = id;
+    /**
+     * Constructor.
+     * @param identifier Element id.
+     * @param xml Flat xml model.
+     */
+    FlatXmlAttribute(final int identifier, final FlatXmlModel xml) {
+        this.identifier = identifier;
         this.xml = xml;
     }
 
@@ -67,8 +80,8 @@ final class FlatXmlAttribute implements Xml {
     @EqualsAndHashCode.Include
     @Override
     public Optional<String> text() {
-        final String s = this.full().split("=", 2)[1];
-        return Optional.of(s.substring(1, s.length() - 1));
+        final String text = this.full().split("=", 2)[1];
+        return Optional.of(text.substring(1, text.length() - 1));
     }
 
     @Override
@@ -86,7 +99,16 @@ final class FlatXmlAttribute implements Xml {
         throw new UnsupportedOperationException("Not implemented");
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s='%s'", this.name(), this.text().orElse(""));
+    }
+
+    /**
+     * Entire content of the element.
+     * @return Content.
+     */
     private String full() {
-        return this.xml.content(this.id);
+        return this.xml.content(this.identifier);
     }
 }

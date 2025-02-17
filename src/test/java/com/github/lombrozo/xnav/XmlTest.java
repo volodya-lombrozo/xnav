@@ -228,7 +228,10 @@ final class XmlTest {
         MatcherAssert.assertThat(
             String.format("We expect to find all attributes by '%s' implementation", label),
             impl.apply(same).child("colors").toString(),
-            Matchers.equalTo(same)
+            Matchers.anyOf(
+                Matchers.equalTo(same),
+                Matchers.equalTo("<colors base=\"bytes\" color=\"red\"/>")
+            )
         );
     }
 

@@ -113,7 +113,7 @@ final class DomXml implements Xml {
         synchronized (this.sync()) {
             final Optional<String> result;
             if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
-                result = Optional.of("");
+                result = Optional.ofNullable(this.inner.getFirstChild().getTextContent());
             } else if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
                 result = Optional.of(this.inner.getNodeValue());
             } else {

@@ -25,6 +25,7 @@
 package com.github.lombrozo.xnav;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.w3c.dom.Node;
 
@@ -47,7 +48,12 @@ final class FlatXml implements Xml {
         this(String.join("", xml));
     }
 
-    FlatXml(final String xml, final FlatParser parser){
+    /**
+     * Constructor.
+     * @param xml XML string.
+     * @param parser Flat parser.
+     */
+    FlatXml(final String xml, final FlatParser parser) {
         this(parser.parse(xml));
     }
 
@@ -58,7 +64,6 @@ final class FlatXml implements Xml {
     private FlatXml(final String xml) {
         this(xml, new FlatDom());
     }
-
 
     /**
      * Constructor.
@@ -84,7 +89,12 @@ final class FlatXml implements Xml {
 
     @Override
     public Optional<String> text() {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return Optional.of(
+            this.children().map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining())
+        );
     }
 
     @Override
