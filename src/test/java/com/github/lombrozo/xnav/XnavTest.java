@@ -274,7 +274,7 @@ final class XnavTest {
         final String program = "program";
         final String metas = "metas";
         return Stream.of(
-            Arguments.of(xml, ""),
+            Arguments.of(xml, "version\n1.2.3"),
             Arguments.of(xml.element(program).element(metas), "version\n1.2.3"),
             Arguments.of(xml.element(program).element(metas).element("meta"), "version\n1.2.3"),
             Arguments.of(

@@ -90,7 +90,7 @@ final class VtdElem implements OrderedXml {
         return this.children()
             .filter(e -> e.name().equals(element))
             .findFirst()
-            .orElseThrow();
+            .orElseGet(Empty::new);
     }
 
     @Override

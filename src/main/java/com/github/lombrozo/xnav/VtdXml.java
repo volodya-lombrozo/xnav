@@ -39,7 +39,7 @@ import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
 @EqualsAndHashCode
-public final class VtdXml implements Xml {
+final class VtdXml implements Xml {
 
     /**
      * Root document.
