@@ -29,11 +29,21 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+/**
+ * Parser of flat xml model from DOM.
+ * @since 0.1
+ */
 final class FlatDom implements FlatParser {
 
+    /**
+     * Index of elements.
+     */
     private final AtomicInteger index;
 
-    public FlatDom() {
+    /**
+     * Constructor.
+     */
+    FlatDom() {
         this.index = new AtomicInteger(-1);
     }
 
@@ -44,49 +54,56 @@ final class FlatDom implements FlatParser {
         return xml;
     }
 
-    private void parse(int parent, Node node, FlatXmlModel xml) {
-        if (node == null) {
-            return;
-        }
-        final int id = this.index.incrementAndGet();
-        switch (node.getNodeType()) {
-            case Node.DOCUMENT_NODE:
-                xml.addElement(parent, id, FlatXmlModel.Type.DOCUMENT, "");
-                final NodeList nodes = node.getChildNodes();
-                for (int i = 0; i < nodes.getLength(); i++) {
-                    this.parse(id, nodes.item(i), xml);
-                }
-                break;
-            case Node.ELEMENT_NODE:
-                final String name = node.getNodeName();
-                xml.addElement(parent, id, FlatXmlModel.Type.ELEMENT, name);
-                final NamedNodeMap attributes = node.getAttributes();
-                if (attributes != null) {
-                    for (int i = 0; i < attributes.getLength(); i++) {
-                        final Node attr = attributes.item(i);
-                        final int attrId = this.index.incrementAndGet();
-                        final String text = attr.getNodeName() + "='" + attr.getNodeValue() + "'";
-                        xml.addElement(
-                            id,
-                            attrId,
-                            FlatXmlModel.Type.ATTRIBUTE,
-                            text
-                        );
+    /**
+     * Parse node.
+     * @param parent Parent id.
+     * @param node Node.
+     * @param xml Flat xml model.
+     */
+    private void parse(final int parent, final Node node, final FlatXmlModel xml) {
+        if (node != null) {
+            final int id = this.index.incrementAndGet();
+            switch (node.getNodeType()) {
+                case Node.DOCUMENT_NODE:
+                    xml.addElement(parent, id, FlatXmlModel.Type.DOCUMENT, "");
+                    final NodeList nodes = node.getChildNodes();
+                    for (int i = 0; i < nodes.getLength(); i++) {
+                        this.parse(id, nodes.item(i), xml);
                     }
-                }
-                final int contentId = this.index.incrementAndGet();
-                xml.addElement(id, contentId, FlatXmlModel.Type.CONTENT, null);
-                final NodeList children = node.getChildNodes();
-                for (int i = 0; i < children.getLength(); i++) {
-                    this.parse(contentId, children.item(i), xml);
-                }
-                break;
-            case Node.TEXT_NODE:
-                final String value = node.getNodeValue();
-                xml.addElement(parent, id, FlatXmlModel.Type.CHARDATA, value);
-                break;
+                    break;
+                case Node.ELEMENT_NODE:
+                    final String name = node.getNodeName();
+                    xml.addElement(parent, id, FlatXmlModel.Type.ELEMENT, name);
+                    final NamedNodeMap attributes = node.getAttributes();
+                    if (attributes != null) {
+                        for (int i = 0; i < attributes.getLength(); i++) {
+                            final Node attr = attributes.item(i);
+                            final int attrId = this.index.incrementAndGet();
+                            final String text = String.format(
+                                "%s='%s'",
+                                attr.getNodeName(),
+                                attr.getNodeValue()
+                            );
+                            xml.addElement(
+                                id,
+                                attrId,
+                                FlatXmlModel.Type.ATTRIBUTE,
+                                text
+                            );
+                        }
+                    }
+                    final int contentId = this.index.incrementAndGet();
+                    xml.addElement(id, contentId, FlatXmlModel.Type.CONTENT, null);
+                    final NodeList children = node.getChildNodes();
+                    for (int i = 0; i < children.getLength(); i++) {
+                        this.parse(contentId, children.item(i), xml);
+                    }
+                    break;
+                case Node.TEXT_NODE:
+                    final String value = node.getNodeValue();
+                    xml.addElement(parent, id, FlatXmlModel.Type.CHARDATA, value);
+                    break;
+            }
         }
-
     }
-
 }

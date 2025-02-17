@@ -38,6 +38,14 @@ import javax.xml.transform.stream.StreamResult;
 import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
+/**
+ * VTD implementation of XML.
+ * You can read more about it here:
+ * https://vtd-xml.sourceforge.io/
+ * XML abstraction over an XML document.
+ * This class is thread-safe.
+ * @since 0.1
+ */
 @EqualsAndHashCode
 final class VtdXml implements Xml {
 
@@ -57,14 +65,6 @@ final class VtdXml implements Xml {
      */
     VtdXml(final Node node) {
         this(VtdXml.nodeToString(node));
-    }
-
-    /**
-     * Constructor.
-     * @param xml XML document lines.
-     */
-    VtdXml(final String... xml) {
-        this(String.join("\n", xml));
     }
 
     /**
