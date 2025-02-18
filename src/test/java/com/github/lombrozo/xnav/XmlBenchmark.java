@@ -31,7 +31,6 @@ import java.io.StringReader;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.transform.stream.StreamSource;
@@ -47,6 +46,7 @@ import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -57,6 +57,16 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 public class XmlBenchmark {
+
+    private static final String DOM = "dom-xml";
+
+    private static final String VTD = "vtd-xml";
+
+    private static final String ANTLR_OBJECT = "antlr-object-xml";
+
+    private static final String FLAT_DOM = "flat-dom-xml";
+
+    private static final String FLAT_ANTLR = "flat-antlr-xml";
 
     private static final String HUGE_XML = XmlBenchmark.generateXml();
 
@@ -79,6 +89,15 @@ public class XmlBenchmark {
     @State(Scope.Benchmark)
     public static class HugeXml {
 
+        @Param({
+            XmlBenchmark.DOM,
+            XmlBenchmark.VTD,
+            XmlBenchmark.ANTLR_OBJECT,
+            XmlBenchmark.FLAT_DOM,
+            XmlBenchmark.FLAT_ANTLR
+        })
+        public String implementation;
+
         /**
          * Xml file.
          */
@@ -98,6 +117,15 @@ public class XmlBenchmark {
     @State(Scope.Benchmark)
     public static class SmallXml {
 
+        @Param({
+            XmlBenchmark.DOM,
+            XmlBenchmark.VTD,
+            XmlBenchmark.ANTLR_OBJECT,
+            XmlBenchmark.FLAT_DOM,
+            XmlBenchmark.FLAT_ANTLR
+        })
+        public String implementation;
+
         /**
          * Xml file.
          */
@@ -106,6 +134,25 @@ public class XmlBenchmark {
         @Setup(Level.Trial)
         public void up() {
             this.xml = "<root><child>text</child></root>";
+        }
+
+        public Xml instance() {
+            switch (this.implementation) {
+                case XmlBenchmark.DOM:
+                    return new DomXml(xml);
+                case XmlBenchmark.VTD:
+                    return new VtdXml(xml);
+                case XmlBenchmark.ANTLR_OBJECT:
+                    return new ObjectXml(xml);
+                case XmlBenchmark.FLAT_DOM:
+                    return new FlatXml(xml, new FlatDom());
+                case XmlBenchmark.FLAT_ANTLR:
+                    return new FlatXml(xml, new FlatAntlr());
+                default:
+                    throw new IllegalArgumentException(
+                        String.format("Unknown implementation %s", this.implementation)
+                    );
+            }
         }
     }
 
@@ -121,6 +168,20 @@ public class XmlBenchmark {
             .build();
         new Runner(opt).run();
     }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void singleQueryForSmallXml(final SmallXml state) {
+        assertTrue(
+            new Xpath(state.instance(), "/root/child")
+                .nodes()
+                .findFirst()
+                .map(Xml::text).get().get().equals("text")
+        );
+    }
+
 
     @Benchmark
     @Group(XmlBenchmark.SIMPLE)
@@ -140,7 +201,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void simpleWithVtdXml() {
         final Xml xml = new VtdXml(XmlBenchmark.SIMPLE_XML);
-        assertEq(new Xpath(xml, "/root/child")
+        assertTrue(new Xpath(xml, "/root/child")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("text"));
@@ -201,7 +262,7 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void hugeSingleWithVtdXml() {
         final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
-        assertEq(new Xpath(xml, "/program/@name")
+        assertTrue(new Xpath(xml, "/program/@name")
             .nodes()
             .findFirst()
             .map(Xml::text).get().get().equals("j$Collections"));
@@ -350,7 +411,7 @@ public class XmlBenchmark {
             final int request = random.nextInt(queries.length);
             String query = queries[request][0].toString();
             String expected = queries[request][1].toString();
-            assertEq(
+            assertTrue(
                 new Xpath(xml, query)
                     .nodes()
                     .findFirst()
@@ -372,7 +433,7 @@ public class XmlBenchmark {
         final Xml xml = new DomXml(XmlBenchmark.HUGE_XML);
         AtomicInteger counter = new AtomicInteger(1000);
         final Random random = new Random();
-        assertEq(
+        assertTrue(
             new Together<>(i -> {
                 boolean res = true;
                 while (counter.get() > 0) {
@@ -407,7 +468,7 @@ public class XmlBenchmark {
         final Xml xml = new ObjectXml(XmlBenchmark.HUGE_XML);
         AtomicInteger counter = new AtomicInteger(1000);
         final Random random = new Random();
-        assertEq(
+        assertTrue(
             new Together<>(i -> {
                 boolean res = true;
                 while (counter.get() > 0) {
@@ -427,40 +488,6 @@ public class XmlBenchmark {
         );
     }
 
-//    @Benchmark
-//    @BenchmarkMode(Mode.AverageTime)
-//    @Group(XmlBenchmark.HUGE_PARALLEL)
-//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-//    public void hugeManyInParallelWithOptXml() {
-//        final Object[][] queries = {
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
-//        AtomicInteger counter = new AtomicInteger(1000);
-//        final Random random = new Random();
-//        assertEq(
-//            new Together<>(i -> {
-//                boolean res = true;
-//                while (counter.get() > 0) {
-//                    final int request = random.nextInt(queries.length);
-//                    String query = queries[request][0].toString();
-//                    String expected = queries[request][1].toString();
-//                    final boolean equals;
-//                    equals = new Xpath(xml, query)
-//                        .nodes()
-//                        .findFirst()
-//                        .map(Xml::text).get().get().equals(expected);
-//                    res = res && equals;
-//                    counter.decrementAndGet();
-//                }
-//                return res;
-//            }).asList().stream().allMatch(Boolean::booleanValue)
-//        );
-//    }
-
-
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @Group(XmlBenchmark.HUGE_PARALLEL)
@@ -474,7 +501,7 @@ public class XmlBenchmark {
         final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
         AtomicInteger counter = new AtomicInteger(1000);
         final Random random = new Random();
-        assertEq(
+        assertTrue(
             new Together<>(i -> {
                 boolean res = true;
                 while (counter.get() > 0) {
@@ -510,7 +537,7 @@ public class XmlBenchmark {
         final XdmNode node = processor.newDocumentBuilder()
             .build(source);
         final AtomicInteger counter = new AtomicInteger(1000);
-        assertEq(
+        assertTrue(
             new Together<>(i -> {
                 boolean res = true;
                 while (counter.get() > 0) {
@@ -532,99 +559,6 @@ public class XmlBenchmark {
         );
     }
 
-
-//    @Benchmark
-//    @BenchmarkMode(Mode.AverageTime)
-//    @Group(XmlBenchmark.HUGE_MANY)
-//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-//    public void hugeManyWithOptXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        final Xml xml = new OptXml(XmlBenchmark.HUGE_XML);
-//        for (int i = 0; i < 1000; i++) {
-//            final int request = random.nextInt(queries.length);
-//            String query = queries[request][0].toString();
-//            String expected = queries[request][1].toString();
-//            assert new Xpath(xml, query)
-//                .nodes()
-//                .findFirst()
-//                .map(Xml::text).get().get().equals(expected);
-//        }
-//    }
-//
-//    @Benchmark
-//    @BenchmarkMode(Mode.AverageTime)
-//    @Group(XmlBenchmark.HUGE_MANY)
-//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-//    public void hugeManyWithEagerXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        final Xml xml = new EagerXml(XmlBenchmark.HUGE_XML);
-//        for (int i = 0; i < 1000; i++) {
-//            final int request = random.nextInt(queries.length);
-//            String query = queries[request][0].toString();
-//            String expected = queries[request][1].toString();
-//            assert new Xpath(xml, query)
-//                .nodes()
-//                .findFirst()
-//                .map(Xml::text).get().get().equals(expected);
-//        }
-//    }
-//
-//    @Benchmark
-//    @BenchmarkMode(Mode.AverageTime)
-//    @Group(XmlBenchmark.HUGE_MANY)
-//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-//    public void hugeManyWithSaxonXpath() throws SaxonApiException, XPathException {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        final Processor processor = new Processor(false);
-//        final StreamSource source = new StreamSource(new StringReader(XmlBenchmark.HUGE_XML));
-//        final XdmNode node = processor.newDocumentBuilder()
-//            .build(source);
-//        for (int i = 0; i < 1000; i++) {
-//            final int request = random.nextInt(queries.length);
-//            String query = queries[request][0].toString();
-//            String expected = queries[request][1].toString();
-//            assert processor.newXPathCompiler()
-//                .evaluate(query, node)
-//                .getUnderlyingValue()
-//                .getStringValue().equals(expected);
-//        }
-//    }
-//
-//    @Benchmark
-//    @BenchmarkMode(Mode.AverageTime)
-//    @Group(XmlBenchmark.HUGE_MANY)
-//    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-//    public void hugeManyWithVtdXml() {
-//        Object[][] queries = new Object[][]{
-//            {"/program/@name", "j$Collections"},
-//            {"/program/objects/o/@base", "jeo.class"},
-//            {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
-//        };
-//        final Xml xml = new VtdXml(XmlBenchmark.HUGE_XML);
-//        for (int i = 0; i < 1000; i++) {
-//            final int request = random.nextInt(queries.length);
-//            String query = queries[request][0].toString();
-//            String expected = queries[request][1].toString();
-//            assertEq(
-//                new Xpath(xml, query)
-//                    .nodes()
-//                    .findFirst()
-//                    .map(Xml::text).get().get().equals(expected)
-//            );
-//        }
-//    }
 
     public static String generateXml() {
         final String clazz = Collections.class.getName().replace('.', '/') + ".class";
@@ -650,11 +584,11 @@ public class XmlBenchmark {
             );
     }
 
-    private boolean assertEq(final boolean assertion) {
-        return assertEq(assertion, "");
+    private boolean assertTrue(final boolean assertion) {
+        return assertTrue(assertion, "");
     }
 
-    private boolean assertEq(final boolean assertion, String msg) {
+    private boolean assertTrue(final boolean assertion, String msg) {
         if (!assertion) {
             throw new AssertionError(msg);
         }
