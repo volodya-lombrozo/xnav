@@ -336,7 +336,8 @@ final class XmlTest {
         final List<String> together = new Together<>(
             10,
             input -> {
-                final String res = new Xpath(implementation, path).nodes().findFirst()
+                final Optional<Xml> first = new Xpath(implementation, path).nodes().findFirst();
+                final String res = first
                     .map(Xml::text)
                     .orElseThrow(
                         () -> new IllegalStateException(

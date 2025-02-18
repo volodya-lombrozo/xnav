@@ -154,7 +154,7 @@ final class DomXml implements Xml {
                     .limit(length)
                     .map(nodes::item)
                     .filter(Objects::nonNull)
-                    .map(DomXml::new);
+                    .map(node -> new DomXml(node, this.sync));
             }
             return result;
         }
