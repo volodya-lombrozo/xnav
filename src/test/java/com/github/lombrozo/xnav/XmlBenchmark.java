@@ -24,12 +24,12 @@
 
 package com.github.lombrozo.xnav;
 
-import com.jcabi.log.Logger;
+import com.yegor256.Together;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.eolang.jeo.representation.BytecodeRepresentation;
 import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -59,18 +59,6 @@ public class XmlBenchmark {
 
     private static final String FLAT_ANTLR = "flat-antlr-xml";
 
-    private static final String HUGE_XML = XmlBenchmark.generateXml();
-
-    private static final String SIMPLE_XML = "<root><child>text</child></root>";
-
-    private static final String SIMPLE = "simpleXmlOneQuery";
-    private static final String HUGE = "hugeXmlOneQuery";
-
-    private static final String HUGE_MANY = "hugeXmlManyQueries";
-
-    private static final String HUGE_PARALLEL = "hugeXmlParallelQueries";
-
-    private static final Random random = new SecureRandom();
 
     private static final String[][] QUERIES = {
         {"/program/@name", "j$Collections"},
@@ -78,34 +66,6 @@ public class XmlBenchmark {
         {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
     };
 
-
-    /**
-     * State with huge xml file.
-     * @since 0.1
-     */
-    @State(Scope.Benchmark)
-    public static class HugeXml {
-
-        @Param({
-            XmlBenchmark.DOM,
-            XmlBenchmark.VTD,
-            XmlBenchmark.ANTLR_OBJECT,
-            XmlBenchmark.FLAT_DOM,
-            XmlBenchmark.FLAT_ANTLR
-        })
-        public String implementation;
-
-        /**
-         * Xml file.
-         */
-        String xml;
-
-        @Setup(Level.Trial)
-        public void up() {
-            Logger.info(this, "Generating huge xml file");
-            this.xml = XmlBenchmark.generateXml();
-        }
-    }
 
     /**
      * State with small xml file.
@@ -160,15 +120,15 @@ public class XmlBenchmark {
         public Xml instance() {
             switch (this.implementation) {
                 case XmlBenchmark.DOM:
-                    return new DomXml(xml);
+                    return new DomXml(this.xml);
                 case XmlBenchmark.VTD:
-                    return new VtdXml(xml);
+                    return new VtdXml(this.xml);
                 case XmlBenchmark.ANTLR_OBJECT:
-                    return new ObjectXml(xml);
+                    return new ObjectXml(this.xml);
                 case XmlBenchmark.FLAT_DOM:
-                    return new FlatXml(xml, new FlatDom());
+                    return new FlatXml(this.xml, new FlatDom());
                 case XmlBenchmark.FLAT_ANTLR:
-                    return new FlatXml(xml, new FlatAntlr());
+                    return new FlatXml(this.xml, new FlatAntlr());
                 default:
                     throw new IllegalArgumentException(
                         String.format("Unknown implementation %s", this.implementation)
@@ -229,6 +189,37 @@ public class XmlBenchmark {
             );
         }
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void parallelQueries(final SmallXml state) {
+        final Random random = new Random();
+        final Xml xml = state.instance();
+        final AtomicInteger counter = new AtomicInteger(1000);
+        assertTrue(
+            new Together<>(i -> {
+                boolean res = true;
+                while (counter.get() > 0) {
+                    final int request = random.nextInt(XmlBenchmark.QUERIES.length);
+                    final String query = XmlBenchmark.QUERIES[request][0];
+                    final String expected = XmlBenchmark.QUERIES[request][1];
+                    final boolean equals;
+                    equals = new Xpath(xml, query)
+                        .nodes()
+                        .findFirst()
+                        .map(Xml::text)
+                        .get()
+                        .get()
+                        .equals(expected);
+                    res = res && equals;
+                    counter.decrementAndGet();
+                }
+                return res;
+            }).asList().stream().allMatch(Boolean::booleanValue)
+        );
+    }
+
 
 //
 //    @Benchmark
