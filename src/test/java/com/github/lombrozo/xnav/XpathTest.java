@@ -842,7 +842,7 @@ final class XpathTest {
      * @return XML.
      */
     private static Xml xml(final String... lines) {
-        return new VtdXml(String.join("\n", lines));
+        return new DomXml(String.join("\n", lines));
     }
 
 }

@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.cactoos.experimental.Threads;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -313,6 +314,52 @@ final class XmlTest {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("all")
+    void retrievesAttributeNameByXpathInParallel(
+        final Function<String, Xml> impl, final String label
+    ) {
+        final String xml = String.join(
+            "\n",
+            "<program name=\"j$Collections\">",
+            "    <objects>",
+            "        <o base=\"jeo.class\">",
+            "            <o>",
+            "                <o>",
+            "                    <o base=\"org.eolang.bytes\"/>",
+            "                </o>",
+            "            </o>",
+            "        </o>",
+            "    </objects>",
+            "</program>"
+        );
+        final String path = "/program/objects/o/o/o/o/@base";
+        final Xml implementation = impl.apply(xml);
+        final List<String> together = new Together<>(
+            10,
+            input -> {
+                final String res = new Xpath(implementation, path).nodes().findFirst()
+                    .map(Xml::text)
+                    .orElseThrow(
+                        () -> new IllegalStateException(
+                            String.format("Can't find any nodes by path '%s'", path)
+                        )
+                    ).get();
+                return res;
+            }
+        ).asList();
+        MatcherAssert.assertThat(
+            "We expect to find the correct number of results",
+            together.size(),
+            Matchers.equalTo(10)
+        );
+        MatcherAssert.assertThat(
+            "We expect to find the correct attribute name by xpath",
+            together,
+            Matchers.hasItem("org.eolang.bytes")
+        );
+    }
+
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("all")
     void retrievesAttributeFromAttribute(final Function<String, Xml> impl, final String label) {
         MatcherAssert.assertThat(
             String.format("We expect to get empty attribute from attribute by '%s'", label),
@@ -348,6 +395,21 @@ final class XmlTest {
                     .collect(Collectors.toList())
             ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasSize(threads * 2)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("all")
+    void retrievesAttributeName(final Function<String, Xml> impl, final String label) {
+        final String carrot = "carrot";
+        MatcherAssert.assertThat(
+            String.format("We expect to find the correct attribute name by '%s'", label),
+            impl.apply("<o carrot='red'>red</o>")
+                .child("o")
+                .attribute(carrot)
+                .orElseThrow()
+                .name(),
+            Matchers.equalTo(carrot)
         );
     }
 

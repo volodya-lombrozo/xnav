@@ -59,6 +59,8 @@ final class DomXml implements Xml {
      */
     private final Node inner;
 
+    private final Object sync;
+
     /**
      * Ctor.
      *
@@ -74,12 +76,22 @@ final class DomXml implements Xml {
      * @param node XML document node.
      */
     DomXml(final Node node) {
-        this.inner = node;
+        this(node, new Object());
+    }
+
+    /**
+     * Constructor.
+     * @param inner Inner node.
+     * @param sync Synchronization object.
+     */
+    public DomXml(final Node inner, final Object sync) {
+        this.inner = inner;
+        this.sync = sync;
     }
 
     @Override
     public Xml child(final String element) {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             final NodeList nodes = this.inner.getChildNodes();
             final int length = nodes.getLength();
             Xml res = new Empty();
@@ -87,7 +99,7 @@ final class DomXml implements Xml {
                 final Node child = nodes.item(idx);
                 if (child.getNodeType() == Node.ELEMENT_NODE
                     && child.getNodeName().equals(element)) {
-                    res = new DomXml(child);
+                    res = new DomXml(child, this.sync);
                     break;
                 }
             }
@@ -97,7 +109,7 @@ final class DomXml implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             final NamedNodeMap attributes = this.inner.getAttributes();
             final Optional<Xml> result;
             if (Objects.isNull(attributes)) {
@@ -105,7 +117,7 @@ final class DomXml implements Xml {
             } else {
                 final Node item = attributes.getNamedItem(name);
                 if (Objects.nonNull(item)) {
-                    result = Optional.of(new DomXml(item));
+                    result = Optional.of(new DomXml(item, this.sync));
                 } else {
                     result = Optional.empty();
                 }
@@ -116,7 +128,7 @@ final class DomXml implements Xml {
 
     @Override
     public Optional<String> text() {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             final Optional<String> result;
             if (this.inner.getNodeType() == Node.DOCUMENT_NODE) {
                 result = Optional.ofNullable(this.inner.getFirstChild().getTextContent());
@@ -131,7 +143,7 @@ final class DomXml implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             final Stream<Xml> result;
             if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
                 result = Stream.empty();
@@ -150,14 +162,14 @@ final class DomXml implements Xml {
 
     @Override
     public String name() {
-        synchronized (this.sync()) {
-            return this.inner.getNodeName();
+        synchronized (this.syn()) {
+            return Optional.ofNullable(this.inner).map(Node::getNodeName).orElse("");
         }
     }
 
     @Override
     public DomXml copy() {
-        return new DomXml(this.inner.cloneNode(true));
+        return new DomXml(this.inner.cloneNode(true), this.sync);
     }
 
     @Override
@@ -167,7 +179,7 @@ final class DomXml implements Xml {
 
     @Override
     public String toString() {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             try {
                 final Transformer transformer = DomXml.TFACTORY.newTransformer();
                 transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
@@ -196,7 +208,7 @@ final class DomXml implements Xml {
 
     @Override
     public boolean equals(final Object obj) {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             final boolean result;
             if (this == obj) {
                 result = true;
@@ -212,7 +224,7 @@ final class DomXml implements Xml {
 
     @Override
     public int hashCode() {
-        synchronized (this.sync()) {
+        synchronized (this.syn()) {
             return Objects.hashCode(this.inner);
         }
     }
@@ -221,8 +233,8 @@ final class DomXml implements Xml {
      * Synchronize target.
      * @return Target to synchronize.
      */
-    private Object sync() {
-        return this.inner;
+    private Object syn() {
+        return this.sync;
     }
 
 }

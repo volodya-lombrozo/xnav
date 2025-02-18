@@ -276,11 +276,11 @@ public class XmlBenchmark {
          */
         @Param({
             XmlBenchmark.DOM,
-            XmlBenchmark.VTD,
-            XmlBenchmark.ANTLR_OBJECT,
-            XmlBenchmark.FLAT_DOM,
-            XmlBenchmark.FLAT_ANTLR,
-            XmlBenchmark.SAXON
+//            XmlBenchmark.VTD,
+//            XmlBenchmark.ANTLR_OBJECT,
+//            XmlBenchmark.FLAT_DOM,
+//            XmlBenchmark.FLAT_ANTLR,
+//            XmlBenchmark.SAXON
         })
         String impl;
 
@@ -329,8 +329,11 @@ public class XmlBenchmark {
                     .nodes()
                     .findFirst()
                     .map(Xml::text)
-                    .get()
-                    .get();
+                    .orElseThrow(
+                        () -> new IllegalStateException(
+                            String.format("Can't find any nodes by path '%s'", path)
+                        )
+                    ).get();
             }
             return res;
         }

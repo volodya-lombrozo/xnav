@@ -82,7 +82,7 @@ public final class Xnav {
      * @param node XML document node.
      */
     public Xnav(final Node node) {
-        this(new VtdXml(node));
+        this(new DomXml(node));
     }
 
     /**
