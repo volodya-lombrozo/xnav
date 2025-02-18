@@ -352,5 +352,4 @@ final class XmlTest {
             Arguments.of((Function<String, Xml>) DomXml::new, "dom-xml")
         );
     }
-
 }

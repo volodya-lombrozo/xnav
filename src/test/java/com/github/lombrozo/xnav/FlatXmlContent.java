@@ -31,25 +31,37 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.w3c.dom.Node;
 
+/**
+ * Flat xml content.
+ * This is a content of an element.
+ * Might contain text and children elements.
+ * @since 0.1
+ */
 @EqualsAndHashCode
 @ToString
 final class FlatXmlContent implements Xml {
 
+    /**
+     * Node id.
+     */
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private final int id;
+    private final int identifier;
 
+    /**
+     * Flat xml model.
+     */
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private final FlatXmlModel xml;
 
     /**
      * Constructor.
-     * @param id Element id.
+     * @param identifier Node id.
      * @param xml Flat xml model.
      */
-    FlatXmlContent(final int id, final FlatXmlModel xml) {
-        this.id = id;
+    FlatXmlContent(final int identifier, final FlatXmlModel xml) {
+        this.identifier = identifier;
         this.xml = xml;
     }
 
@@ -63,7 +75,7 @@ final class FlatXmlContent implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        return this.xml.children(this.id);
+        return this.xml.children(this.identifier);
     }
 
     @Override
@@ -76,7 +88,7 @@ final class FlatXmlContent implements Xml {
     @Override
     public Optional<String> text() {
         return Optional.of(
-            this.xml.children(this.id)
+            this.xml.children(this.identifier)
                 .map(Xml::text)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

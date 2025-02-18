@@ -28,12 +28,29 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.w3c.dom.Node;
 
+/**
+ * Text character from flat xml model.
+ * @since 0.1
+ */
 public final class FlatXmlChardata implements Xml {
-    private final int id;
+
+    /**
+     * Node id.
+     */
+    private final int identifier;
+
+    /**
+     * Flat xml model.
+     */
     private final FlatXmlModel xml;
 
-    FlatXmlChardata(final int id, final FlatXmlModel xml) {
-        this.id = id;
+    /**
+     * Constructor.
+     * @param identifier Node id.
+     * @param xml Flat xml model.
+     */
+    FlatXmlChardata(final int identifier, final FlatXmlModel xml) {
+        this.identifier = identifier;
         this.xml = xml;
     }
 
@@ -54,7 +71,7 @@ public final class FlatXmlChardata implements Xml {
 
     @Override
     public Optional<String> text() {
-        return Optional.of(this.xml.content(this.id));
+        return Optional.of(this.xml.content(this.identifier));
     }
 
     @Override

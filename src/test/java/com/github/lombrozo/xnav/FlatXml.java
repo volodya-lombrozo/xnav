@@ -73,7 +73,6 @@ final class FlatXml implements Xml {
         this.doc = doc;
     }
 
-
     @Override
     public Xml child(final String element) {
         return this.children()

@@ -57,12 +57,12 @@ public final class FlatXmlModel {
     /**
      * Attached text.
      */
-    private final List<Integer> text;
+    private final List<Integer> texts;
 
     /**
      * Node type.
      */
-    private final List<Type> type;
+    private final List<Type> types;
 
     /**
      * Pool of strings.
@@ -75,8 +75,8 @@ public final class FlatXmlModel {
     FlatXmlModel() {
         this.first = new HashMap<>(0);
         this.sibling = new HashMap<>(0);
-        this.text = new ArrayList<>(0);
-        this.type = new ArrayList<>(0);
+        this.texts = new ArrayList<>(0);
+        this.types = new ArrayList<>(0);
         this.pool = new StringPool();
     }
 
@@ -87,7 +87,7 @@ public final class FlatXmlModel {
      */
     public Xml child(final int identifier) {
         final Xml result;
-        switch (this.type.get(identifier)) {
+        switch (this.types.get(identifier)) {
             case DOCUMENT:
             case ELEMENT:
                 result = new FlatXmlElement(identifier, this);
@@ -132,18 +132,28 @@ public final class FlatXmlModel {
     }
 
     /**
+     * Get text by id.
+     * @param identifier Id
+     * @return Text.
+     */
+    public String content(final int identifier) {
+        return this.pool.string(this.texts.get(identifier));
+    }
+
+    /**
      * Add node to the model.
      * @param parent Parent id.
      * @param current Current id.
      * @param type Node type.
-     * @param text Node text.
+     * @param content Node text.
+     * @checkstyle ParameterNumberCheck (5 lines)
      */
-    void add(final int parent, final int current, final Type type, final String text) {
-        this.type.add(type);
-        if (text != null) {
-            this.text.add(this.pool.identifier(text));
+    void add(final int parent, final int current, final Type type, final String content) {
+        this.types.add(type);
+        if (content != null) {
+            this.texts.add(this.pool.identifier(content));
         } else {
-            this.text.add(-1);
+            this.texts.add(-1);
         }
         if (parent != -1) {
             final int child = this.first.getOrDefault(parent, -1);
@@ -157,15 +167,6 @@ public final class FlatXmlModel {
                 this.sibling.put(next, current);
             }
         }
-    }
-
-    /**
-     * Get text by id.
-     * @param identifier Id
-     * @return Text.
-     */
-    public String content(final int identifier) {
-        return this.pool.string(this.text.get(identifier));
     }
 
     /**
@@ -197,7 +198,7 @@ public final class FlatXmlModel {
         /**
          * Text.
          */
-        CHARDATA
+        CHARDATA;
     }
 
     /**
@@ -231,7 +232,7 @@ public final class FlatXmlModel {
          * @param identifier Id.
          * @return String.
          */
-        String string(int identifier) {
+        String string(final int identifier) {
             String result = "";
             if (identifier != -1) {
                 result = this.indexed.get(identifier);

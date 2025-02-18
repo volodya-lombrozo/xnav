@@ -109,7 +109,7 @@ final class VtdAttr implements Xml {
 
     @Override
     public String toString() {
-        return this.attr + "='" + this.text().orElse("") + "'";
+        return String.format("%s='%s'", this.attr, this.text().orElse(""));
     }
 
     /**

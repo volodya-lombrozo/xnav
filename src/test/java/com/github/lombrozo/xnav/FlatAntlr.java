@@ -36,6 +36,9 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
  */
 final class FlatAntlr implements FlatParser {
 
+    /**
+     * Visitor.
+     */
     private final FlatAntlrVisitor visitor;
 
     /**
@@ -53,8 +56,8 @@ final class FlatAntlr implements FlatParser {
             );
             parser.setErrorHandler(new BailErrorStrategy());
             return this.visitor.visitDocument(parser.document());
-        } catch (final ParseCancellationException e) {
-            throw new IllegalArgumentException("Invalid XML", e);
+        } catch (final ParseCancellationException exception) {
+            throw new IllegalArgumentException(String.format("Invalid XML '%s'", xml), exception);
         }
     }
 }

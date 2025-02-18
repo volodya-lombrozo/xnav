@@ -24,10 +24,16 @@
 
 package com.github.lombrozo.xnav;
 
+/**
+ * Parser of the flat xml model.
+ * @since 0.1
+ */
 public interface FlatParser {
+
     /**
      * Parse XML to a flat model.
+     * @param xml XML string.
      * @return Flat XML model.
      */
-    FlatXmlModel parse(final String xml);
+    FlatXmlModel parse(String xml);
 }

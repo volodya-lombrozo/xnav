@@ -41,7 +41,8 @@ final class ObjectXmlElement implements Xml {
     /**
      * Element name.
      */
-    private final String element;
+    private final String current;
+
     /**
      * Element attributes.
      */
@@ -59,7 +60,7 @@ final class ObjectXmlElement implements Xml {
      * @param content Element content
      */
     ObjectXmlElement(final String name, final List<Xml> attrs, final Xml content) {
-        this.element = name;
+        this.current = name;
         this.attributes = attrs;
         this.content = content;
     }
@@ -88,13 +89,13 @@ final class ObjectXmlElement implements Xml {
 
     @Override
     public String name() {
-        return this.element;
+        return this.current;
     }
 
     @Override
     public Xml copy() {
         return new ObjectXmlElement(
-            this.element,
+            this.current,
             this.attributes.stream().map(Xml::copy).collect(Collectors.toList()),
             this.content.copy()
         );
@@ -113,6 +114,6 @@ final class ObjectXmlElement implements Xml {
         if (!atts.isEmpty()) {
             atts = String.format(" %s", atts);
         }
-        return String.format("<%s%s>%s</%s>", this.element, atts, this.content, this.element);
+        return String.format("<%s%s>%s</%s>", this.current, atts, this.content, this.current);
     }
 }

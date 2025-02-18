@@ -60,6 +60,7 @@ final class FlatDom implements FlatParser {
      * @param node Node.
      * @param xml Flat xml model.
      */
+    @SuppressWarnings("PMD.CognitiveComplexity")
     private void parse(final int parent, final Node node, final FlatXmlModel xml) {
         if (node != null) {
             final int id = this.index.incrementAndGet();
@@ -67,8 +68,9 @@ final class FlatDom implements FlatParser {
                 case Node.DOCUMENT_NODE:
                     xml.add(parent, id, FlatXmlModel.Type.DOCUMENT, "");
                     final NodeList nodes = node.getChildNodes();
-                    for (int i = 0; i < nodes.getLength(); i++) {
-                        this.parse(id, nodes.item(i), xml);
+                    final int len = nodes.getLength();
+                    for (int indx = 0; indx < len; ++indx) {
+                        this.parse(id, nodes.item(indx), xml);
                     }
                     break;
                 case Node.ELEMENT_NODE:
@@ -76,9 +78,9 @@ final class FlatDom implements FlatParser {
                     xml.add(parent, id, FlatXmlModel.Type.ELEMENT, name);
                     final NamedNodeMap attributes = node.getAttributes();
                     if (attributes != null) {
-                        for (int i = 0; i < attributes.getLength(); i++) {
-                            final Node attr = attributes.item(i);
-                            final int attrId = this.index.incrementAndGet();
+                        final int length = attributes.getLength();
+                        for (int indx = 0; indx < length; ++indx) {
+                            final Node attr = attributes.item(indx);
                             final String text = String.format(
                                 "%s='%s'",
                                 attr.getNodeName(),
@@ -86,22 +88,25 @@ final class FlatDom implements FlatParser {
                             );
                             xml.add(
                                 id,
-                                attrId,
+                                this.index.incrementAndGet(),
                                 FlatXmlModel.Type.ATTRIBUTE,
                                 text
                             );
                         }
                     }
-                    final int contentId = this.index.incrementAndGet();
-                    xml.add(id, contentId, FlatXmlModel.Type.CONTENT, null);
+                    final int content = this.index.incrementAndGet();
+                    xml.add(id, content, FlatXmlModel.Type.CONTENT, null);
                     final NodeList children = node.getChildNodes();
-                    for (int i = 0; i < children.getLength(); i++) {
-                        this.parse(contentId, children.item(i), xml);
+                    final int length = children.getLength();
+                    for (int indx = 0; indx < length; ++indx) {
+                        this.parse(content, children.item(indx), xml);
                     }
                     break;
                 case Node.TEXT_NODE:
                     final String value = node.getNodeValue();
                     xml.add(parent, id, FlatXmlModel.Type.CHARDATA, value);
+                    break;
+                default:
                     break;
             }
         }

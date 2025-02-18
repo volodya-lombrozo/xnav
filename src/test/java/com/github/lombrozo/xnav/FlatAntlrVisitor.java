@@ -39,11 +39,12 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
     /**
      * Index of the current element.
      */
-    private final AtomicInteger index = new AtomicInteger(-1);
+    private final AtomicInteger index;
+
     /**
      * Stack of the current element.
      */
-    private final Deque<Integer> stack = new ArrayDeque<>(0);
+    private final Deque<Integer> stack;
 
     /**
      * Flat XML model.
@@ -62,6 +63,8 @@ final class FlatAntlrVisitor extends XMLParserBaseVisitor<FlatXmlModel> {
      * @param xml Flat XML model to fill.
      */
     private FlatAntlrVisitor(final FlatXmlModel xml) {
+        this.index = new AtomicInteger(-1);
+        this.stack = new ArrayDeque<>(0);
         this.xml = xml;
     }
 

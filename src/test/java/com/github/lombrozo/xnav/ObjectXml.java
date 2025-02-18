@@ -70,7 +70,6 @@ public final class ObjectXml implements Xml {
         this.doc = doc;
     }
 
-
     @Override
     public Xml child(final String element) {
         return this.doc.child(element);

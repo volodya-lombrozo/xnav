@@ -107,11 +107,11 @@ final class VtdElem implements OrderedXml {
                 do {
                     final int curr = nav.getCurrentIndex();
                     results.add(new VtdElem(nav, curr));
-                    this.scanUp(nav, curr, depth).forEach(results::add);
+                    VtdElem.scanUp(nav, curr, depth).forEach(results::add);
                 } while (nav.toElement(VTDNav.NEXT_SIBLING));
                 final int last = this.findLastTokenIndex(nav);
                 nav.toElement(VTDNav.PARENT);
-                this.scanUp(nav, last, depth).forEach(results::add);
+                VtdElem.scanUp(nav, last, depth).forEach(results::add);
             } else {
                 final int text = nav.getText();
                 if (text != -1) {
@@ -227,7 +227,6 @@ final class VtdElem implements OrderedXml {
                 exception
             );
         }
-
     }
 
     /**
@@ -237,7 +236,7 @@ final class VtdElem implements OrderedXml {
      * @param redline Redline depth - the depth to stop at.
      * @return Stream of elements from top to up.
      */
-    private Stream<OrderedXml> scanUp(final VTDNav nav, final int from, final int redline) {
+    private static Stream<OrderedXml> scanUp(final VTDNav nav, final int from, final int redline) {
         final Stream.Builder<OrderedXml> result = Stream.builder();
         for (int index = from - 1; index >= 0; index = index - 1) {
             final int depth = nav.getTokenDepth(index);
@@ -297,5 +296,4 @@ final class VtdElem implements OrderedXml {
     private VTDNav start() {
         return this.navigator.cloneNav();
     }
-
 }

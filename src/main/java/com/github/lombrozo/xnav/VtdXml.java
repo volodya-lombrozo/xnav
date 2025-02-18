@@ -78,6 +78,7 @@ final class VtdXml implements Xml {
     /**
      * Constructor.
      * @param doc VTD document.
+     * @param original Original XML.
      */
     private VtdXml(final VtdDoc doc, final String original) {
         this.doc = doc;
@@ -134,11 +135,11 @@ final class VtdXml implements Xml {
      */
     private static VtdDoc parseDoc(final String xml) {
         try {
-            final VTDGen vg = new VTDGen();
-            vg.enableIgnoredWhiteSpace(true);
-            vg.setDoc(xml.getBytes(StandardCharsets.UTF_8));
-            vg.parse(true);
-            return new VtdDoc(vg.getNav());
+            final VTDGen generator = new VTDGen();
+            generator.enableIgnoredWhiteSpace(true);
+            generator.setDoc(xml.getBytes(StandardCharsets.UTF_8));
+            generator.parse(true);
+            return new VtdDoc(generator.getNav());
         } catch (final ParseException exception) {
             throw new IllegalArgumentException(
                 String.format("Can't prepare document for VTD: Invalid XML: %s", xml),

@@ -30,7 +30,7 @@ import lombok.EqualsAndHashCode;
 import org.w3c.dom.Node;
 
 /**
- * Xml document as an object.
+ * XML document as an object.
  * @since 0.1
  */
 @EqualsAndHashCode
@@ -39,21 +39,21 @@ final class ObjectXmlDocument implements Xml {
     /**
      * Element.
      */
-    private final Xml element;
+    private final Xml root;
 
     /**
      * Constructor.
      * @param element Root element.
-     * */
+     */
     ObjectXmlDocument(final Xml element) {
-        this.element = element;
+        this.root = element;
     }
 
     @Override
     public Xml child(final String element) {
         final Xml result;
-        if (this.element.name().equals(element)) {
-            result = this.element;
+        if (this.root.name().equals(element)) {
+            result = this.root;
         } else {
             result = new Empty();
         }
@@ -62,17 +62,17 @@ final class ObjectXmlDocument implements Xml {
 
     @Override
     public Optional<Xml> attribute(final String name) {
-        return this.element.attribute(name);
+        return this.root.attribute(name);
     }
 
     @Override
     public Optional<String> text() {
-        return this.element.text();
+        return this.root.text();
     }
 
     @Override
     public Stream<Xml> children() {
-        return Stream.of(this.element);
+        return Stream.of(this.root);
     }
 
     @Override
@@ -82,7 +82,7 @@ final class ObjectXmlDocument implements Xml {
 
     @Override
     public Xml copy() {
-        return new ObjectXmlDocument(this.element.copy());
+        return new ObjectXmlDocument(this.root.copy());
     }
 
     @Override
@@ -94,7 +94,7 @@ final class ObjectXmlDocument implements Xml {
     public String toString() {
         return String.format(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>%s",
-            this.element.toString()
+            this.root.toString()
         );
     }
 }
