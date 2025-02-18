@@ -73,7 +73,7 @@ final class ObjectXmlAttribute implements Xml {
 
     @Override
     public Stream<Xml> children() {
-        throw new UnsupportedOperationException("Not supported.");
+        return Stream.empty();
     }
 
     @Override

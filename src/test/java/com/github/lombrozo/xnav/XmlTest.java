@@ -26,6 +26,7 @@ package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -292,6 +293,35 @@ final class XmlTest {
                 )
             ).text().get(),
             Matchers.equalTo("\n  red\n  blue\n")
+        );
+    }
+
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("all")
+    void retrievesAttributeChildren(final Function<String, Xml> impl, final String label) {
+        MatcherAssert.assertThat(
+            String.format("We expect to find the correct attribute children by '%s'", label),
+            impl.apply("<tree honey='no'>fir</tree>")
+                .child("tree")
+                .attribute("honey")
+                .orElseThrow()
+                .children()
+                .collect(Collectors.toList()),
+            Matchers.empty()
+        );
+    }
+
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("all")
+    void retrievesAttributeFromAttribute(final Function<String, Xml> impl, final String label) {
+        MatcherAssert.assertThat(
+            String.format("We expect to get empty attribute from attribute by '%s'", label),
+            impl.apply("<strange case='yes'>fir</strange>")
+                .child("strange")
+                .attribute("case")
+                .orElseThrow()
+                .attribute("unknown"),
+            Matchers.equalTo(Optional.empty())
         );
     }
 

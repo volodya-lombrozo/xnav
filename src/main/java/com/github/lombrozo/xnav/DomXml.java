@@ -35,6 +35,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -97,12 +98,17 @@ final class DomXml implements Xml {
     @Override
     public Optional<Xml> attribute(final String name) {
         synchronized (this.sync()) {
-            final Node item = this.inner.getAttributes().getNamedItem(name);
+            final NamedNodeMap attributes = this.inner.getAttributes();
             final Optional<Xml> result;
-            if (Objects.nonNull(item)) {
-                result = Optional.of(new DomXml(item));
-            } else {
+            if (Objects.isNull(attributes)) {
                 result = Optional.empty();
+            } else {
+                final Node item = attributes.getNamedItem(name);
+                if (Objects.nonNull(item)) {
+                    result = Optional.of(new DomXml(item));
+                } else {
+                    result = Optional.empty();
+                }
             }
             return result;
         }
@@ -126,13 +132,19 @@ final class DomXml implements Xml {
     @Override
     public Stream<Xml> children() {
         synchronized (this.sync()) {
-            final NodeList nodes = this.inner.getChildNodes();
-            final int length = nodes.getLength();
-            return Stream.iterate(0, idx -> idx + 1)
-                .limit(length)
-                .map(nodes::item)
-                .filter(Objects::nonNull)
-                .map(DomXml::new);
+            final Stream<Xml> result;
+            if (this.inner.getNodeType() == Node.ATTRIBUTE_NODE) {
+                result = Stream.empty();
+            } else {
+                final NodeList nodes = this.inner.getChildNodes();
+                final int length = nodes.getLength();
+                result = Stream.iterate(0, idx -> idx + 1)
+                    .limit(length)
+                    .map(nodes::item)
+                    .filter(Objects::nonNull)
+                    .map(DomXml::new);
+            }
+            return result;
         }
     }
 
