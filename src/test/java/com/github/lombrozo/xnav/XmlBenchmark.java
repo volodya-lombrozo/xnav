@@ -26,10 +26,16 @@ package com.github.lombrozo.xnav;
 
 import com.yegor256.Together;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import javax.xml.transform.stream.StreamSource;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XdmNode;
 import org.eolang.jeo.representation.BytecodeRepresentation;
 import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -59,6 +65,8 @@ public class XmlBenchmark {
 
     private static final String FLAT_ANTLR = "flat-antlr-xml";
 
+    private static final String SAXON = "saxon";
+
 
     private static final String[][] QUERIES = {
         {"/program/@name", "j$Collections"},
@@ -79,7 +87,8 @@ public class XmlBenchmark {
             XmlBenchmark.VTD,
             XmlBenchmark.ANTLR_OBJECT,
             XmlBenchmark.FLAT_DOM,
-            XmlBenchmark.FLAT_ANTLR
+            XmlBenchmark.FLAT_ANTLR,
+            XmlBenchmark.SAXON
         })
         public String implementation;
 
@@ -117,6 +126,42 @@ public class XmlBenchmark {
             }
         }
 
+        public Function<String, String> implementation() {
+            if (this.implementation.equals(XmlBenchmark.SAXON)) {
+                return this.saxon();
+            } else {
+                final Xml instance = this.instance();
+                return path -> new Xpath(instance, path)
+                    .nodes()
+                    .findFirst()
+                    .map(Xml::text)
+                    .get()
+                    .get();
+            }
+
+        }
+
+        private Function<String, String> saxon() {
+            try {
+                final Processor processor = new Processor(false);
+                final XdmNode node = processor.newDocumentBuilder().build(
+                    new StreamSource(new StringReader(this.xml))
+                );
+                return path -> {
+                    try {
+                        return processor.newXPathCompiler().evaluate(
+                            path,
+                            node
+                        ).getUnderlyingValue().getStringValue();
+                    } catch (final Exception exception) {
+                        throw new IllegalStateException(exception);
+                    }
+                };
+            } catch (final SaxonApiException exception) {
+                throw new RuntimeException(exception);
+            }
+        }
+
         public Xml instance() {
             switch (this.implementation) {
                 case XmlBenchmark.DOM:
@@ -137,7 +182,6 @@ public class XmlBenchmark {
         }
     }
 
-
     public static void main(String[] args) throws RunnerException {
         final Options opt = new OptionsBuilder()
             .include(XmlBenchmark.class.getSimpleName())
@@ -156,14 +200,15 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void singleQuery(final SmallXml state) {
         final String[] query = XmlBenchmark.QUERIES[0];
-        this.assertTrue(
-            new Xpath(state.instance(), query[0])
-                .nodes()
-                .findFirst()
-                .map(Xml::text)
-                .get()
-                .get()
-                .equals(query[1])
+        XmlBenchmark.assertTrue(
+            state.implementation().apply(query[0]).equals(query[1])
+//            new Xpath(state.instance(), query[0])
+//                .nodes()
+//                .findFirst()
+//                .map(Xml::text)
+//                .get()
+//                .get()
+//                .equals(query[1])
         );
     }
 
@@ -173,19 +218,22 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void manyQueries(final SmallXml state) {
         final Random random = new Random();
-        final Xml xml = state.instance();
+//        final Xml xml = state.instance();
+        final Function<String, String> impl = state.implementation();
+
         for (int i = 0; i < 1000; i++) {
             final int request = random.nextInt(XmlBenchmark.QUERIES.length);
             final String query = XmlBenchmark.QUERIES[request][0];
             final String expected = XmlBenchmark.QUERIES[request][1];
-            this.assertTrue(
-                new Xpath(xml, query)
-                    .nodes()
-                    .findFirst()
-                    .map(Xml::text)
-                    .get()
-                    .get()
-                    .equals(expected)
+            XmlBenchmark.assertTrue(
+                impl.apply(query).equals(expected)
+//                new Xpath(xml, query)
+//                    .nodes()
+//                    .findFirst()
+//                    .map(Xml::text)
+//                    .get()
+//                    .get()
+//                    .equals(expected)
             );
         }
     }
@@ -195,23 +243,24 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void parallelQueries(final SmallXml state) {
         final Random random = new Random();
-        final Xml xml = state.instance();
+//        final Xml xml = state.instance();
         final AtomicInteger counter = new AtomicInteger(1000);
-        assertTrue(
+        final Function<String, String> impl = state.implementation();
+        XmlBenchmark.assertTrue(
             new Together<>(i -> {
                 boolean res = true;
                 while (counter.get() > 0) {
                     final int request = random.nextInt(XmlBenchmark.QUERIES.length);
                     final String query = XmlBenchmark.QUERIES[request][0];
                     final String expected = XmlBenchmark.QUERIES[request][1];
-                    final boolean equals;
-                    equals = new Xpath(xml, query)
-                        .nodes()
-                        .findFirst()
-                        .map(Xml::text)
-                        .get()
-                        .get()
-                        .equals(expected);
+                    final boolean equals = impl.apply(query).equals(expected);
+//                    equals = new Xpath(xml, query)
+//                        .nodes()
+//                        .findFirst()
+//                        .map(Xml::text)
+//                        .get()
+//                        .get()
+//                        .equals(expected);
                     res = res && equals;
                     counter.decrementAndGet();
                 }
@@ -623,14 +672,16 @@ public class XmlBenchmark {
             );
     }
 
-    private boolean assertTrue(final boolean assertion) {
-        return assertTrue(assertion, "");
+    /**
+     * Assert that assertion is true.
+     * @param assertion Assertion.
+     * @return True if assertion is true.
+     */
+    private static boolean assertTrue(final boolean assertion) {
+        if (assertion) {
+            return true;
+        }
+        throw new AssertionError("Assertion failed");
     }
 
-    private boolean assertTrue(final boolean assertion, String msg) {
-        if (!assertion) {
-            throw new AssertionError(msg);
-        }
-        return true;
-    }
 }
