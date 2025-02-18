@@ -153,7 +153,7 @@ SOFTWARE.
     <dependency>
       <groupId>org.eolang</groupId>
       <artifactId>jeo-maven-plugin</artifactId>
-      <version>0.7.3</version>
+      <version>0.7.5</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -236,7 +236,7 @@ SOFTWARE.
           <plugin>
             <groupId>com.qulice</groupId>
             <artifactId>qulice-maven-plugin</artifactId>
-            <version>0.23.0</version>
+            <version>0.24.0</version>
             <configuration>
               <license>file:${basedir}/LICENSE.txt</license>
               <excludes>
@@ -460,7 +460,7 @@ SOFTWARE.
               <dependency>
                 <groupId>org.eolang</groupId>
                 <artifactId>jeo-maven-plugin</artifactId>
-                <version>0.7.3</version>
+                <version>0.7.5</version>
                 <exclusions>
                   <exclusion>
                     <groupId>org.slf4j</groupId>
