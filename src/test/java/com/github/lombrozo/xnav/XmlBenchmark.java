@@ -24,12 +24,14 @@
 
 package com.github.lombrozo.xnav;
 
+import com.jcabi.log.Logger;
 import com.yegor256.Together;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.transform.stream.StreamSource;
@@ -42,8 +44,12 @@ import org.eolang.jeo.representation.bytecode.Bytecode;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -64,6 +70,45 @@ public class XmlBenchmark {
     private static final String HUGE_PARALLEL = "hugeXmlParallelQueries";
 
     private static final Random random = new SecureRandom();
+
+
+    /**
+     * State with huge xml file.
+     * @since 0.1
+     */
+    @State(Scope.Benchmark)
+    public static class HugeXml {
+
+        /**
+         * Xml file.
+         */
+        String xml;
+
+        @Setup(Level.Trial)
+        public void up() {
+            Logger.info(this, "Generating huge xml file");
+            this.xml = XmlBenchmark.generateXml();
+        }
+    }
+
+    /**
+     * State with small xml file.
+     * @since 0.1
+     */
+    @State(Scope.Benchmark)
+    public static class SmallXml {
+
+        /**
+         * Xml file.
+         */
+        String xml;
+
+        @Setup(Level.Trial)
+        public void up() {
+            this.xml = "<root><child>text</child></root>";
+        }
+    }
+
 
     public static void main(String[] args) throws RunnerException {
         final Options opt = new OptionsBuilder()
