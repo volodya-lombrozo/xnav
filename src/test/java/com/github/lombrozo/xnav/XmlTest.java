@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.cactoos.experimental.Threads;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -314,67 +313,29 @@ final class XmlTest {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("all")
-    void retrievesAttributeNameByXpath(
-        final Function<String, Xml> impl, final String label
-    ) {
-        final String xml = String.join(
-            "\n",
-            "<program name=\"j$Collections\">",
-            "    <objects>",
-            "        <o base=\"jeo.class\">",
-            "            <o>",
-            "                <o>",
-            "                    <o base=\"org.eolang.bytes\"/>",
-            "                </o>",
-            "            </o>",
-            "        </o>",
-            "    </objects>",
-            "</program>"
-        );
-        final String path = "/program/objects/o/o/o/o/@base";
-        final Xml implementation = impl.apply(xml);
-        final String together = new Xpath(implementation, path)
-            .nodes()
-            .findFirst()
-            .map(Xml::text)
-            .orElseThrow(
-                () -> new IllegalStateException(
-                    String.format("Can't find any nodes by path '%s'", path)
-                )
-            ).get();
-
-        MatcherAssert.assertThat(
-            "We expect to find the correct attribute name by xpath",
-            together,
-            Matchers.equalTo("org.eolang.bytes")
-        );
-    }
-
-
-    @ParameterizedTest(name = "{1}")
-    @MethodSource("all")
     void retrievesAttributeNameByXpathInParallel(
         final Function<String, Xml> impl, final String label
     ) {
-        final String xml = String.join(
-            "\n",
-            "<program name=\"j$Collections\">",
-            "    <objects>",
-            "        <o base=\"jeo.class\">",
-            "            <o>",
-            "                <o>",
-            "                    <o base=\"org.eolang.bytes\"/>",
-            "                </o>",
-            "            </o>",
-            "        </o>",
-            "    </objects>",
-            "</program>"
+        final Xml xml = impl.apply(
+            String.join(
+                "\n",
+                "<program name='j$Collections'>",
+                "    <objects>",
+                "        <o base='jeo.class'>",
+                "            <o>",
+                "                <o>",
+                "                    <o base='org.eolang.bytes'/>",
+                "                </o>",
+                "            </o>",
+                "        </o>",
+                "    </objects>",
+                "</program>"
+            )
         );
         final String path = "/program/objects/o/o/o/o/@base";
-        final Xml implementation = impl.apply(xml);
         final List<String> together = new Together<>(
             10,
-            input -> new Xpath(implementation, path)
+            input -> new Xpath(xml, path)
                 .nodes()
                 .findFirst()
                 .map(Xml::text)

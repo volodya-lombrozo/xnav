@@ -268,6 +268,7 @@ public class XmlBenchmark {
     /**
      * Assert that assertion is true.
      * @param assertion Assertion.
+     * @param msg Message.
      * @return True if assertion is true.
      */
     private static boolean assertTrue(final boolean assertion, final String msg) {
@@ -290,11 +291,11 @@ public class XmlBenchmark {
          */
         @Param({
             XmlBenchmark.DOM,
-//            XmlBenchmark.VTD,
-//            XmlBenchmark.ANTLR_OBJECT,
-//            XmlBenchmark.FLAT_DOM,
-//            XmlBenchmark.FLAT_ANTLR,
-//            XmlBenchmark.SAXON
+            XmlBenchmark.VTD,
+            XmlBenchmark.ANTLR_OBJECT,
+            XmlBenchmark.FLAT_DOM,
+            XmlBenchmark.FLAT_ANTLR,
+            XmlBenchmark.SAXON
         })
         String impl;
 

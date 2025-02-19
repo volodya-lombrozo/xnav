@@ -24,8 +24,6 @@
 package com.github.lombrozo.xnav;
 
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -61,6 +59,9 @@ final class DomXml implements Xml {
      */
     private final Node inner;
 
+    /**
+     * Synchronization object.
+     */
     private final Object sync;
 
     /**
@@ -86,7 +87,7 @@ final class DomXml implements Xml {
      * @param inner Inner node.
      * @param sync Synchronization object.
      */
-    public DomXml(final Node inner, final Object sync) {
+    private DomXml(final Node inner, final Object sync) {
         this.inner = inner;
         this.sync = sync;
     }
@@ -152,23 +153,14 @@ final class DomXml implements Xml {
             } else {
                 final NodeList nodes = this.inner.getChildNodes();
                 final int length = nodes.getLength();
-
-                Stream.Builder<Xml> builder = Stream.builder();
-//                final List<Xml> children = new ArrayList<>(length);
-                for (int i = 0; i < length; i++) {
-                    final Node node = nodes.item(i);
+                final Stream.Builder<Xml> builder = Stream.builder();
+                for (int index = 0; index < length; ++index) {
+                    final Node node = nodes.item(index);
                     if (node != null) {
-                        builder.add(new DomXml(node, this.sync));
+                        builder.accept(new DomXml(node, this.sync));
                     }
                 }
-                return builder.build();
-//                final NodeList nodes = this.inner.getChildNodes();
-//                final int length = nodes.getLength();
-//                result = Stream.iterate(0, idx -> idx + 1)
-//                    .limit(length)
-//                    .map(nodes::item)
-//                    .filter(Objects::nonNull)
-//                    .map(node -> new DomXml(node, this.sync));
+                result = builder.build();
             }
             return result;
         }
