@@ -117,8 +117,8 @@ public class XmlBenchmark {
      */
     private static final String[][] QUERIES = {
         {"/program/@name", "j$Collections"},
-        {"/program/objects/o/@base", "jeo.class"},
-        {"/program/objects/o/o/o/o/@base", "org.eolang.bytes"},
+        {"/program/objects/o/@base", "Q.jeo.class"},
+        {"/program/objects/o/o/o/o/@base", "Q.org.eolang.bytes"},
     };
 
     @SuppressWarnings("PMD.ProhibitPublicStaticMethods")
@@ -145,8 +145,14 @@ public class XmlBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public static void singleQuery(final BenchmarkState state) {
         final String[] query = XmlBenchmark.QUERIES[0];
+        final String actual = state.implementation().apply(query[0]);
+        final String expected = query[1];
         XmlBenchmark.assertTrue(
-            state.implementation().apply(query[0]).equals(query[1])
+            actual.equals(expected),
+            String.format(
+                "Can't find correct nodes by path %s, actual: %s, expected: %s with implementation %s",
+                query[0], actual, expected, state.impl
+            )
         );
     }
 
@@ -165,7 +171,14 @@ public class XmlBenchmark {
             final int request = random.nextInt(XmlBenchmark.QUERIES.length);
             final String query = XmlBenchmark.QUERIES[request][0];
             final String expected = XmlBenchmark.QUERIES[request][1];
-            XmlBenchmark.assertTrue(impl.apply(query).equals(expected));
+            final String actual = impl.apply(query);
+            XmlBenchmark.assertTrue(
+                actual.equals(expected),
+                String.format(
+                    "Can't find correct nodes by path %s, actual: %s, expected: %s with implementation %s",
+                    query, actual, expected, state.impl
+                )
+            );
         }
     }
 
@@ -195,7 +208,8 @@ public class XmlBenchmark {
                     }
                     return res;
                 }
-            ).asList().stream().allMatch(Boolean::booleanValue)
+            ).asList().stream().allMatch(Boolean::booleanValue),
+            "Can't find correct nodes by path in parallel"
         );
     }
 
@@ -210,10 +224,10 @@ public class XmlBenchmark {
             "\n",
             "<program name=\"j$Collections\">",
             "    <objects>",
-            "        <o base=\"jeo.class\">",
+            "        <o base=\"Q.jeo.class\">",
             "            <o>",
             "                <o>",
-            "                    <o base=\"org.eolang.bytes\"/>",
+            "                    <o base=\"Q.org.eolang.bytes\"/>",
             "                </o>",
             "            </o>",
             "        </o>",
@@ -256,11 +270,11 @@ public class XmlBenchmark {
      * @param assertion Assertion.
      * @return True if assertion is true.
      */
-    private static boolean assertTrue(final boolean assertion) {
+    private static boolean assertTrue(final boolean assertion, final String msg) {
         if (assertion) {
             return true;
         }
-        throw new AssertionError("Assertion failed");
+        throw new AssertionError(String.format("Assertion failed: %s", msg));
     }
 
     /**

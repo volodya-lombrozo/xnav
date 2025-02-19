@@ -314,6 +314,45 @@ final class XmlTest {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("all")
+    void retrievesAttributeNameByXpath(
+        final Function<String, Xml> impl, final String label
+    ) {
+        final String xml = String.join(
+            "\n",
+            "<program name=\"j$Collections\">",
+            "    <objects>",
+            "        <o base=\"jeo.class\">",
+            "            <o>",
+            "                <o>",
+            "                    <o base=\"org.eolang.bytes\"/>",
+            "                </o>",
+            "            </o>",
+            "        </o>",
+            "    </objects>",
+            "</program>"
+        );
+        final String path = "/program/objects/o/o/o/o/@base";
+        final Xml implementation = impl.apply(xml);
+        final String together = new Xpath(implementation, path)
+            .nodes()
+            .findFirst()
+            .map(Xml::text)
+            .orElseThrow(
+                () -> new IllegalStateException(
+                    String.format("Can't find any nodes by path '%s'", path)
+                )
+            ).get();
+
+        MatcherAssert.assertThat(
+            "We expect to find the correct attribute name by xpath",
+            together,
+            Matchers.equalTo("org.eolang.bytes")
+        );
+    }
+
+
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("all")
     void retrievesAttributeNameByXpathInParallel(
         final Function<String, Xml> impl, final String label
     ) {
@@ -335,17 +374,15 @@ final class XmlTest {
         final Xml implementation = impl.apply(xml);
         final List<String> together = new Together<>(
             10,
-            input -> {
-                final Optional<Xml> first = new Xpath(implementation, path).nodes().findFirst();
-                final String res = first
-                    .map(Xml::text)
-                    .orElseThrow(
-                        () -> new IllegalStateException(
-                            String.format("Can't find any nodes by path '%s'", path)
-                        )
-                    ).get();
-                return res;
-            }
+            input -> new Xpath(implementation, path)
+                .nodes()
+                .findFirst()
+                .map(Xml::text)
+                .orElseThrow(
+                    () -> new IllegalStateException(
+                        String.format("Can't find any nodes by path '%s'", path)
+                    )
+                ).get()
         ).asList();
         MatcherAssert.assertThat(
             "We expect to find the correct number of results",

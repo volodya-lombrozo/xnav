@@ -24,6 +24,8 @@
 package com.github.lombrozo.xnav;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -150,11 +152,23 @@ final class DomXml implements Xml {
             } else {
                 final NodeList nodes = this.inner.getChildNodes();
                 final int length = nodes.getLength();
-                result = Stream.iterate(0, idx -> idx + 1)
-                    .limit(length)
-                    .map(nodes::item)
-                    .filter(Objects::nonNull)
-                    .map(node -> new DomXml(node, this.sync));
+
+                Stream.Builder<Xml> builder = Stream.builder();
+//                final List<Xml> children = new ArrayList<>(length);
+                for (int i = 0; i < length; i++) {
+                    final Node node = nodes.item(i);
+                    if (node != null) {
+                        builder.add(new DomXml(node, this.sync));
+                    }
+                }
+                return builder.build();
+//                final NodeList nodes = this.inner.getChildNodes();
+//                final int length = nodes.getLength();
+//                result = Stream.iterate(0, idx -> idx + 1)
+//                    .limit(length)
+//                    .map(nodes::item)
+//                    .filter(Objects::nonNull)
+//                    .map(node -> new DomXml(node, this.sync));
             }
             return result;
         }
