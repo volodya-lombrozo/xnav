@@ -51,7 +51,7 @@ jobs:
           tool: 'jmh'
           output-file-path: pr/benchmark.json
           external-data-json-path: base/benchmark.json
-          github-token: ${{ secrets.COMMENTER_TOKEN }}
+          github-token: ${{ secrets.XNAV_COMMENTER }}
           comment-always: true
           alert-comment-cc-users: '@volodya-lombrozo'
           debug: true
