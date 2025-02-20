@@ -18,4 +18,5 @@ jobs:
             mvn test-compile
             mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          benchmark-file: "benchmark.json"
         
