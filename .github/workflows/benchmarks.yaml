@@ -23,23 +23,21 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 11
-      #todo:
       - name: Run benchmarks on base branch
         run: |
           cd base
-          ./gradlew jmh > ../base_benchmark.txt
-      #todo:
+          mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
       - name: Run benchmarks on pr branch
         run: |
           cd pr
-          ./gradlew jmh > ../pr_benchmark.txt 
+          mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
       - name: Compare benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: 'JMH Benchmark Comparison'
           tool: 'jmh'
-          output-file-path: pr_benchmark.txt
-          external-data-json-path: base_benchmark.txt
+          output-file-path: pr/benchmark.json
+          external-data-json-path: base/benchmark.json
           save-data-file: false
           comment-on-alert: true
           alert-threshold: '10%'
