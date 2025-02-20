@@ -6,7 +6,7 @@ on:
 
 jobs:
   benchmark:
-    name: Performance Regression Check
+    name: JMH
     runs-on: ubuntu-latest
     steps:
       - name: Check out PR branch
