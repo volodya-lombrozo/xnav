@@ -26,10 +26,12 @@ jobs:
       - name: Run benchmarks on base branch
         run: |
           cd base
+          mvn test-compile
           mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
       - name: Run benchmarks on pr branch
         run: |
           cd pr
+          mvn test-compile
           mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
       - name: Compare benchmark results
         uses: benchmark-action/github-action-benchmark@v1
