@@ -33,6 +33,12 @@ jobs:
           cd pr
           mvn test-compile
           mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
+      - name: Debug Benchmark Files
+        run: |
+          ls -al base/
+          ls -al pr/
+          cat pr/benchmark.json || echo "PR benchmark file not found"
+          cat base/benchmark.json || echo "Base benchmark file not found"
       - name: Compare benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -41,6 +47,7 @@ jobs:
           output-file-path: pr/benchmark.json
           external-data-json-path: base/benchmark.json
           github-token: ${{ secrets.COMMENTER_TOKEN }}
+          comment-on-alert: true
           comment-always: true
           fail-on-alert: true
           save-data-file: false
