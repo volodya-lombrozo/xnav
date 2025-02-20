@@ -27,7 +27,6 @@ package com.github.lombrozo.xnav;
 import java.util.concurrent.TimeUnit;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -40,7 +39,9 @@ import org.openjdk.jmh.runner.options.TimeValue;
 /**
  * Benchmark for Xnav.
  * @since 0.1
+ * @checkstyle HideUtilityClassConstructor (500 lines)
  */
+@SuppressWarnings({"PMD.ProhibitPublicStaticMethods", "PMD.UseUtilityClass"})
 public class XnavBenchmark {
 
     /**
@@ -71,6 +72,10 @@ public class XnavBenchmark {
             .orElseThrow()
             .text()
             .orElseThrow();
-        MatcherAssert.assertThat(acutal, Matchers.equalTo("text"));
+        MatcherAssert.assertThat(
+            "Xpath failed",
+            acutal,
+            Matchers.equalTo("text")
+        );
     }
 }
