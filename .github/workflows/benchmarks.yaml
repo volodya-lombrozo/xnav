@@ -4,84 +4,18 @@ on:
     branches:
       - main
 
-permissions:
-  # allow posting comments to pull request
-  pull-requests: write
-  contents: write
-
 jobs:
   benchmark:
     name: JMH
     runs-on: ubuntu-latest
     steps:
-      - name: Check out PR branch
-        uses: actions/checkout@v4
+      - name: Run JMH Benchmark Action
+        uses: volodya-lombrozo/jmh-benchmark-action@main
         with:
-          path: pr
-      - name: Check out base branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: base
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 11
-      - name: Run benchmarks on base branch
-        run: |
-          cd base
-          mvn test-compile
-          mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
-      - name: Run benchmarks on pr branch
-        run: |
-          cd pr
-          mvn test-compile
-          mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
-      - name: Debug Benchmark Files
-        run: |
-          ls -al base/
-          ls -al pr/
-          cat pr/benchmark.json || echo "PR benchmark file not found"
-          cat base/benchmark.json || echo "Base benchmark file not found"
-      - name: Compare benchmark results
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          name: 'JMH Benchmark Comparison'
-          tool: 'jmh'
-          output-file-path: pr/benchmark.json
-          external-data-json-path: base/benchmark.json
-          github-token: ${{ secrets.XNAV_COMMENTER }}
-          comment-always: true
-          alert-comment-cc-users: '@volodya-lombrozo'
-      - name: Manually Post a Comment
-        uses: actions/github-script@v7
-        with:
+          java-version: "11"
+          base-ref: "main"
+          benchmark-command: |
+            mvn test-compile
+            mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const path = 'pr/benchmark.json';
-
-            let benchmarkResults = '';
-            if (fs.existsSync(path)) {
-              benchmarkResults = fs.readFileSync(path, 'utf8');
-            } else {
-              benchmarkResults = 'No benchmark results found.';
-            }
-
-            const commentBody = `
-            ### 🔥 JMH Benchmark Results 🔥
-            \`\`\`json
-            ${benchmarkResults}
-            \`\`\`
-            @volodya-lombrozo
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: commentBody
-            });
-
         
