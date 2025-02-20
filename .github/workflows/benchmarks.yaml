@@ -42,7 +42,7 @@ jobs:
           external-data-json-path: base/benchmark.json
           fail-on-alert: true
           save-data-file: false
+          comment-always: true
           comment-on-alert: true
-          summary-always: true
           alert-threshold: '10%'
           github-token: ${{ secrets.GITHUB_TOKEN }}
