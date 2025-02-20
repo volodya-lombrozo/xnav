@@ -40,8 +40,8 @@ jobs:
           tool: 'jmh'
           output-file-path: pr/benchmark.json
           external-data-json-path: base/benchmark.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-always: true
           fail-on-alert: true
           save-data-file: false
-          comment-always: true
-          alert-threshold: '10%'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+
