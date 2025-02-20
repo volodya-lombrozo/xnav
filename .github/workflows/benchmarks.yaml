@@ -57,7 +57,7 @@ jobs:
       - name: Manually Post a Comment
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.XNAV_COMMENTER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const path = 'pr/benchmark.json';
@@ -73,6 +73,8 @@ jobs:
             ### 🔥 JMH Benchmark Results 🔥
             \`\`\`json
             ${benchmarkResults}
+            
+            @volodya-lombrozo
             \`\`\`
             `;
 
