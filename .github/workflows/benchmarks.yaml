@@ -4,6 +4,10 @@ on:
     branches:
       - main
 
+permissions:
+  # allow posting comments to pull request
+  pull-requests: write
+
 jobs:
   benchmark:
     name: JMH
