@@ -54,4 +54,33 @@ jobs:
           github-token: ${{ secrets.XNAV_COMMENTER }}
           comment-always: true
           alert-comment-cc-users: '@volodya-lombrozo'
-          debug: true
+      - name: Manually Post a Comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.XNAV_COMMENTER }}
+          script: |
+            const fs = require('fs');
+            const path = 'pr/benchmark.json';
+
+            let benchmarkResults = '';
+            if (fs.existsSync(path)) {
+              benchmarkResults = fs.readFileSync(path, 'utf8');
+            } else {
+              benchmarkResults = 'No benchmark results found.';
+            }
+
+            const commentBody = `
+            ### 🔥 JMH Benchmark Results 🔥
+            \`\`\`json
+            ${benchmarkResults}
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+        
