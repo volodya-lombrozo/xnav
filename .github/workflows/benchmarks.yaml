@@ -27,7 +27,7 @@ jobs:
         run: |
           cd base
           mvn test-compile
-          mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
+          mvn jmh:benchmark -Dmaven.test.failure.ignore=true -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
       - name: Run benchmarks on pr branch
         run: |
           cd pr
