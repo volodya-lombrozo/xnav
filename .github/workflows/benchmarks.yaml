@@ -1,0 +1,47 @@
+name: Performance Regression Check
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  benchmark:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v4
+        with:
+          path: pr
+      - name: Check out base branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: base
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 11
+      #todo:
+      - name: Run benchmarks on base branch
+        run: |
+          cd base
+          ./gradlew jmh > ../base_benchmark.txt
+      #todo:
+      - name: Run benchmarks on pr branch
+        run: |
+          cd pr
+          ./gradlew jmh > ../pr_benchmark.txt 
+      - name: Compare benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: 'JMH Benchmark Comparison'
+          tool: 'jmh'
+          output-file-path: pr_benchmark.txt
+          external-data-json-path: base_benchmark.txt
+          save-data-file: false
+          comment-on-alert: true
+          alert-threshold: '10%'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
