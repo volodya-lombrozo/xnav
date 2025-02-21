@@ -78,4 +78,22 @@ public class XnavBenchmark {
             Matchers.equalTo("text")
         );
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public static void element() {
+        final String acutal = new Xnav("<root><a><b><c>deep</c></b></a></root>")
+            .element("root")
+            .element("a")
+            .element("b")
+            .element("c")
+            .text()
+            .orElseThrow();
+        MatcherAssert.assertThat(
+            "Element failed",
+            acutal,
+            Matchers.equalTo("deep")
+        );
+    }
 }
