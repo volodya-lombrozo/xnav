@@ -80,8 +80,8 @@ public class XnavBenchmark {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public static void element() {
         final String acutal = new Xnav("<root><a><b><c>deep</c></b></a></root>")
             .element("root")
