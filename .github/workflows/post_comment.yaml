@@ -1,0 +1,13 @@
+name: "Post Benchmark Comment"
+on:
+  workflow_run:
+    workflows: ["Performance Regression Check"]
+    types:
+      - completed
+
+jobs:
+  process-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print benchmark comment
+        run: echo "${{ inputs.benchmark-comment }}"
