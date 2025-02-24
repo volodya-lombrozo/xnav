@@ -16,6 +16,6 @@ jobs:
           base-ref: "main"
           benchmark-command: |
             mvn test-compile
-            mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=2 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
+            mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=1 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
           benchmark-file: "benchmark.json"
         
