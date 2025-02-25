@@ -1,11 +1,7 @@
 name: Post Benchmark Comment
 on:
   workflow_run:
-<<<<<<< HEAD
-    workflows: ["Performance Regression Check"]
-=======
     workflows: [ "Performance Regression Check" ]
->>>>>>> main
     types:
       - completed
 
