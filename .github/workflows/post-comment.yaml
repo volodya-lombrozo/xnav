@@ -15,13 +15,9 @@ jobs:
           name: benchmark-comment
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Read Comment
-        id: read_comment
-        run: echo "COMMENT_BODY=$(cat benchmark-comment.md)" >> $GITHUB_ENV
-
       - name: Post Comment on PR
         uses: mshick/add-pr-comment@v2
         with:
-          message: ${{ env.COMMENT_BODY }}
+          message-path: |
+            benchmark-comment.md
           repo-token: ${{ secrets.GITHUB_TOKEN }}
