@@ -24,6 +24,7 @@ jobs:
       - name: Post Comment on PR
         uses: mshick/add-pr-comment@v2
         with:
+          issue: ${{ github.event.workflow_run.pull_requests[0].number }}
           message-path: |
             benchmark-comment.md
           repo-token: ${{ secrets.GITHUB_TOKEN }}
