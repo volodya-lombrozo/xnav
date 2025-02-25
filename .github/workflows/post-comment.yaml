@@ -1,7 +1,7 @@
 name: Post Benchmark Comment
 on:
   workflow_run:
-    workflows: ["Performance Regression Check"]
+    workflows: [ "Performance Regression Check" ]
     types:
       - completed
 
@@ -13,6 +13,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: benchmark-comment
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read Comment
         id: read_comment
