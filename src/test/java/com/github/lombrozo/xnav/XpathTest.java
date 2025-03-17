@@ -493,7 +493,7 @@ final class XpathTest {
                 () -> new Xpath(xml, invalid).nodes().findFirst().orElseThrow(),
                 "We expect an exception when an invalid token is used"
             ).getMessage(),
-            Matchers.containsString("Expected ']', but got '@' in position: 27")
+            Matchers.containsString("Expected ']', but got '@' in position: 24")
         );
     }
 
