@@ -812,39 +812,6 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private static final class AttributePresenceExpression implements XpathFunction {
-
-        /**
-         * Attribute name.
-         */
-        private final String name;
-
-        /**
-         * Constructor.
-         *
-         * @param name Attribute name.
-         */
-        private AttributePresenceExpression(final String name) {
-            this.name = name;
-        }
-
-        @Override
-        public Object execute(final Xml xml) {
-            return xml.attribute(this.name).isPresent();
-        }
-
-        @Override
-        public String toString() {
-            return String.format("@%s", this.name);
-        }
-    }
-
-
-    /**
-     * Attribute expression.
-     *
-     * @since 0.1
-     */
     private static final class AttributeValueExpression implements XpathFunction {
 
         /**
