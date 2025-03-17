@@ -334,7 +334,7 @@ final class Xpath {
                 final XpathFunction arg = this.parseExpression();
                 this.consume(Type.RPAREN);
                 function = new NormalizeSpace(arg);
-            } else if ("starts-with".equals(name)) { // Added starts-with case
+            } else if ("starts-with".equals(name)) {
                 this.consume(Type.LPAREN);
                 final XpathFunction arg1 = this.parseExpression();
                 this.consume(Type.COMMA);
@@ -512,14 +512,12 @@ final class Xpath {
         /**
          * Constructor.
          *
-         * @param firstArgument First argument.
-         * @param secondArgument Second argument.
+         * @param text First argument.
+         * @param prefix Second argument.
          */
-        private StartsWithFunction(
-            final XpathFunction firstArgument, final XpathFunction secondArgument
-        ) {
-            this.first = firstArgument;
-            this.second = secondArgument;
+        private StartsWithFunction(final XpathFunction text, final XpathFunction prefix) {
+            this.first = text;
+            this.second = prefix;
         }
 
         @Override
