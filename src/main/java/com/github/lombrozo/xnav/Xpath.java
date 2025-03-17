@@ -334,6 +334,13 @@ final class Xpath {
                 final XpathFunction arg = this.parseExpression();
                 this.consume(Type.RPAREN);
                 function = new NormalizeSpace(arg);
+            } else if ("starts-with".equals(name)) { // Added starts-with case
+                this.consume(Type.LPAREN);
+                final XpathFunction arg1 = this.parseExpression();
+                this.consume(Type.COMMA);
+                final XpathFunction arg2 = this.parseExpression();
+                this.consume(Type.RPAREN);
+                function = new StartsWithFunction(arg1, arg2);
             } else {
                 throw new IllegalStateException(
                     String.format("Unknown function '%s'", name)
@@ -422,7 +429,7 @@ final class Xpath {
             final Token name = this.consume(Type.NAME);
             final XpathFunction result;
             if (this.eof() || this.tokens.get(this.pos).type != Type.EQUALS) {
-                result = new AttributeExpession(name.text);
+                result = new AttributeValueExpression(name.text);
             } else {
                 this.consume(Type.EQUALS);
                 final Token value = this.consume(Type.VALUE);
@@ -482,6 +489,53 @@ final class Xpath {
          */
         private boolean eof() {
             return this.pos >= this.tokens.size();
+        }
+    }
+
+    /**
+     * Starts-with function implementation.
+     *
+     * @since 0.1
+     */
+    private static final class StartsWithFunction implements XpathFunction {
+
+        /**
+         * First argument of the function.
+         */
+        private final XpathFunction first;
+
+        /**
+         * Second argument of the function.
+         */
+        private final XpathFunction second;
+
+        /**
+         * Constructor.
+         *
+         * @param firstArgument First argument.
+         * @param secondArgument Second argument.
+         */
+        private StartsWithFunction(
+            final XpathFunction firstArgument, final XpathFunction secondArgument
+        ) {
+            this.first = firstArgument;
+            this.second = secondArgument;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            final Object fvalue = this.first.execute(xml);
+            final Object svalue = this.second.execute(xml);
+            if (!(fvalue instanceof String) || !(svalue instanceof String)) {
+                throw new IllegalArgumentException(
+                    "starts-with function arguments must be strings");
+            }
+            return ((String) fvalue).startsWith((String) svalue);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("starts-with(%s, %s)", this.first, this.second);
         }
     }
 
@@ -622,13 +676,28 @@ final class Xpath {
 
         @Override
         public Stream<Xml> nodes(final Stream<Xml> xml) {
-            return this.original.nodes(xml).filter(x -> (boolean) this.predicate.execute(x));
+            return this.original.nodes(xml).filter(x -> Xpath.toBoolean(this.predicate.execute(x)));
         }
 
         @Override
         public String toString() {
             return String.format("%s[%s]", this.original, this.predicate);
         }
+    }
+
+    /**
+     * Convert an object to boolean.
+     * @param obj Object to convert.
+     * @return Boolean value.
+     */
+    private static boolean toBoolean(final Object obj) {
+        final boolean result;
+        if (obj instanceof String) {
+            result = !((String) obj).isEmpty();
+        } else {
+            result = obj instanceof Boolean && (Boolean) obj;
+        }
+        return result;
     }
 
     /**
@@ -743,7 +812,7 @@ final class Xpath {
      *
      * @since 0.1
      */
-    private static final class AttributeExpession implements XpathFunction {
+    private static final class AttributePresenceExpression implements XpathFunction {
 
         /**
          * Attribute name.
@@ -755,13 +824,48 @@ final class Xpath {
          *
          * @param name Attribute name.
          */
-        private AttributeExpession(final String name) {
+        private AttributePresenceExpression(final String name) {
             this.name = name;
         }
 
         @Override
         public Object execute(final Xml xml) {
             return xml.attribute(this.name).isPresent();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("@%s", this.name);
+        }
+    }
+
+
+    /**
+     * Attribute expression.
+     *
+     * @since 0.1
+     */
+    private static final class AttributeValueExpression implements XpathFunction {
+
+        /**
+         * Attribute name.
+         */
+        private final String name;
+
+        /**
+         * Constructor.
+         *
+         * @param name Attribute name.
+         */
+        private AttributeValueExpression(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Object execute(final Xml xml) {
+            return xml.attribute(this.name)
+                .flatMap(Xml::text)
+                .orElse("");
         }
 
         @Override
@@ -930,7 +1034,11 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return this.subpath.nodes(Stream.of(xml)).findFirst().isPresent();
+            return this.subpath.nodes(Stream.of(xml)).findFirst()
+                .map(Xml::text)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .orElse("");
         }
 
         @Override
@@ -962,7 +1070,7 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return !((boolean) this.original.execute(xml));
+            return !(toBoolean(this.original.execute(xml)));
         }
     }
 
@@ -1234,7 +1342,7 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return (boolean) this.left.execute(xml) && (boolean) this.right.execute(xml);
+            return toBoolean(this.left.execute(xml)) && toBoolean(this.right.execute(xml));
         }
     }
 
@@ -1268,7 +1376,7 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return (boolean) this.left.execute(xml) || (boolean) this.right.execute(xml);
+            return toBoolean(this.left.execute(xml)) || toBoolean(this.right.execute(xml));
         }
     }
 
@@ -1470,6 +1578,11 @@ final class Xpath {
          * Or operator.
          */
         OR("or|OR"),
+
+        /**
+         * Comma.
+         */
+        COMMA(","),
 
         /**
          * Name.
