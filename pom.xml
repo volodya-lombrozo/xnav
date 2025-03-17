@@ -249,6 +249,13 @@ SOFTWARE.
                 <exclude>checkstyle:/src/test/java/XnavUsage.java</exclude>
                 <exclude>duplicatefinder:.*</exclude>
                 <exclude>dependencies:.*</exclude>
+                <!--
+                  @todo #74:30min Enable checkstyle for XpathTest.
+                   We should enable checkstyle for XpathTest.java file.
+                   Checkstyle is disabled for this files because it has
+                   a large size > 1000.
+                -->
+                <exclude>checkstyle:/src/test/java/com/github/lombrozo/xnav/XpathTest.java</exclude>
               </excludes>
             </configuration>
             <executions>

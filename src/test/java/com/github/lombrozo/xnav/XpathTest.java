@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -451,6 +452,48 @@ final class XpathTest {
                     .collect(Collectors.toList())
             ).asList().stream().flatMap(List::stream).collect(Collectors.toList()),
             Matchers.hasItems("Class4", "Class5", "Class6")
+        );
+    }
+
+    @Test
+    void throwsExceptionWhenUnexpectedOperator() {
+        final String invalid = "/values/val[@active='true' && @type='A']";
+        final Xml xml = XpathTest.xml(
+            "<values>",
+            "  <val type='A' active='true'>one</val>",
+            "  <val type='B' active='false'>two</val>",
+            "</values>"
+        );
+        MatcherAssert.assertThat(
+            "We expect a human-readable error message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xpath(xml, invalid).nodes().findFirst().orElseThrow(),
+                "We expect an exception when an unexpected operator is used"
+            ).getMessage(),
+            Matchers.containsString("Expected ']', but got '@' in position: 30")
+        );
+    }
+
+    @Test
+    void throwsExceptionWithCompletelyInvalidToken() {
+        final String invalid = "/lib/novel[title='1984' @author]";
+        final Xml xml = XpathTest.xml(
+            "<lib>",
+            "  <novel genre='fiction'>",
+            "    <title>1984</title>",
+            "    <author>George Orwell</author>",
+            "  </novel>",
+            "</lib>"
+        );
+        MatcherAssert.assertThat(
+            "We expect human-readable error message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xpath(xml, invalid).nodes().findFirst().orElseThrow(),
+                "We expect an exception when an invalid token is used"
+            ).getMessage(),
+            Matchers.containsString("Expected ']', but got '@' in position: 27")
         );
     }
 
