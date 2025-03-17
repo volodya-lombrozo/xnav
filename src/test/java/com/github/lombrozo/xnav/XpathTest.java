@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -116,6 +117,36 @@ final class XpathTest {
                 "/zoo/animal[3]"
             ).nodes().collect(Collectors.toList()),
             Matchers.empty()
+        );
+    }
+
+    @Test
+    void retrievesAttributeValuesCorrectly() {
+        final Xml xml = XpathTest.xml(
+            "<root>",
+            "  <item name='apple'>Fruit</item>",
+            "  <item name='application'>Software</item>",
+            "</root>"
+        );
+        MatcherAssert.assertThat(
+            "First 'item' name should be 'apple'",
+            new Xpath(xml, "/root/item[1]/@name")
+                .nodes()
+                .findFirst()
+                .orElseThrow()
+                .text()
+                .orElseThrow(),
+            Matchers.equalTo("apple")
+        );
+        MatcherAssert.assertThat(
+            "Second 'item' name should be 'application'",
+            new Xpath(xml, "/root/item[2]/@name")
+                .nodes()
+                .findFirst()
+                .orElseThrow()
+                .text()
+                .orElseThrow(),
+            Matchers.equalTo("application")
         );
     }
 
@@ -424,6 +455,48 @@ final class XpathTest {
         );
     }
 
+    @Test
+    void throwsExceptionWhenUnexpectedOperator() {
+        final String invalid = "/values/val[@active='true' && @type='A']";
+        final Xml xml = XpathTest.xml(
+            "<values>",
+            "  <val type='A' active='true'>one</val>",
+            "  <val type='B' active='false'>two</val>",
+            "</values>"
+        );
+        MatcherAssert.assertThat(
+            "We expect a human-readable error message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xpath(xml, invalid).nodes().findFirst().orElseThrow(),
+                "We expect an exception when an unexpected operator is used"
+            ).getMessage(),
+            Matchers.containsString("Expected ']', but got '@' in position: 30")
+        );
+    }
+
+    @Test
+    void throwsExceptionWithCompletelyInvalidToken() {
+        final String invalid = "/lib/novel[title='1984' @author]";
+        final Xml xml = XpathTest.xml(
+            "<lib>",
+            "  <novel genre='fiction'>",
+            "    <title>1984</title>",
+            "    <author>George Orwell</author>",
+            "  </novel>",
+            "</lib>"
+        );
+        MatcherAssert.assertThat(
+            "We expect human-readable error message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xpath(xml, invalid).nodes().findFirst().orElseThrow(),
+                "We expect an exception when an invalid token is used"
+            ).getMessage(),
+            Matchers.containsString("Expected ']', but got '@' in position: 24")
+        );
+    }
+
     @ParameterizedTest
     @MethodSource({
         "xpaths",
@@ -437,7 +510,9 @@ final class XpathTest {
         "recursivePaths",
         "subpathExpressions",
         "textEquality",
-        "complexXpaths"
+        "complexXpaths",
+        "startsWithTests",
+        "complexStartsWithTests"
     })
     void checksManyXpaths(final String xpath, final Xml xml, final String expected) {
         MatcherAssert.assertThat(
@@ -452,7 +527,7 @@ final class XpathTest {
     }
 
     /**
-     * Arguments for the test.
+     * Arguments for the starts-with() function tests.
      *
      * @return Arguments for the test.
      */
@@ -472,10 +547,121 @@ final class XpathTest {
             {"/zoo/animal[1]/cat", xml, ""},
             {"/zoo/animal[1]/dog", xml, ""},
             {"/zoo/animal[1]/bird", xml, ""},
-            {"/zoo/animal[2]/cat", xml, ""},
             {"/zoo/animal[2]/bird", xml, ""},
+            {"/zoo/animal[2]/cat", xml, ""},
             {"/zoo/animal[3]/cat", xml, ""},
             {"/zoo/animal[3]/dog", xml, ""},
+        };
+    }
+
+    /**
+     * Arguments for the starts-with() function tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] startsWithTests() {
+        final Xml fruits = xml(
+            "<root>",
+            "  <item name='apple'>Fruit</item>",
+            "  <item name='apricot'>Fruit</item>",
+            "  <item name='banana'>Fruit</item>",
+            "  <item name='application'>Software</item>",
+            "</root>"
+        );
+        final Xml products = xml(
+            "<catalog>",
+            "  <product code='ABC123'>Laptop</product>",
+            "  <product code='ABD456'>Smartphone</product>",
+            "  <product code='XYZ789'>Tablet</product>",
+            "  <product code='ABF000'>Monitor</product>",
+            "</catalog>"
+        );
+        final Xml employees = xml(
+            "<employees>",
+            "  <employee id='E001'>Alice</employee>",
+            "  <employee id='E002'>Bob</employee>",
+            "  <employee id='A003'>Charlie</employee>",
+            "  <employee id='A004'>David</employee>",
+            "</employees>"
+        );
+        final String apple = "apple";
+        final String app = "application";
+        return new Object[][]{
+            {"/root/item[starts-with(@name, 'app')]/@name", fruits, apple},
+            {"/root/item[starts-with(@name, 'apr')]/@name", fruits, "apricot"},
+            {"/root/item[starts-with(@name, 'ban')]/@name", fruits, "banana"},
+            {"/root/item[starts-with(@name, 'app') and text()='Fruit']/@name", fruits, apple},
+            {"/root/item[starts-with(@name, 'app') and text()='Software']/@name", fruits, app},
+            {"/catalog/product[starts-with(@code, 'AB')]", products, "Laptop"},
+            {"/catalog/product[starts-with(@code, 'ab')]/text()", products, ""},
+            {"/employees/employee[starts-with(@id, 'A')]", employees, "Charlie"},
+            {"/employees/employee[starts-with(@id, 'A')][2]", employees, "David"},
+            {"/root/item[starts-with(@name, 'xyz')]", fruits, ""},
+            {"/catalog/product[starts-with(@code, 'DEF')]", products, ""},
+            {"/employees/employee[starts-with(@id, 'Z')]/text()", employees, ""},
+            {"/root/item[starts-with(@name, '')]/@name", fruits, apple},
+            {"/catalog/product[starts-with(@code, '')]/@code", products, "ABC123"},
+            {"/employees/employee[starts-with(@id, '')]/@id", employees, "E001"},
+            {"/root/item[starts-with(@name, 'app')]", fruits, "Fruit"},
+            {"/employees/employee[starts-with(@id, 'E')]", employees, "Alice"},
+        };
+    }
+
+    /**
+     * Arguments for the complex starts-with() function tests.
+     *
+     * @return Arguments for the test.
+     */
+    private static Object[][] complexStartsWithTests() {
+        final Xml xml = xml(
+            "<program>",
+            "  <metas>",
+            "    <meta>",
+            "      <head>unlint</head>",
+            "      <tail>lname</tail>",
+            "    </meta>",
+            "    <meta>",
+            "      <head>unlint</head>",
+            "      <tail>lname:extra</tail>",
+            "    </meta>",
+            "    <meta>",
+            "      <head>other</head>",
+            "      <tail>something</tail>",
+            "    </meta>",
+            "  </metas>",
+            "</program>"
+        );
+        return new Object[][]{
+            {
+                "/program/metas/meta[head='unlint' and (tail='lname' or starts-with(tail, 'lname:'))]/tail[2]",
+                xml,
+                "lname:extra",
+            },
+            {
+                "/program/metas/meta[starts-with(tail, 'ln') and head='unlint']/head",
+                xml,
+                "unlint",
+            },
+            {
+                "/program/metas/meta[starts-with(tail, 'lm') or starts-with(tail, 'ln')]/tail[2]",
+                xml,
+                "lname:extra",
+            },
+            {
+                "/program/metas/meta[head='unlint' and (starts-with(tail, 'lname') or starts-with(tail, 'other'))]/tail[1]",
+                xml,
+                "lname",
+            },
+            {
+                "/program/metas/meta[starts-with(head, 'un') and (starts-with(tail, 'lname') or starts-with(tail, 'something'))]/head[2]",
+                xml,
+                "unlint",
+            },
+            {
+                "/program/metas/meta[head='unlint' and (tail='unknown' or starts-with(tail, 'unknown:'))]/tail",
+                xml,
+                "",
+            },
         };
     }
 
@@ -495,8 +681,8 @@ final class XpathTest {
         final String eagle = "eagle";
         return new Object[][]{
             {"/zoo/animal[@legs][1]", xml, "big"},
-            {"/zoo/animal[@legs][2]", xml, eagle},
-            {"/zoo/animal[@legs][3]", xml, ""},
+            {"/zoo/animal[@legs='2']", xml, eagle},
+            {"/zoo/animal[@legs='3']", xml, ""},
             {"/zoo/animal[@legs='4']/elephant", xml, "big"},
             {"/zoo/animal[@legs='2']/bird", xml, eagle},
             {"/zoo/animal[@legs='3']/bird", xml, ""},
@@ -505,8 +691,8 @@ final class XpathTest {
             {"/zoo/animal[@legs='2']/elephant", xml, ""},
             {"/zoo/animal[@legs='3']/elephant", xml, ""},
             {"/zoo/animal[@legs='4']", xml, "big"},
-            {"/zoo/animal[@legs='2']", xml, eagle},
-            {"/zoo/animal[@legs='3']", xml, ""},
+            {"/zoo/animal[@legs][2]", xml, eagle},
+            {"/zoo/animal[@legs][3]", xml, ""},
         };
     }
 
