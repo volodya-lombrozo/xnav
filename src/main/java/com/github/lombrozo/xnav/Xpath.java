@@ -522,13 +522,8 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            final Object fvalue = this.first.execute(xml);
-            final Object svalue = this.second.execute(xml);
-            if (!(fvalue instanceof String) || !(svalue instanceof String)) {
-                throw new IllegalArgumentException(
-                    "starts-with function arguments must be strings");
-            }
-            return ((String) fvalue).startsWith((String) svalue);
+            return Xpath.toString(this.first.execute(xml))
+                .startsWith(Xpath.toString(this.second.execute(xml)));
         }
 
         @Override
@@ -692,8 +687,33 @@ final class Xpath {
         final boolean result;
         if (obj instanceof String) {
             result = !((String) obj).isEmpty();
+        } else if (obj instanceof Xml) {
+            result = !(obj instanceof Empty);
+        } else if (obj instanceof Boolean) {
+            result = (Boolean) obj;
         } else {
-            result = obj instanceof Boolean && (Boolean) obj;
+            throw new IllegalStateException(
+                String.format("Cannot convert %s to boolean", obj)
+            );
+        }
+        return result;
+    }
+
+    /**
+     * Convert an object to a string.
+     * @param obj Object to convert.
+     * @return String value.
+     */
+    private static String toString(final Object obj) {
+        final String result;
+        if (obj instanceof String) {
+            result = (String) obj;
+        } else if (obj instanceof Xml) {
+            result = ((Xml) obj).text().orElse("");
+        } else {
+            throw new IllegalStateException(
+                String.format("Cannot convert %s to string", obj)
+            );
         }
         return result;
     }
@@ -957,11 +977,23 @@ final class Xpath {
 
     }
 
+    /**
+     * Find text by subpath.
+     *
+     * @since 0.1
+     */
     private static final class SubpathTextExpression implements XpathFunction {
 
+        /**
+         * Subpath.
+         */
         private final XpathNode subpath;
 
-        public SubpathTextExpression(final XpathNode subpath) {
+        /**
+         * Constructor.
+         * @param subpath Subpath.
+         */
+        private SubpathTextExpression(final XpathNode subpath) {
             this.subpath = subpath;
         }
 
@@ -999,11 +1031,9 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return this.subpath.nodes(Stream.of(xml)).findFirst()
-                .map(Xml::text)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .orElse("");
+            return this.subpath.nodes(Stream.of(xml))
+                .findFirst()
+                .orElse(new Empty());
         }
 
         @Override
@@ -1307,7 +1337,8 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return toBoolean(this.left.execute(xml)) && toBoolean(this.right.execute(xml));
+            final boolean first = Xpath.toBoolean(this.left.execute(xml));
+            return first && Xpath.toBoolean(this.right.execute(xml));
         }
     }
 

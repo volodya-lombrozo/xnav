@@ -43,6 +43,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 @SuppressWarnings("PMD.TooManyMethods")
 final class XpathTest {
 
+    /**
+     * Root start tag.
+     */
+    private static final String ROOT_START = "<root>";
+
+    /**
+     * Root end tag.
+     */
+    private static final String ROOT_END = "</root>";
+
     @Test
     void retrievesElement() {
         MatcherAssert.assertThat(
@@ -52,6 +62,27 @@ final class XpathTest {
                 .findFirst()
                 .orElseThrow(),
             Matchers.equalTo(XpathTest.xml("<cat/>").child("cat"))
+        );
+    }
+
+    @Test
+    void findsElementWithAndOperator() {
+        final Xml xml = XpathTest.xml(
+            XpathTest.ROOT_START,
+            "  <o name='foo'>",
+            "    <o name='at'>",
+            "      <o name='λ'/>",
+            "    </o>",
+            "  </o>",
+            XpathTest.ROOT_END
+        );
+        MatcherAssert.assertThat(
+            "We expect to find the element using the 'and' operator",
+            new Xpath(xml, "//o[@name='at' and o[@name='λ']]")
+                .nodes()
+                .findFirst()
+                .isPresent(),
+            Matchers.is(true)
         );
     }
 
@@ -123,10 +154,10 @@ final class XpathTest {
     @Test
     void retrievesAttributeValuesCorrectly() {
         final Xml xml = XpathTest.xml(
-            "<root>",
+            XpathTest.ROOT_START,
             "  <item name='apple'>Fruit</item>",
             "  <item name='application'>Software</item>",
-            "</root>"
+            XpathTest.ROOT_END
         );
         MatcherAssert.assertThat(
             "First 'item' name should be 'apple'",
@@ -561,12 +592,12 @@ final class XpathTest {
      */
     private static Object[][] startsWithTests() {
         final Xml fruits = xml(
-            "<root>",
+            XpathTest.ROOT_START,
             "  <item name='apple'>Fruit</item>",
             "  <item name='apricot'>Fruit</item>",
             "  <item name='banana'>Fruit</item>",
             "  <item name='application'>Software</item>",
-            "</root>"
+            XpathTest.ROOT_END
         );
         final Xml products = xml(
             "<catalog>",
@@ -910,12 +941,12 @@ final class XpathTest {
      */
     private static Object[][] subpathExpressions() {
         final Xml xml = XpathTest.xml(
-            "<root>",
+            XpathTest.ROOT_START,
             "  <o><o base='true'><o>basetrue</o></o></o>",
             "  <o base='false'><o>other</o></o>",
             "  <o><o base='true'>nested</o></o>",
             "  <o><o base='false'><o>other</o></o></o>",
-            "</root>"
+            XpathTest.ROOT_END
         );
         final String content = "basetrue";
         final String other = "other";
@@ -980,7 +1011,7 @@ final class XpathTest {
      */
     private static Object[][] complexXpaths() {
         final Xml xml = XpathTest.xml(
-            "<root>",
+            XpathTest.ROOT_START,
             "  <o name='one' atom='true' loc='here'>one</o>",
             "  <o name='two' atom='true' base='org.eolang.two' loc='there'><o base='bytes'>two</o></o>",
             "  <o name='three' atom='true' loc='everywhere' lambda='no'>three</o>",
@@ -992,7 +1023,7 @@ final class XpathTest {
             "  <o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>first-</o><o>content</o></o></o>",
             "  <o><o><o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>second-</o><o>content</o></o></o></o>",
             "  <o base='Q.org.eolang.string'><o base='Q.org.eolang.bytes'>third-</o><o>content</o></o>",
-            "</root>"
+            XpathTest.ROOT_END
         );
         return new Object[][]{
             {"(//o[@name and @atom and not(@base) and @loc and not(@lambda)])[1]", xml, "one"},
