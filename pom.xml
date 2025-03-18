@@ -368,7 +368,7 @@ SOFTWARE.
         <plugins>
           <plugin>
             <artifactId>maven-clean-plugin</artifactId>
-            <version>3.4.0</version>
+            <version>3.4.1</version>
             <executions>
               <execution>
                 <phase>prepare-package</phase>
