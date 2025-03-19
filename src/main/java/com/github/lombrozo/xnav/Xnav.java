@@ -73,7 +73,7 @@ public final class Xnav {
      * @param join XML document as a string.
      */
     public Xnav(final String... join) {
-        this(new VtdXml(String.join("\n", join)));
+        this(new DomXml(String.join("\n", join)));
     }
 
     /**

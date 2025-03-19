@@ -151,6 +151,12 @@ SOFTWARE.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.ximpleware</groupId>
+      <artifactId>vtd-xml</artifactId>
+      <version>2.13.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.eolang</groupId>
       <artifactId>jeo-maven-plugin</artifactId>
       <version>0.8.1</version>
@@ -169,11 +175,6 @@ SOFTWARE.
           <artifactId>lints</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.ximpleware</groupId>
-      <artifactId>vtd-xml</artifactId>
-      <version>2.13.4</version>
     </dependency>
   </dependencies>
   <build>
