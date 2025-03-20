@@ -152,6 +152,24 @@ final class XpathTest {
     }
 
     @Test
+    void findsHex() {
+        MatcherAssert.assertThat(
+            "We expect to find the hex value",
+            new Xpath(
+                XpathTest.xml(
+                    "<p>",
+                    "   <o base='Q.org.eolang.number'>",
+                    "      <o base='Q.org.eolang.bytes' hex=''>1</o>",
+                    "   </o>",
+                    "</p>"
+                ),
+                "//o[@hex]"
+            ).nodes().findFirst().isPresent(),
+            Matchers.is(true)
+        );
+    }
+
+    @Test
     void retrievesAttributeValuesCorrectly() {
         final Xml xml = XpathTest.xml(
             XpathTest.ROOT_START,

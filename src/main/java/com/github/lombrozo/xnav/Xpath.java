@@ -848,9 +848,7 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return xml.attribute(this.name)
-                .flatMap(Xml::text)
-                .orElse("");
+            return xml.attribute(this.name).orElse(new Empty());
         }
 
         @Override
@@ -1065,7 +1063,7 @@ final class Xpath {
 
         @Override
         public Object execute(final Xml xml) {
-            return !(toBoolean(this.original.execute(xml)));
+            return !(Xpath.toBoolean(this.original.execute(xml)));
         }
     }
 
