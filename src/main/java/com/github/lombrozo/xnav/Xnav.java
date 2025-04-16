@@ -27,7 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -112,6 +114,28 @@ public final class Xnav {
      */
     public Stream<Xnav> elements(final Filter... filters) {
         return this.xml.children().filter(Filter.all(filters)).map(Xnav::new);
+    }
+
+    /**
+     * Get strictly N child nodes.
+     * If there are more or less than N nodes, the exception is thrown.
+     * @param number Number of child nodes to get.
+     * @return Stream of navigators for the children.
+     * @throws IllegalStateException If the number of child nodes is not equal to N.
+     */
+    public Stream<Xnav> strict(final int number) {
+        final List<Xml> collect = this.xml.children().collect(Collectors.toList());
+        if (collect.size() == number) {
+            return collect.stream().map(Xnav::new);
+        } else {
+            throw new IllegalStateException(
+                String.format(
+                    "Expected %d child nodes, but found %d",
+                    number,
+                    collect.size()
+                )
+            );
+        }
     }
 
     /**

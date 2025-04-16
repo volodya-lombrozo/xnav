@@ -220,6 +220,42 @@ final class XnavTest {
         );
     }
 
+    @Test
+    void retrievesStrictNumberOfChildren() {
+        MatcherAssert.assertThat(
+            "We expect exactly 3 child nodes to be retrieved",
+            new Xnav("<strict><a>1</a><b>2</b><c>3</c></strict>")
+                .element("strict")
+                .strict(3)
+                .count(),
+            Matchers.equalTo(3L)
+        );
+    }
+
+    @Test
+    void failsWhenChildrenAreLessThanStrictNumber() {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> new Xnav("<strict><a>1</a><b>2</b></strict>")
+                .element("strict")
+                .strict(3)
+                .collect(Collectors.toList()),
+            "We expect an exception when there are fewer children than the strict number"
+        );
+    }
+
+    @Test
+    void failsWhenChildrenAreMoreThanStrictNumber() {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> new Xnav("<strict><a>1</a><b>2</b><c>3</c><d>4</d></strict>")
+                .element("strict")
+                .strict(3)
+                .collect(Collectors.toList()),
+            "We expect an exception when there are more children than the strict number"
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
