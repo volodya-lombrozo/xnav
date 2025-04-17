@@ -19,7 +19,7 @@ the following snippet in your `pom.xml`:
 <dependency>
   <groupId>com.github.volodya-lombrozo</groupId>
   <artifactId>xnav</artifactId>
-  <version>0.1.16</version>
+  <version>0.1.17</version>
 </dependency>
 ```
 
