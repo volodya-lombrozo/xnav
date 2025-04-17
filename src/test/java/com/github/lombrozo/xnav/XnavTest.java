@@ -256,6 +256,37 @@ final class XnavTest {
         );
     }
 
+    @Test
+    void retrievesOneChild() {
+        MatcherAssert.assertThat(
+            "We expect the 'one()' method to retrieve the single child node",
+            new Xnav("<one><child>content</child></one>")
+                .element("one")
+                .one()
+                .text()
+                .orElseThrow(),
+            Matchers.equalTo("content")
+        );
+    }
+
+    @Test
+    void failsWhenNoChildrenExist() {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> new Xnav("<one></one>").element("one").one(),
+            "We expect an exception when no children exist"
+        );
+    }
+
+    @Test
+    void failsWhenMoreThanOneChildExists() {
+        Assertions.assertThrows(
+            IllegalStateException.class,
+            () -> new Xnav("<one><child1>1</child1><child2>2</child2></one>").element("one").one(),
+            "We expect an exception when more than one child exists"
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {

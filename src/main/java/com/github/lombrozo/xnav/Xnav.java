@@ -139,6 +139,15 @@ public final class Xnav {
     }
 
     /**
+     * Get strictly one child node.
+     * If there are more or less than one node, the exception is thrown.
+     * @return Navigator for the child.
+     */
+    public Xnav one() {
+        return this.strict(1).findFirst().orElseThrow();
+    }
+
+    /**
      * Get an attribute by its name.
      *
      * @param name Attribute name.
