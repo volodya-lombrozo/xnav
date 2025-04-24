@@ -44,6 +44,7 @@ import org.w3c.dom.Node;
  */
 @ToString
 @EqualsAndHashCode
+@SuppressWarnings("PMD.TooManyMethods")
 public final class Xnav {
 
     /**
@@ -139,12 +140,42 @@ public final class Xnav {
     }
 
     /**
+     * Get strictly N nodes by XPath expression.
+     * @param path XPath expression.
+     * @param number Number of child nodes to get.
+     * @return Stream of navigators for the children.
+     */
+    public Stream<Xnav> strict(final String path, final int number) {
+        final List<Xnav> all = this.path(path).collect(Collectors.toList());
+        if (all.size() == number) {
+            return all.stream();
+        } else {
+            throw new IllegalStateException(
+                String.format(
+                    "Expected %d child nodes, but found %d",
+                    number,
+                    all.size()
+                )
+            );
+        }
+    }
+
+    /**
      * Get strictly one child node.
      * If there are more or less than one node, the exception is thrown.
      * @return Navigator for the child.
      */
     public Xnav one() {
         return this.strict(1).findFirst().orElseThrow();
+    }
+
+    /**
+     * Get strictly one child node by XPath expression.
+     * @param xpath XPath expression.
+     * @return Navigator for the child.
+     */
+    public Xnav one(final String xpath) {
+        return this.strict(xpath, 1).findFirst().orElseThrow();
     }
 
     /**

@@ -287,6 +287,85 @@ final class XnavTest {
         );
     }
 
+    @Test
+    void retrievesStrictNumberOfChildrenByXPath() {
+        MatcherAssert.assertThat(
+            "We expect exactly 2 child nodes to be retrieved by XPath",
+            new Xnav("<root><a>1</a><a>2</a><c>3</c></root>")
+                .strict("/root/a", 2)
+                .count(),
+            Matchers.equalTo(2L)
+        );
+    }
+
+    @Test
+    void failsWhenXPathChildrenAreLessThanStrictNumber() {
+        MatcherAssert.assertThat(
+            "We expect to get helpful message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xnav("<root><a>1</a></root>")
+                    .strict("//a", 2)
+                    .collect(Collectors.toList()),
+                "We expect an exception when XPath retrieves fewer children than the strict number"
+            ).getMessage(),
+            Matchers.equalTo("Expected 2 child nodes, but found 1")
+        );
+    }
+
+    @Test
+    void failsWhenXPathChildrenAreMoreThanStrictNumber() {
+        MatcherAssert.assertThat(
+            "We expect to get helpful message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xnav("<root><c>1</c><c>2</c><c>3</c></root>")
+                    .strict("//c", 2)
+                    .collect(Collectors.toList()),
+                "We expect an exception when XPath retrieves more children than the strict number"
+            ).getMessage(),
+            Matchers.equalTo("Expected 2 child nodes, but found 3")
+        );
+    }
+
+    @Test
+    void retrievesOneChildByXPath() {
+        MatcherAssert.assertThat(
+            "We expect the 'one(String xpath)' method to retrieve the single child node by XPath",
+            new Xnav("<root><child>content</child></root>")
+                .one("//child")
+                .text()
+                .orElseThrow(),
+            Matchers.equalTo("content")
+        );
+    }
+
+    @Test
+    void failsWhenNoChildrenExistForXPath() {
+        MatcherAssert.assertThat(
+            "We expect to get helpful message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xnav("<root></root>").one("//element"),
+                "We expect an exception when no children exist for the given XPath"
+            ).getMessage(),
+            Matchers.equalTo("Expected 1 child nodes, but found 0")
+        );
+    }
+
+    @Test
+    void failsWhenMoreThanOneChildExistsForXPath() {
+        MatcherAssert.assertThat(
+            "We expect to get helpful message",
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> new Xnav("<root><child>1</child><child>2</child></root>").one("//child"),
+                "We expect an exception when more than one child exists for the given XPath"
+            ).getMessage(),
+            Matchers.equalTo("Expected 1 child nodes, but found 2")
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
