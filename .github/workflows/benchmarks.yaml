@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run JMH Benchmark Action
-        uses: volodya-lombrozo/jmh-benchmark-action@main
+        uses: volodya-lombrozo/jmh-benchmark-action@v1
         with:
           java-version: "11"
           base-ref: "main"
