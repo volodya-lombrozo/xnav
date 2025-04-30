@@ -116,9 +116,9 @@ public class XmlBenchmark {
      * All XPath queries with expected results.
      */
     private static final String[][] QUERIES = {
-        {"/program/@name", "j$Collections"},
-        {"/program/objects/o/@base", "Q.jeo.class"},
-        {"/program/objects/o/o/o/o/@base", "Q.org.eolang.bytes"},
+        {"/object/o/@name", "j$Collections"},
+        {"/object/o/@base", "Q.jeo.class"},
+        {"/object/o/o/o/o/@base", "Q.org.eolang.bytes"},
     };
 
     @SuppressWarnings("PMD.ProhibitPublicStaticMethods")
@@ -222,17 +222,15 @@ public class XmlBenchmark {
     private static String small() {
         return String.join(
             "\n",
-            "<program name=\"j$Collections\">",
-            "    <objects>",
-            "        <o base=\"Q.jeo.class\">",
+            "<object>",
+            "        <o base=\"Q.jeo.class\" name=\"j$Collections\">",
             "            <o>",
             "                <o>",
             "                    <o base=\"Q.org.eolang.bytes\"/>",
             "                </o>",
             "            </o>",
             "        </o>",
-            "    </objects>",
-            "</program>"
+            "    </object>"
         );
     }
 
