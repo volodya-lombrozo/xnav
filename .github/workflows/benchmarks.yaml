@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run JMH Benchmark Action
-        uses: volodya-lombrozo/jmh-benchmark-action@v1
+        uses: volodya-lombrozo/jmh-benchmark-action@v1.0.3
         with:
           java-version: "11"
           base-ref: "main"
@@ -18,4 +18,5 @@ jobs:
             mvn test-compile
             mvn jmh:benchmark -Pbenchmark -Djmh.benchmarks=XnavBenchmark -Djmh.wi=1 -Djmh.i=1 -Djmh.f=1 -Djmh.rf=json -Djmh.rff=benchmark.json
           benchmark-file: "benchmark.json"
+          threshold: 50
         
