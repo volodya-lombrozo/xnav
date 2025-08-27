@@ -3,3 +3,9 @@ target
 *.DS_Store
 .aider*
 .aidy
+.env
+.classpath
+.project
+.factorypath
+.settings/
+stats.csv
