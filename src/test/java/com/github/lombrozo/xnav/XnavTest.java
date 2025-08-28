@@ -389,6 +389,34 @@ final class XnavTest {
         );
     }
 
+    /**
+     * This test was added after a bug was found in parsing indented XML.
+     * https://github.com/volodya-lombrozo/xnav/issues/119
+     * @since 0.1.19
+     */
+    @Test
+    void parsesIndentedXml() {
+        final String xml = String.join(
+            "\n",
+            "<error check=\"eo-parser\" line=\"2\" severity=\"critical\">[2:4] error: 'Invalid bound object declaration'",
+                "  y:^",
+                "    ^</error>"
+        );
+        final String text = new Xnav(xml).element("error").text().orElseThrow();
+        MatcherAssert.assertThat(
+            "We expect the indented XML to be parsed correctly",
+            text,
+            Matchers.equalTo(
+                String.join(
+                    "\n",
+                    "[2:4] error: 'Invalid bound object declaration'",
+                    "  y:^",
+                    "    ^"
+                )
+            )
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
