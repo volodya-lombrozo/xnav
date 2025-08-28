@@ -366,6 +366,29 @@ final class XnavTest {
         );
     }
 
+    /**
+     * This test was added after a bug was found in attribute retrieval.
+     * https://github.com/volodya-lombrozo/xnav/issues/144
+     * @since 0.1.19
+     */
+    @Test
+    void retrievesNodeAttribute() {
+        final Optional<String> res = new Xnav("<o a='some text here'/>")
+            .element("o")
+            .attribute("a")
+            .text();
+        MatcherAssert.assertThat(
+            "We expect the attribute to be present",
+            res.isPresent(),
+            Matchers.is(true)
+        );
+        MatcherAssert.assertThat(
+            "We expect the attribute to be equal to the correct value",
+            res.get(),
+            Matchers.equalTo("some text here")
+        );
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("filters")
     void filtersSuccessfully(final String title, final Filter filter, final List<String> expected) {
