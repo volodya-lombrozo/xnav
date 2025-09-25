@@ -12,8 +12,8 @@ jobs:
     name: Tests
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-14]
-        java: [11, 17]
+        os: [ubuntu-latest]
+        java: [17]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -27,4 +27,4 @@ jobs:
           key: ${{ runner.os }}-jdk-${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-jdk-${{ matrix.java }}-maven-
-      - run: mvn clean install --errors --batch-mode
+      - run: mvn clean qulice:check -Pqulice --errors --batch-mode
