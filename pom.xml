@@ -159,7 +159,7 @@ SOFTWARE.
     <dependency>
       <groupId>org.eolang</groupId>
       <artifactId>jeo-maven-plugin</artifactId>
-      <version>0.10.0</version>
+      <version>0.15.0</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -488,7 +488,7 @@ SOFTWARE.
               <dependency>
                 <groupId>org.eolang</groupId>
                 <artifactId>jeo-maven-plugin</artifactId>
-                <version>0.10.0</version>
+                <version>0.15.0</version>
                 <exclusions>
                   <exclusion>
                     <groupId>org.slf4j</groupId>
