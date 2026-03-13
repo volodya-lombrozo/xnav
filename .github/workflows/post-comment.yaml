@@ -28,7 +28,7 @@ jobs:
           echo "The PR number is $PR_NUMBER"
 
       - name: Post Comment on PR
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         with:
           issue: ${{ env.PR_NUMBER }}
           message-path: |
